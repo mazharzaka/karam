@@ -1,8 +1,8 @@
 "use client";
 
 import React from "react";
-import { SceneManager } from "@/components/cinematic/SceneManager";
+import { PhysicsSceneManager } from "@/components/physics/PhysicsSceneManager";
 
-export default function RomanticWrappedCinematicPage() {
-  return <SceneManager />;
+export default function RomanticWrappedPhysicsPage() {
+  return <PhysicsSceneManager />;
 }
