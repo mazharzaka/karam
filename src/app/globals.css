@@ -3,25 +3,64 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-bg-start: #FDECEF;
+  --color-bg-end: #FCE4EC;
+  --color-rose-gold: #D4AF37;
+  --color-charcoal: #33272A;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* Custom scroll snap utilities */
+.scroll-snap-container {
+  scroll-snap-type: y mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+.scroll-snap-section {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* Custom romantic gradient shimmer */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+.text-gold-shimmer {
+  background: linear-gradient(
+    90deg,
+    #B89335 0%,
+    #F2D98D 25%,
+    #D4AF37 50%,
+    #F2D98D 75%,
+    #B89335 100%
+  );
+  background-size: 200% auto;
+  color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
+  animation: shimmer 6s linear infinite;
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+/* Polaroid drop-shadow effect */
+.polaroid-shadow {
+  box-shadow: 
+    0 1px 3px rgba(51, 39, 42, 0.08),
+    0 8px 24px rgba(51, 39, 42, 0.12),
+    0 16px 36px -4px rgba(212, 175, 55, 0.1);
 }
