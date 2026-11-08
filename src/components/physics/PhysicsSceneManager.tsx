@@ -22,7 +22,7 @@ const SCENE_TITLES = [
   "03 Saidi Heritage",
   "04 Golden Age Cinema",
   "05 Zamalek SC",
-  "06 Wedding Race",
+  "06 تحدي الأزواج",
   "07 Physics Desk",
   "08 3D Tunnel",
   "09 Infinite Canvas",
