@@ -1,13 +1,21 @@
-== برومبتات توليد الصور (لأدوات الذكاء الاصطناعي زي Midjourney) ===
+Act as a Master React/Framer Motion Developer. We are adding a final Theme Section: "Section 5: Zamalek SC (The White Knights)". 
 
+This is a structural clone of Section 4, maintaining the EXACT SAME layout and scroll mechanics.
 
+IMPLEMENT THESE EXACT REQUIREMENTS:
 
-صورة العريس (توت عنخ آمون):
+1. CLONE THE EXACT MECHANICS:
+- Keep the Framer Motion `useScroll` parallax effect (Left and Right characters emerging from the bottom).
+- Keep the massive responsive character sizes (`lg:max-w-[335px] lg:h-[335px]`).
+- Keep the mirrored Left character (`-scale-x-100`) so he faces the right character.
+- Keep the 3-card scrolling marquee, centered text with `mb-24`, and the floating Audio Mute/Play button.
 
-"A cinematic, hyper-realistic portrait of a modern handsome man dressed as an Ancient Egyptian Pharaoh. He is wearing a majestic golden Nemes headdress. Warm rose gold lighting, elegant and romantic vibe. Isolated on a pure white or solid green background for easy cutout, 8k resolution --ar 9:16"
+2. APPLY THE "ZAMALEK SC" THEME:
+- Color Palette: Set the background to Pure White (`bg-white` or `#FFFFFF`).
+- Background Symbols: Add the famous "Two Red Lines" (الخطين الحمر) as subtle vertical borders. In the exact center background (behind the marquee cards), place a large, low-opacity (10-15%) watermark SVG of the Zamalek "Bow and Arrow" (القوس والسهم) logo. 
+- Left Character: Placeholder of a Groom wearing a white Zamalek jersey.
+- Right Character: Placeholder of a Bride wearing a white Zamalek jersey.
+- Audio: Set the track to a classic Zamalek anthem (e.g., "Zamalek Ya Hendasa").
+- Text: Update the title to "مدرسة الفن والهندسة" (The School of Art & Engineering), using Zamalek Red (`text-[#E3001B]`) for the main title to pop against the white background.
 
-
-
-صورة العروسة (الملكة بالفيونكة):
-
-"A cinematic, hyper-realistic portrait of a beautiful modern woman dressed as an Ancient Egyptian Queen (Nefertiti style). CRITICAL DETAIL: She is wearing a cute, oversized pastel pink bow and a soft pink flower attached to her royal golden crown, adding a modern feminine and girly touch. Soft pastel pink and rose gold lighting. Isolated on a pure white or solid green background for easy cutout, 8k resolution --ar 9:16"
+Output the flawless, updated React component for Section 5, ensuring it fits perfectly into the main page timeline before we move to entirely new concepts.

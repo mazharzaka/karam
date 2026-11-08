@@ -689,7 +689,7 @@ export default function GoldenAgeCinemaSection({
             onClick={onNext}
             className="rounded-full bg-[#7A6E65] px-4 py-2 text-sm text-white shadow-sm transition-all duration-200 hover:scale-105 hover:bg-[#63574F] active:scale-95 cursor-pointer"
           >
-            Scene 05: Physics Desk →
+            Scene 05: Zamalek SC →
           </button>
         )}
       </div>

@@ -6,9 +6,11 @@ import { Scene1HeroSpotlight } from "./Scene1HeroSpotlight";
 import TimelessBondSection from "./TimelessBondSection";
 import SaidiHeritageSection from "./SaidiHeritageSection";
 import GoldenAgeCinemaSection from "./GoldenAgeCinemaSection";
+import ZamalekThemeSection from "./ZamalekThemeSection";
 import { Scene3PhysicsDesk } from "./Scene3PhysicsDesk";
 import { Scene4ZTunnel } from "./Scene4ZTunnel";
 import { Scene5InfiniteCanvas } from "./Scene5InfiniteCanvas";
+import { KeyboardShortcutsPill } from "./KeyboardShortcutsPill";
 import { FloatingPetals } from "@/components/layout/FloatingPetals";
 import { Volume2, VolumeX, Maximize2, Minimize2, Heart } from "lucide-react";
 import { sceneAudio } from "@/utils/sceneAudioController";
@@ -18,9 +20,10 @@ const SCENE_TITLES = [
   "02 Egyptian Heritage",
   "03 Saidi Heritage",
   "04 Golden Age Cinema",
-  "05 Physics Desk",
-  "06 3D Tunnel",
-  "07 Infinite Canvas",
+  "05 Zamalek SC",
+  "06 Physics Desk",
+  "07 3D Tunnel",
+  "08 Infinite Canvas",
 ];
 
 export const PhysicsSceneManager: React.FC = () => {
@@ -33,6 +36,7 @@ export const PhysicsSceneManager: React.FC = () => {
   const section2Ref = useRef<HTMLDivElement>(null);
   const section3Ref = useRef<HTMLDivElement>(null);
   const section4Ref = useRef<HTMLDivElement>(null);
+  const section5Ref = useRef<HTMLDivElement>(null);
 
   const scrollToSection1 = useCallback(() => {
     setCurrentScene(0);
@@ -79,34 +83,53 @@ export const PhysicsSceneManager: React.FC = () => {
     }
   }, []);
 
+  const scrollToSection5 = useCallback(() => {
+    setCurrentScene(4);
+    if (section5Ref.current) {
+      section5Ref.current.scrollIntoView({ behavior: "smooth" });
+    } else if (scrollContainerRef.current) {
+      const top = section5Ref.current
+        ? (section5Ref.current as HTMLElement).offsetTop
+        : scrollContainerRef.current.clientHeight * 4;
+      scrollContainerRef.current.scrollTo({ top, behavior: "smooth" });
+    }
+  }, []);
+
   const handleNavClick = (idx: number) => {
     if (idx === 0) {
-      if (currentScene > 3) {
+      if (currentScene > 4) {
         setCurrentScene(0);
         setTimeout(() => scrollToSection1(), 60);
       } else {
         scrollToSection1();
       }
     } else if (idx === 1) {
-      if (currentScene > 3) {
+      if (currentScene > 4) {
         setCurrentScene(1);
         setTimeout(() => scrollToSection2(), 60);
       } else {
         scrollToSection2();
       }
     } else if (idx === 2) {
-      if (currentScene > 3) {
+      if (currentScene > 4) {
         setCurrentScene(2);
         setTimeout(() => scrollToSection3(), 60);
       } else {
         scrollToSection3();
       }
     } else if (idx === 3) {
-      if (currentScene > 3) {
+      if (currentScene > 4) {
         setCurrentScene(3);
         setTimeout(() => scrollToSection4(), 60);
       } else {
         scrollToSection4();
+      }
+    } else if (idx === 4) {
+      if (currentScene > 4) {
+        setCurrentScene(4);
+        setTimeout(() => scrollToSection5(), 60);
+      } else {
+        scrollToSection5();
       }
     } else {
       setCurrentScene(idx);
@@ -114,15 +137,19 @@ export const PhysicsSceneManager: React.FC = () => {
   };
 
   // Organic scroll listener to automatically synchronize HUD and dynamic audio
-  // when scrolling smoothly between Section 1, 2, 3, and 4
+  // when scrolling smoothly between Section 1, 2, 3, 4, and 5
   useEffect(() => {
     const container = scrollContainerRef.current;
-    if (!container || currentScene > 3) return;
+    if (!container || currentScene > 4) return;
 
     const handleScroll = () => {
       const scrollPos = container.scrollTop;
       const height = container.clientHeight;
-      if (scrollPos > height * 2.35) {
+      if (scrollPos > height * 3.35) {
+        if (currentScene !== 4) {
+          setCurrentScene(4);
+        }
+      } else if (scrollPos > height * 2.35) {
         if (currentScene !== 3) {
           setCurrentScene(3);
         }
@@ -181,13 +208,17 @@ export const PhysicsSceneManager: React.FC = () => {
       scrollToSection3();
     } else if (currentScene === 2) {
       scrollToSection4();
+    } else if (currentScene === 3) {
+      scrollToSection5();
     } else {
       setCurrentScene((prev) => Math.min(SCENE_TITLES.length - 1, prev + 1));
     }
-  }, [currentScene, scrollToSection2, scrollToSection3, scrollToSection4]);
+  }, [currentScene, scrollToSection2, scrollToSection3, scrollToSection4, scrollToSection5]);
 
   const prevScene = useCallback(() => {
-    if (currentScene === 3) {
+    if (currentScene === 4) {
+      scrollToSection4();
+    } else if (currentScene === 3) {
       scrollToSection3();
     } else if (currentScene === 2) {
       scrollToSection2();
@@ -196,7 +227,7 @@ export const PhysicsSceneManager: React.FC = () => {
     } else {
       setCurrentScene((prev) => Math.max(0, prev - 1));
     }
-  }, [currentScene, scrollToSection1, scrollToSection2, scrollToSection3]);
+  }, [currentScene, scrollToSection1, scrollToSection2, scrollToSection3, scrollToSection4]);
 
   // Global keydown listeners for scene switching
   useEffect(() => {
@@ -310,9 +341,9 @@ export const PhysicsSceneManager: React.FC = () => {
       {/* ACTIVE STAGE VIEWPORT */}
       <main className="relative w-full h-full pt-16 flex items-center justify-center overflow-hidden">
         <AnimatePresence mode="wait">
-          {currentScene <= 3 && (
+          {currentScene <= 4 && (
             <motion.div
-              key="scene-1-2-3-4-scroll-stream"
+              key="scene-1-2-3-4-5-scroll-stream"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0, scale: 0.96 }}
@@ -360,16 +391,28 @@ export const PhysicsSceneManager: React.FC = () => {
                 className="w-full min-h-[calc(100vh-4rem)] flex flex-col justify-between"
               >
                 <GoldenAgeCinemaSection
-                  onNext={() => setCurrentScene(4)}
+                  onNext={scrollToSection5}
+                  scrollContainerRef={scrollContainerRef}
+                />
+              </div>
+
+              {/* Scene 5: Zamalek SC (مدرسة الفن والهندسة - The White Knights) */}
+              <div
+                ref={section5Ref}
+                id="scene-5-zamalek"
+                className="w-full min-h-[calc(100vh-4rem)] flex flex-col justify-between"
+              >
+                <ZamalekThemeSection
+                  onNext={() => setCurrentScene(5)}
                   scrollContainerRef={scrollContainerRef}
                 />
               </div>
             </motion.div>
           )}
 
-          {currentScene === 4 && (
+          {currentScene === 5 && (
             <motion.div
-              key="scene-5-desk"
+              key="scene-6-desk"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 1.05 }}
@@ -380,9 +423,9 @@ export const PhysicsSceneManager: React.FC = () => {
             </motion.div>
           )}
 
-          {currentScene === 5 && (
+          {currentScene === 6 && (
             <motion.div
-              key="scene-6-tunnel"
+              key="scene-7-tunnel"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -393,9 +436,9 @@ export const PhysicsSceneManager: React.FC = () => {
             </motion.div>
           )}
 
-          {currentScene === 6 && (
+          {currentScene === 7 && (
             <motion.div
-              key="scene-7-canvas"
+              key="scene-8-canvas"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -407,6 +450,9 @@ export const PhysicsSceneManager: React.FC = () => {
           )}
         </AnimatePresence>
       </main>
+
+      {/* Floating Keyboard Shortcuts Pill */}
+      <KeyboardShortcutsPill />
     </div>
   );
 };
