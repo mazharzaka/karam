@@ -5,7 +5,6 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Camera,
-  ArrowRight,
   Heart,
   Shuffle,
   Layers,
@@ -30,7 +29,7 @@ const WASHI_TAPES = [
   "bg-purple-100/90 border-purple-200/60 text-purple-800 rotate-2",
 ];
 
-export const Scene3PhysicsDesk: React.FC<Scene3PhysicsDeskProps> = ({ onNext }) => {
+export const Scene3PhysicsDesk: React.FC<Scene3PhysicsDeskProps> = () => {
   const deskRef = useRef<HTMLDivElement>(null);
   const [activeZ, setActiveZ] = useState<number>(100);
   const [layoutMode, setLayoutMode] = useState<"scatter" | "stack">("scatter");
@@ -117,14 +116,6 @@ export const Scene3PhysicsDesk: React.FC<Scene3PhysicsDeskProps> = ({ onNext }) 
               <Shuffle className="w-4 h-4 text-romantic-roseGold" />
             </button>
           )}
-
-          <button
-            onClick={onNext}
-            className="px-5 py-2 rounded-full bg-gradient-to-r from-romantic-roseGold to-romantic-roseGoldLight text-romantic-charcoal font-bold text-xs shadow-md hover:scale-105 active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
-          >
-            <span>Scene 04: Z-Tunnel</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
         </div>
       </div>
 

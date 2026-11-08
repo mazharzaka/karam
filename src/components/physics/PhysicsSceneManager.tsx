@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { Scene1HeroSpotlight } from "./Scene1HeroSpotlight";
 import TimelessBondSection from "./TimelessBondSection";
 import SaidiHeritageSection from "./SaidiHeritageSection";
@@ -40,162 +40,64 @@ export const PhysicsSceneManager: React.FC = () => {
   const section4Ref = useRef<HTMLDivElement>(null);
   const section5Ref = useRef<HTMLDivElement>(null);
   const section6Ref = useRef<HTMLDivElement>(null);
+  const section7Ref = useRef<HTMLDivElement>(null);
+  const section8Ref = useRef<HTMLDivElement>(null);
+  const section9Ref = useRef<HTMLDivElement>(null);
 
-  const scrollToSection1 = useCallback(() => {
-    setCurrentScene(0);
-    if (section1Ref.current) {
-      section1Ref.current.scrollIntoView({ behavior: "smooth" });
-    } else if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTo({ top: 0, behavior: "smooth" });
-    }
-  }, []);
-
-  const scrollToSection2 = useCallback(() => {
-    setCurrentScene(1);
-    if (section2Ref.current) {
-      section2Ref.current.scrollIntoView({ behavior: "smooth" });
-    } else if (scrollContainerRef.current) {
-      const top = section2Ref.current
-        ? (section2Ref.current as HTMLElement).offsetTop
-        : scrollContainerRef.current.clientHeight;
-      scrollContainerRef.current.scrollTo({ top, behavior: "smooth" });
-    }
-  }, []);
-
-  const scrollToSection3 = useCallback(() => {
-    setCurrentScene(2);
-    if (section3Ref.current) {
-      section3Ref.current.scrollIntoView({ behavior: "smooth" });
-    } else if (scrollContainerRef.current) {
-      const top = section3Ref.current
-        ? (section3Ref.current as HTMLElement).offsetTop
-        : scrollContainerRef.current.clientHeight * 2;
-      scrollContainerRef.current.scrollTo({ top, behavior: "smooth" });
-    }
-  }, []);
-
-  const scrollToSection4 = useCallback(() => {
-    setCurrentScene(3);
-    if (section4Ref.current) {
-      section4Ref.current.scrollIntoView({ behavior: "smooth" });
-    } else if (scrollContainerRef.current) {
-      const top = section4Ref.current
-        ? (section4Ref.current as HTMLElement).offsetTop
-        : scrollContainerRef.current.clientHeight * 3;
-      scrollContainerRef.current.scrollTo({ top, behavior: "smooth" });
-    }
-  }, []);
-
-  const scrollToSection5 = useCallback(() => {
-    setCurrentScene(4);
-    if (section5Ref.current) {
-      section5Ref.current.scrollIntoView({ behavior: "smooth" });
-    } else if (scrollContainerRef.current) {
-      const top = section5Ref.current
-        ? (section5Ref.current as HTMLElement).offsetTop
-        : scrollContainerRef.current.clientHeight * 4;
-      scrollContainerRef.current.scrollTo({ top, behavior: "smooth" });
-    }
-  }, []);
-
-  const scrollToSection6 = useCallback(() => {
-    setCurrentScene(5);
-    if (section6Ref.current) {
-      section6Ref.current.scrollIntoView({ behavior: "smooth" });
-    } else if (scrollContainerRef.current) {
-      const top = section6Ref.current
-        ? (section6Ref.current as HTMLElement).offsetTop
-        : scrollContainerRef.current.clientHeight * 5;
-      scrollContainerRef.current.scrollTo({ top, behavior: "smooth" });
+  const scrollToSection = useCallback((idx: number) => {
+    setCurrentScene(idx);
+    const refs = [
+      section1Ref,
+      section2Ref,
+      section3Ref,
+      section4Ref,
+      section5Ref,
+      section6Ref,
+      section7Ref,
+      section8Ref,
+      section9Ref,
+    ];
+    const target = refs[idx]?.current;
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth" });
     }
   }, []);
 
   const handleNavClick = (idx: number) => {
-    if (idx === 0) {
-      if (currentScene > 5) {
-        setCurrentScene(0);
-        setTimeout(() => scrollToSection1(), 60);
-      } else {
-        scrollToSection1();
-      }
-    } else if (idx === 1) {
-      if (currentScene > 5) {
-        setCurrentScene(1);
-        setTimeout(() => scrollToSection2(), 60);
-      } else {
-        scrollToSection2();
-      }
-    } else if (idx === 2) {
-      if (currentScene > 5) {
-        setCurrentScene(2);
-        setTimeout(() => scrollToSection3(), 60);
-      } else {
-        scrollToSection3();
-      }
-    } else if (idx === 3) {
-      if (currentScene > 5) {
-        setCurrentScene(3);
-        setTimeout(() => scrollToSection4(), 60);
-      } else {
-        scrollToSection4();
-      }
-    } else if (idx === 4) {
-      if (currentScene > 5) {
-        setCurrentScene(4);
-        setTimeout(() => scrollToSection5(), 60);
-      } else {
-        scrollToSection5();
-      }
-    } else if (idx === 5) {
-      if (currentScene > 5) {
-        setCurrentScene(5);
-        setTimeout(() => scrollToSection6(), 60);
-      } else {
-        scrollToSection6();
-      }
-    } else {
-      setCurrentScene(idx);
-    }
+    scrollToSection(idx);
   };
 
   // Organic scroll listener to automatically synchronize HUD and dynamic audio
   useEffect(() => {
     const container = scrollContainerRef.current;
-    if (!container || currentScene > 5) return;
+    if (!container) return;
+
+    const refs = [
+      section1Ref,
+      section2Ref,
+      section3Ref,
+      section4Ref,
+      section5Ref,
+      section6Ref,
+      section7Ref,
+      section8Ref,
+      section9Ref,
+    ];
 
     const handleScroll = () => {
-      const scrollPos = container.scrollTop;
-      const height = container.clientHeight;
-      if (scrollPos > height * 4.35) {
-        if (currentScene !== 5) {
-          setCurrentScene(5);
-        }
-      } else if (scrollPos > height * 3.35) {
-        if (currentScene !== 4) {
-          setCurrentScene(4);
-        }
-      } else if (scrollPos > height * 2.35) {
-        if (currentScene !== 3) {
-          setCurrentScene(3);
-        }
-      } else if (scrollPos > height * 1.35) {
-        if (currentScene !== 2) {
-          setCurrentScene(2);
-        }
-      } else if (scrollPos > height * 0.35) {
-        if (currentScene !== 1) {
-          setCurrentScene(1);
-        }
-      } else {
-        if (currentScene !== 0) {
-          setCurrentScene(0);
+      const scrollPos = container.scrollTop + container.clientHeight * 0.35;
+      for (let i = refs.length - 1; i >= 0; i--) {
+        const el = refs[i]?.current;
+        if (el && el.offsetTop <= scrollPos) {
+          setCurrentScene(i);
+          break;
         }
       }
     };
 
     container.addEventListener("scroll", handleScroll, { passive: true });
     return () => container.removeEventListener("scroll", handleScroll);
-  }, [currentScene]);
+  }, []);
 
   const toggleMusic = () => {
     const nextState = !isPlayingMusic;
@@ -205,8 +107,7 @@ export const PhysicsSceneManager: React.FC = () => {
     }
   };
 
-  // Dynamic Scene Audio Crossfade Controller:
-  // Smoothly crossfades between Scene 1 (Arabic Track) and Scene 2 (Pharaonic Track)
+  // Dynamic Scene Audio Crossfade Controller
   useEffect(() => {
     if (sceneAudio) {
       sceneAudio.transitionToScene(currentScene, isPlayingMusic);
@@ -227,41 +128,16 @@ export const PhysicsSceneManager: React.FC = () => {
   };
 
   const nextScene = useCallback(() => {
-    if (currentScene === 0) {
-      scrollToSection2();
-    } else if (currentScene === 1) {
-      scrollToSection3();
-    } else if (currentScene === 2) {
-      scrollToSection4();
-    } else if (currentScene === 3) {
-      scrollToSection5();
-    } else if (currentScene === 4) {
-      scrollToSection6();
-    } else {
-      setCurrentScene((prev) => Math.min(SCENE_TITLES.length - 1, prev + 1));
-    }
-  }, [currentScene, scrollToSection2, scrollToSection3, scrollToSection4, scrollToSection5, scrollToSection6]);
+    scrollToSection(Math.min(SCENE_TITLES.length - 1, currentScene + 1));
+  }, [currentScene, scrollToSection]);
 
   const prevScene = useCallback(() => {
-    if (currentScene === 5) {
-      scrollToSection5();
-    } else if (currentScene === 4) {
-      scrollToSection4();
-    } else if (currentScene === 3) {
-      scrollToSection3();
-    } else if (currentScene === 2) {
-      scrollToSection2();
-    } else if (currentScene === 1) {
-      scrollToSection1();
-    } else {
-      setCurrentScene((prev) => Math.max(0, prev - 1));
-    }
-  }, [currentScene, scrollToSection1, scrollToSection2, scrollToSection3, scrollToSection4, scrollToSection5]);
+    scrollToSection(Math.max(0, currentScene - 1));
+  }, [currentScene, scrollToSection]);
 
   // Global keydown listeners for scene switching
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't intercept inside Scene 4 (Tunnel) or Scene 5 (Canvas) unless explicitly using PageDown / PageUp
       if (e.key === "PageDown") {
         e.preventDefault();
         nextScene();
@@ -367,126 +243,117 @@ export const PhysicsSceneManager: React.FC = () => {
         </div>
       </header>
 
-      {/* ACTIVE STAGE VIEWPORT */}
+      {/* ACTIVE STAGE VIEWPORT (All 9 Sections in Natural Vertical Scroll Flow) */}
       <main className="relative w-full h-full pt-16 flex items-center justify-center overflow-hidden">
-        <AnimatePresence mode="wait">
-          {currentScene <= 5 && (
-            <motion.div
-              key="scene-1-2-3-4-5-6-scroll-stream"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0, scale: 0.96 }}
-              transition={{ duration: 0.5 }}
-              ref={scrollContainerRef}
-              className="w-full h-full overflow-y-auto overflow-x-hidden scroll-smooth"
-            >
-              {/* Scene 1: Hero Spotlight */}
-              <div
-                ref={section1Ref}
-                id="scene-1-spotlight"
-                className="w-full min-h-[calc(100vh-4rem)] flex flex-col justify-between"
-              >
-                <Scene1HeroSpotlight onNext={scrollToSection2} />
-              </div>
+        <div
+          ref={scrollContainerRef}
+          className="w-full h-full overflow-y-auto overflow-x-hidden scroll-smooth"
+        >
+          {/* Section 1: Hero Spotlight */}
+          <div
+            ref={section1Ref}
+            id="scene-1-spotlight"
+            className="w-full min-h-[calc(100vh-4rem)] flex flex-col justify-between overflow-x-hidden"
+          >
+            <Scene1HeroSpotlight onNext={() => scrollToSection(1)} />
+          </div>
 
-              {/* Scene 2: Timeless Bond (Egyptian Pharaonic Heritage) */}
-              <div
-                ref={section2Ref}
-                id="scene-2-timeless"
-                className="w-full min-h-[calc(100vh-4rem)] flex flex-col justify-between"
-              >
-                <TimelessBondSection
-                  onNext={scrollToSection3}
-                  scrollContainerRef={scrollContainerRef}
-                />
-              </div>
+          {/* Section 2: Timeless Bond (Egyptian Pharaonic Heritage) */}
+          <div
+            ref={section2Ref}
+            id="scene-2-timeless"
+            className="w-full min-h-[calc(100vh-4rem)] flex flex-col justify-between overflow-x-hidden"
+          >
+            <TimelessBondSection
+              onNext={() => scrollToSection(2)}
+              scrollContainerRef={scrollContainerRef}
+            />
+          </div>
 
-              {/* Scene 3: Saidi Heritage (أصالة وجذور) */}
-              <div
-                ref={section3Ref}
-                id="scene-3-saidi"
-                className="w-full min-h-[calc(100vh-4rem)] flex flex-col justify-between"
-              >
-                <SaidiHeritageSection
-                  onNext={scrollToSection4}
-                  scrollContainerRef={scrollContainerRef}
-                />
-              </div>
+          {/* Section 3: Saidi Heritage (أصالة وجذور) */}
+          <div
+            ref={section3Ref}
+            id="scene-3-saidi"
+            className="w-full min-h-[calc(100vh-4rem)] flex flex-col justify-between overflow-x-hidden"
+          >
+            <SaidiHeritageSection
+              onNext={() => scrollToSection(3)}
+              scrollContainerRef={scrollContainerRef}
+            />
+          </div>
 
-              {/* Scene 4: Golden Age Egyptian Cinema (زمن الفن الجميل) */}
-              <div
-                ref={section4Ref}
-                id="scene-4-cinema"
-                className="w-full min-h-[calc(100vh-4rem)] flex flex-col justify-between"
-              >
-                <GoldenAgeCinemaSection
-                  onNext={scrollToSection5}
-                  scrollContainerRef={scrollContainerRef}
-                />
-              </div>
+          {/* Section 4: Golden Age Egyptian Cinema (زمن الفن الجميل) */}
+          <div
+            ref={section4Ref}
+            id="scene-4-cinema"
+            className="w-full min-h-[calc(100vh-4rem)] flex flex-col justify-between overflow-x-hidden"
+          >
+            <GoldenAgeCinemaSection
+              onNext={() => scrollToSection(4)}
+              scrollContainerRef={scrollContainerRef}
+            />
+          </div>
 
-              {/* Scene 5: Zamalek SC (مدرسة الفن والهندسة - The White Knights) */}
-              <div
-                ref={section5Ref}
-                id="scene-5-zamalek"
-                className="w-full min-h-[calc(100vh-4rem)] flex flex-col justify-between"
-              >
-                <ZamalekThemeSection
-                  onNext={scrollToSection6}
-                  scrollContainerRef={scrollContainerRef}
-                />
-              </div>
+          {/* Section 5: Zamalek SC (مدرسة الفن والهندسة - The White Knights) */}
+          <div
+            ref={section5Ref}
+            id="scene-5-zamalek"
+            className="w-full min-h-[calc(100vh-4rem)] flex flex-col justify-between overflow-x-hidden"
+          >
+            <ZamalekThemeSection
+              onNext={() => scrollToSection(5)}
+              scrollContainerRef={scrollContainerRef}
+            />
+          </div>
 
-              {/* Section 6: Wedding Race (Interactive Two-Player Mini-Game) */}
-              <div
-                ref={section6Ref}
-                id="section-6-race"
-                className="w-full min-h-[calc(100vh-4rem)] flex flex-col justify-between"
-              >
-                <WeddingRaceSection />
-              </div>
-            </motion.div>
-          )}
+          {/* Section 6: Wedding Race (تحدي الأزواج) */}
+          <div
+            ref={section6Ref}
+            id="section-6-race"
+            className="w-full min-h-[calc(100vh-4rem)] flex flex-col justify-between overflow-x-hidden"
+          >
+            <WeddingRaceSection />
+          </div>
 
-          {currentScene === 6 && (
-            <motion.div
-              key="scene-7-desk"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 1.05 }}
-              transition={{ duration: 0.6 }}
-              className="w-full h-full"
-            >
-              <Scene3PhysicsDesk onNext={nextScene} />
-            </motion.div>
-          )}
+          {/* Section 7: Physics Desk (Scrapbook Desk - whileInView) */}
+          <motion.div
+            ref={section7Ref}
+            id="section-7-desk"
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.15 }}
+            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+            className="w-full min-h-[calc(100vh-4rem)] flex flex-col justify-between overflow-x-hidden"
+          >
+            <Scene3PhysicsDesk />
+          </motion.div>
 
-          {currentScene === 7 && (
-            <motion.div
-              key="scene-8-tunnel"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.6 }}
-              className="w-full h-full"
-            >
-              <Scene4ZTunnel onNext={nextScene} />
-            </motion.div>
-          )}
+          {/* Section 8: Z-Axis Memory Tunnel (whileInView) */}
+          <motion.div
+            ref={section8Ref}
+            id="section-8-tunnel"
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.15 }}
+            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+            className="w-full min-h-[calc(100vh-4rem)] flex flex-col justify-between overflow-x-hidden"
+          >
+            <Scene4ZTunnel />
+          </motion.div>
 
-          {currentScene === 8 && (
-            <motion.div
-              key="scene-9-canvas"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.6 }}
-              className="w-full h-full"
-            >
-              <Scene5InfiniteCanvas onRestart={() => handleNavClick(0)} />
-            </motion.div>
-          )}
-        </AnimatePresence>
+          {/* Section 9: Infinite Canvas (whileInView) */}
+          <motion.div
+            ref={section9Ref}
+            id="section-9-canvas"
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.15 }}
+            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+            className="w-full min-h-[calc(100vh-4rem)] flex flex-col justify-between overflow-x-hidden"
+          >
+            <Scene5InfiniteCanvas onRestart={() => scrollToSection(0)} />
+          </motion.div>
+        </div>
       </main>
 
       {/* Floating Keyboard Shortcuts Pill */}

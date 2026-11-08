@@ -38,8 +38,10 @@ export const Scene5InfiniteCanvas: React.FC<Scene5InfiniteCanvasProps> = ({
         setPosition({ x: dx, y: dy });
       },
       onWheel: ({ event, delta: [, dy] }) => {
-        event.preventDefault();
-        setZoom((prev) => Math.min(2.5, Math.max(0.4, prev - dy * 0.002)));
+        if (event.ctrlKey || event.metaKey) {
+          event.preventDefault();
+          setZoom((prev) => Math.min(2.5, Math.max(0.4, prev - dy * 0.002)));
+        }
       },
       onPinch: ({ offset: [d] }) => {
         setZoom(Math.min(2.5, Math.max(0.4, 1 + d / 200)));
@@ -81,7 +83,7 @@ export const Scene5InfiniteCanvas: React.FC<Scene5InfiniteCanvasProps> = ({
   };
 
   return (
-    <div className="relative w-full h-full bg-[#1A1416] text-[#FDECEF] overflow-hidden select-none flex flex-col justify-between">
+    <div className="relative w-full min-h-[750px] bg-[#1A1416] text-[#FDECEF] overflow-hidden select-none flex flex-col justify-between">
       {/* Top HUD */}
       <header className="relative z-30 px-6 lg:px-12 py-6 flex items-center justify-between bg-black/40 backdrop-blur-md border-b border-romantic-roseGold/20">
         <div>
