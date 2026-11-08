@@ -7,6 +7,7 @@ import TimelessBondSection from "./TimelessBondSection";
 import SaidiHeritageSection from "./SaidiHeritageSection";
 import GoldenAgeCinemaSection from "./GoldenAgeCinemaSection";
 import ZamalekThemeSection from "./ZamalekThemeSection";
+import WeddingRaceSection from "./WeddingRaceSection";
 import { Scene3PhysicsDesk } from "./Scene3PhysicsDesk";
 import { Scene4ZTunnel } from "./Scene4ZTunnel";
 import { Scene5InfiniteCanvas } from "./Scene5InfiniteCanvas";
@@ -21,9 +22,10 @@ const SCENE_TITLES = [
   "03 Saidi Heritage",
   "04 Golden Age Cinema",
   "05 Zamalek SC",
-  "06 Physics Desk",
-  "07 3D Tunnel",
-  "08 Infinite Canvas",
+  "06 Wedding Race",
+  "07 Physics Desk",
+  "08 3D Tunnel",
+  "09 Infinite Canvas",
 ];
 
 export const PhysicsSceneManager: React.FC = () => {
@@ -37,6 +39,7 @@ export const PhysicsSceneManager: React.FC = () => {
   const section3Ref = useRef<HTMLDivElement>(null);
   const section4Ref = useRef<HTMLDivElement>(null);
   const section5Ref = useRef<HTMLDivElement>(null);
+  const section6Ref = useRef<HTMLDivElement>(null);
 
   const scrollToSection1 = useCallback(() => {
     setCurrentScene(0);
@@ -95,41 +98,60 @@ export const PhysicsSceneManager: React.FC = () => {
     }
   }, []);
 
+  const scrollToSection6 = useCallback(() => {
+    setCurrentScene(5);
+    if (section6Ref.current) {
+      section6Ref.current.scrollIntoView({ behavior: "smooth" });
+    } else if (scrollContainerRef.current) {
+      const top = section6Ref.current
+        ? (section6Ref.current as HTMLElement).offsetTop
+        : scrollContainerRef.current.clientHeight * 5;
+      scrollContainerRef.current.scrollTo({ top, behavior: "smooth" });
+    }
+  }, []);
+
   const handleNavClick = (idx: number) => {
     if (idx === 0) {
-      if (currentScene > 4) {
+      if (currentScene > 5) {
         setCurrentScene(0);
         setTimeout(() => scrollToSection1(), 60);
       } else {
         scrollToSection1();
       }
     } else if (idx === 1) {
-      if (currentScene > 4) {
+      if (currentScene > 5) {
         setCurrentScene(1);
         setTimeout(() => scrollToSection2(), 60);
       } else {
         scrollToSection2();
       }
     } else if (idx === 2) {
-      if (currentScene > 4) {
+      if (currentScene > 5) {
         setCurrentScene(2);
         setTimeout(() => scrollToSection3(), 60);
       } else {
         scrollToSection3();
       }
     } else if (idx === 3) {
-      if (currentScene > 4) {
+      if (currentScene > 5) {
         setCurrentScene(3);
         setTimeout(() => scrollToSection4(), 60);
       } else {
         scrollToSection4();
       }
     } else if (idx === 4) {
-      if (currentScene > 4) {
+      if (currentScene > 5) {
         setCurrentScene(4);
         setTimeout(() => scrollToSection5(), 60);
       } else {
         scrollToSection5();
+      }
+    } else if (idx === 5) {
+      if (currentScene > 5) {
+        setCurrentScene(5);
+        setTimeout(() => scrollToSection6(), 60);
+      } else {
+        scrollToSection6();
       }
     } else {
       setCurrentScene(idx);
@@ -137,15 +159,18 @@ export const PhysicsSceneManager: React.FC = () => {
   };
 
   // Organic scroll listener to automatically synchronize HUD and dynamic audio
-  // when scrolling smoothly between Section 1, 2, 3, 4, and 5
   useEffect(() => {
     const container = scrollContainerRef.current;
-    if (!container || currentScene > 4) return;
+    if (!container || currentScene > 5) return;
 
     const handleScroll = () => {
       const scrollPos = container.scrollTop;
       const height = container.clientHeight;
-      if (scrollPos > height * 3.35) {
+      if (scrollPos > height * 4.35) {
+        if (currentScene !== 5) {
+          setCurrentScene(5);
+        }
+      } else if (scrollPos > height * 3.35) {
         if (currentScene !== 4) {
           setCurrentScene(4);
         }
@@ -210,13 +235,17 @@ export const PhysicsSceneManager: React.FC = () => {
       scrollToSection4();
     } else if (currentScene === 3) {
       scrollToSection5();
+    } else if (currentScene === 4) {
+      scrollToSection6();
     } else {
       setCurrentScene((prev) => Math.min(SCENE_TITLES.length - 1, prev + 1));
     }
-  }, [currentScene, scrollToSection2, scrollToSection3, scrollToSection4, scrollToSection5]);
+  }, [currentScene, scrollToSection2, scrollToSection3, scrollToSection4, scrollToSection5, scrollToSection6]);
 
   const prevScene = useCallback(() => {
-    if (currentScene === 4) {
+    if (currentScene === 5) {
+      scrollToSection5();
+    } else if (currentScene === 4) {
       scrollToSection4();
     } else if (currentScene === 3) {
       scrollToSection3();
@@ -227,7 +256,7 @@ export const PhysicsSceneManager: React.FC = () => {
     } else {
       setCurrentScene((prev) => Math.max(0, prev - 1));
     }
-  }, [currentScene, scrollToSection1, scrollToSection2, scrollToSection3, scrollToSection4]);
+  }, [currentScene, scrollToSection1, scrollToSection2, scrollToSection3, scrollToSection4, scrollToSection5]);
 
   // Global keydown listeners for scene switching
   useEffect(() => {
@@ -341,9 +370,9 @@ export const PhysicsSceneManager: React.FC = () => {
       {/* ACTIVE STAGE VIEWPORT */}
       <main className="relative w-full h-full pt-16 flex items-center justify-center overflow-hidden">
         <AnimatePresence mode="wait">
-          {currentScene <= 4 && (
+          {currentScene <= 5 && (
             <motion.div
-              key="scene-1-2-3-4-5-scroll-stream"
+              key="scene-1-2-3-4-5-6-scroll-stream"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0, scale: 0.96 }}
@@ -403,16 +432,25 @@ export const PhysicsSceneManager: React.FC = () => {
                 className="w-full min-h-[calc(100vh-4rem)] flex flex-col justify-between"
               >
                 <ZamalekThemeSection
-                  onNext={() => setCurrentScene(5)}
+                  onNext={scrollToSection6}
                   scrollContainerRef={scrollContainerRef}
                 />
+              </div>
+
+              {/* Section 6: Wedding Race (Interactive Two-Player Mini-Game) */}
+              <div
+                ref={section6Ref}
+                id="section-6-race"
+                className="w-full min-h-[calc(100vh-4rem)] flex flex-col justify-between"
+              >
+                <WeddingRaceSection />
               </div>
             </motion.div>
           )}
 
-          {currentScene === 5 && (
+          {currentScene === 6 && (
             <motion.div
-              key="scene-6-desk"
+              key="scene-7-desk"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 1.05 }}
@@ -423,9 +461,9 @@ export const PhysicsSceneManager: React.FC = () => {
             </motion.div>
           )}
 
-          {currentScene === 6 && (
+          {currentScene === 7 && (
             <motion.div
-              key="scene-7-tunnel"
+              key="scene-8-tunnel"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -436,9 +474,9 @@ export const PhysicsSceneManager: React.FC = () => {
             </motion.div>
           )}
 
-          {currentScene === 7 && (
+          {currentScene === 8 && (
             <motion.div
-              key="scene-8-canvas"
+              key="scene-9-canvas"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}

@@ -668,7 +668,7 @@ export default function ZamalekThemeSection({
             onClick={onNext}
             className="rounded-full bg-[#E3001B] px-4 py-2 text-sm font-bold text-white shadow-sm transition-all duration-200 hover:scale-105 hover:bg-[#B30015] active:scale-95 cursor-pointer"
           >
-            Scene 06: Physics Desk →
+            Scene 06: Wedding Race →
           </button>
         )}
       </div>
