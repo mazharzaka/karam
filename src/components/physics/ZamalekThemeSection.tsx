@@ -18,20 +18,15 @@ import {
 } from "framer-motion";
 
 /* -------------------------------------------------------------------------- */
-/* MEDIA PLACEHOLDERS (Zamalek SC The White Knights)                          */
+/* MEDIA PLACEHOLDERS (CRITICAL FOR USER REPLACEMENT)                         */
 /* -------------------------------------------------------------------------- */
-
-export const ZAMALEK_SECTION_ASSETS = {
-  // Hero Character Cutouts (Groom & Bride wearing white Zamalek jerseys)
-  groomImage: "/statues/zamalek-groom.png", // Groom in white Zamalek jersey
-  brideImage: "/statues/zamalek-bride.png", // Bride in white Zamalek jersey
-
-  // Section 5 Audio Track: Classic Zamalek Anthem ("Zamalek Ya Hendasa")
-  zamalekTrack: "/audio/zamalek-ya-hendasa.mp3",
-};
+// Easily swap these paths or paste new URLs directly here:
+export const ZAMALEK_AUDIO_SRC = "/audio/zamalek-curva-sud.mp3";
+export const ZAMALEK_GROOM_SRC = "/statues/zamalek-groom.png";
+export const ZAMALEK_BRIDE_SRC = "/statues/zamalek-bride.png";
 
 /* -------------------------------------------------------------------------- */
-/* Styling Constants (Zamalek Red & Pure White)                               */
+/* Styling Constants (Zamalek Pure White & Red Lines)                         */
 /* -------------------------------------------------------------------------- */
 
 const ZAMALEK_RED = "#E3001B";
@@ -51,54 +46,54 @@ const CARDS: MomentCard[] = [
   {
     num: "01",
     corner: "Z",
-    title: "White Knights Anthem",
-    place: "Cairo International Stadium",
-    time: "Match Night 2024",
+    title: "في الكورفا سود",
+    place: "استاد القاهرة الدولي",
+    time: "جمهور أسود 2024",
     badge: "★ 1911",
     photo: "/moments-zamalek/01.jpg",
   },
   {
     num: "02",
     corner: "K",
-    title: "Hand in Hand in White",
-    place: "Zamalek Club Terrace",
-    time: "Sunset by the Nile",
+    title: "عشق الأبيض بخطين حُمر",
+    place: "تراس النادي الملكي",
+    time: "غروب النيل",
     badge: "★ Red Lines",
     photo: "/moments-zamalek/02.jpg",
   },
   {
     num: "03",
     corner: "Q",
-    title: "Derby Day Celebrations",
-    place: "Gezira Island Promenade",
-    time: "Victory Night",
+    title: "فرحة الديربي والبطولات",
+    place: "كورنيش الجزيرة",
+    time: "ليلة الانتصار",
     badge: "★ Art",
     photo: "/moments-zamalek/03.jpg",
   },
   {
     num: "04",
     corner: "11",
-    title: "The School of Art",
-    place: "Mito Al-Oqba Pavilion",
-    time: "Golden Hour",
+    title: "مدرسة الفن والهندسة",
+    place: "ميت عقبة العريقة",
+    time: "الساعة الذهبية",
     badge: "★ Eng.",
     photo: "/moments-zamalek/04.jpg",
   },
   {
     num: "05",
     corner: "🏹",
-    title: "Forever White & Red",
-    place: "Royal Nile Corniche",
-    time: "Forever Bound",
+    title: "الفرسان البيض للأبد",
+    place: "قصر النيل الملكي",
+    time: "عهد الوفاء",
     badge: "★ Royal",
     photo: "/moments-zamalek/05.jpg",
   },
   {
     num: "06",
     corner: "Z",
-    title: "Champions of Our Hearts",
-    place: "Cairo Opera Square",
-    time: "Moonlit Walk",
+    title: "أبطال قلوبنا دائماً",
+    place: "ميدان الأوبرا",
+    time: "ليلة بيضاء",
     badge: "★ Knights",
     photo: "/moments-zamalek/06.jpg",
   },
@@ -112,7 +107,7 @@ const ROTATIONS = [
 ];
 
 /* -------------------------------------------------------------------------- */
-/* Zamalek "Bow and Arrow" (القوس والسهم) Emblem Watermark SVG                */
+/* Zamalek "Bow and Arrow" (القوس والسهم) Emblem Watermark SVG (10% Opacity)   */
 /* -------------------------------------------------------------------------- */
 
 const ZamalekBowAndArrowWatermark: React.FC<{ className?: string }> = ({
@@ -137,7 +132,6 @@ const ZamalekBowAndArrowWatermark: React.FC<{ className?: string }> = ({
     <circle cx="100" cy="100" r="84" stroke={ZAMALEK_RED} strokeWidth="1.8" />
 
     {/* The Ancient Pharaonic Archer Drawing the Bow */}
-    {/* Archer's Head & Pharaonic Nemes Headdress */}
     <ellipse
       cx="78"
       cy="76"
@@ -163,7 +157,7 @@ const ZamalekBowAndArrowWatermark: React.FC<{ className?: string }> = ({
       fillOpacity="0.18"
     />
 
-    {/* Strong Forward Leg (Striding stance) */}
+    {/* Stance Legs */}
     <path
       d="M75 118 L60 148 L68 152 L84 122"
       stroke={ZAMALEK_RED}
@@ -171,8 +165,6 @@ const ZamalekBowAndArrowWatermark: React.FC<{ className?: string }> = ({
       strokeLinecap="round"
       strokeLinejoin="round"
     />
-
-    {/* Back Bracing Leg */}
     <path
       d="M86 118 L104 148 L114 146 L95 120"
       stroke={ZAMALEK_RED}
@@ -181,7 +173,7 @@ const ZamalekBowAndArrowWatermark: React.FC<{ className?: string }> = ({
       strokeLinejoin="round"
     />
 
-    {/* Left Arm Fully Extended Holding The Bow */}
+    {/* Extended Left Arm Holding Bow */}
     <path
       d="M84 90 L126 78 L142 74"
       stroke={ZAMALEK_RED}
@@ -189,7 +181,7 @@ const ZamalekBowAndArrowWatermark: React.FC<{ className?: string }> = ({
       strokeLinecap="round"
     />
 
-    {/* Right Arm Pulling Bowstring Back to Chin */}
+    {/* Right Arm Pulling Bowstring */}
     <path
       d="M74 92 L62 96 L74 80"
       stroke={ZAMALEK_RED}
@@ -238,18 +230,12 @@ const ZamalekBowAndArrowWatermark: React.FC<{ className?: string }> = ({
       strokeWidth="3.5"
       strokeLinecap="round"
     />
-    {/* Sharp Triangular Arrowhead */}
     <polygon
       points="168,68 156,62 159,74"
       fill={ZAMALEK_RED}
       stroke={ZAMALEK_RED}
       strokeWidth="1.5"
     />
-    {/* Arrow Feathers / Fletching */}
-    <line x1="68" y1="84" x2="62" y2="78" stroke={ZAMALEK_RED} strokeWidth="2.5" />
-    <line x1="72" y1="83" x2="66" y2="77" stroke={ZAMALEK_RED} strokeWidth="2.5" />
-    <line x1="68" y1="84" x2="64" y2="90" stroke={ZAMALEK_RED} strokeWidth="2.5" />
-    <line x1="72" y1="83" x2="68" y2="89" stroke={ZAMALEK_RED} strokeWidth="2.5" />
 
     {/* Foundation Year Accent: 1911 */}
     <text
@@ -337,7 +323,6 @@ const PhotoCard: React.FC<{ card: MomentCard; rotation: string }> = ({
     <div className="flex h-7 shrink-0 items-center justify-between px-2.5 bg-gradient-to-r from-white via-red-50/40 to-white border-b border-[#E3001B]/15">
       <div className="flex items-center gap-1.5 font-serif text-xs font-black text-[#E3001B]">
         <span>{card.corner}</span>
-        {/* Miniature Two Red Lines symbol */}
         <span className="flex gap-0.5 h-3">
           <span className="w-0.5 h-full bg-[#E3001B]" />
           <span className="w-0.5 h-full bg-[#E3001B]" />
@@ -543,7 +528,6 @@ export default function ZamalekThemeSection({
     const startTime = performance.now();
 
     if (inView) {
-      // Pause any preceding audio tracks
       document.querySelectorAll("audio").forEach((otherAudio) => {
         if (otherAudio !== audio && !otherAudio.paused) {
           otherAudio.pause();
@@ -611,17 +595,18 @@ export default function ZamalekThemeSection({
       id="section-5-zamalek"
       className="relative isolate flex h-[82vh] min-h-[640px] max-h-[820px] w-full flex-col overflow-hidden select-none bg-white"
     >
-      {/* Zamalek SC Anthem Soundtrack (Track: Zamalek Ya Hendasa) */}
+      {/* Zamalek SC Anthem Soundtrack (Track: ZAMALEK_AUDIO_SRC) */}
       <audio
         ref={audioRef}
-        src={ZAMALEK_SECTION_ASSETS.zamalekTrack}
+        src={ZAMALEK_AUDIO_SRC}
         loop
         preload="auto"
         className="hidden"
       />
 
       {/* -------------------------------------------------------------------- */}
-      {/* THE FAMOUS TWO RED LINES (الخطين الحمر) - Vertical Borders           */}
+      {/* THE FAMOUS TWO RED LINES (الخطين الحمر) - Vertical Stripes           */}
+      {/* Positioned aesthetically behind characters & framing cards           */}
       {/* -------------------------------------------------------------------- */}
 
       {/* Left Flank: Subtle Double Red Lines */}
@@ -644,10 +629,11 @@ export default function ZamalekThemeSection({
 
       {/* -------------------------------------------------------------------- */}
       {/* WATERMARK: ZAMALEK "BOW & ARROW" (القوس والسهم) In Exact Center      */}
+      {/* Large scale, 10% opacity behind the marquee                          */}
       {/* -------------------------------------------------------------------- */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute left-1/2 top-[52%] -translate-x-1/2 -translate-y-1/2 z-[4] opacity-[0.13] text-[#E3001B] transition-all duration-700"
+        className="pointer-events-none absolute left-1/2 top-[52%] -translate-x-1/2 -translate-y-1/2 z-[4] opacity-10 text-[#E3001B] transition-all duration-700"
       >
         <ZamalekBowAndArrowWatermark className="w-[380px] h-[380px] sm:w-[480px] sm:h-[480px] md:w-[560px] md:h-[560px] drop-shadow-sm" />
       </div>
@@ -690,7 +676,6 @@ export default function ZamalekThemeSection({
       {/* Centered Header with generous mb-24 bottom clearance */}
       <header className="relative z-30 px-6 pt-8 text-center md:pt-10 mb-20 md:mb-24 pb-10 md:pb-12">
         <span className="inline-flex items-center gap-2 rounded-full border border-[#E3001B]/35 bg-white px-4 py-1 text-xs font-bold text-[#E3001B] shadow-sm">
-          {/* Two Red Lines miniature badge */}
           <span className="flex gap-0.5 h-3">
             <span className="w-0.5 h-full bg-[#E3001B]" />
             <span className="w-0.5 h-full bg-[#E3001B]" />
@@ -733,7 +718,7 @@ export default function ZamalekThemeSection({
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={ZAMALEK_SECTION_ASSETS.groomImage}
+          src={ZAMALEK_GROOM_SRC}
           alt="Groom wearing White Zamalek Jersey"
           aria-hidden="true"
           className="-scale-x-100 h-full w-auto lg:max-w-[335px] lg:h-[335px] object-contain object-bottom drop-shadow-2xl"
@@ -748,7 +733,7 @@ export default function ZamalekThemeSection({
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={ZAMALEK_SECTION_ASSETS.brideImage}
+          src={ZAMALEK_BRIDE_SRC}
           alt="Bride wearing White Zamalek Jersey"
           aria-hidden="true"
           className="h-full w-auto lg:max-w-[335px] lg:h-[335px] object-contain object-bottom drop-shadow-2xl"
@@ -772,4 +757,3 @@ export default function ZamalekThemeSection({
     </section>
   );
 }
-
