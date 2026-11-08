@@ -714,14 +714,14 @@ export default function ZamalekThemeSection({
       {/* Left Character: Groom in White Zamalek Jersey (Mirrored Inward -scale-x-100) */}
       <motion.div
         style={{ y: heroY, opacity: heroOpacity }}
-        className="pointer-events-none absolute bottom-0 left-0 z-50 will-change-transform"
+        className="pointer-events-none absolute inset-0 z-20 will-change-transform"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={ZAMALEK_GROOM_SRC}
           alt="Groom wearing White Zamalek Jersey"
           aria-hidden="true"
-          className="absolute bottom-0 left-0 z-50 h-[80vh] lg:h-[335px] lg:max-w-[335px] w-auto object-contain -scale-x-100 drop-shadow-2xl"
+          className="pointer-events-none absolute bottom-0 left-0 z-20 h-[95%] w-auto max-w-[42vw] min-w-[300px] object-contain object-bottom -scale-x-100 drop-shadow-2xl"
           style={{ transform: "scaleX(-1)" }}
         />
       </motion.div>
@@ -729,14 +729,14 @@ export default function ZamalekThemeSection({
       {/* Right Character: Bride in White Zamalek Jersey (Facing Inward toward Groom) */}
       <motion.div
         style={{ y: heroY, opacity: heroOpacity }}
-        className="pointer-events-none absolute bottom-0 right-0 z-50 will-change-transform"
+        className="pointer-events-none absolute inset-0 z-20 will-change-transform"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={ZAMALEK_BRIDE_SRC}
           alt="Bride wearing White Zamalek Jersey"
           aria-hidden="true"
-          className="absolute bottom-0 right-0 z-50 h-[80vh] lg:h-[335px] lg:max-w-[335px] w-auto object-contain drop-shadow-2xl"
+          className="pointer-events-none absolute bottom-0 right-0 z-20 h-[95%] w-auto max-w-[42vw] min-w-[300px] object-contain object-bottom drop-shadow-2xl"
         />
       </motion.div>
 
