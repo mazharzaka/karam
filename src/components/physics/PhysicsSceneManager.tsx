@@ -1,22 +1,24 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Scene1HeroSpotlight } from "./Scene1HeroSpotlight";
-import { Scene2DraggableFilmstrip } from "./Scene2DraggableFilmstrip";
+import TimelessBondSection from "./TimelessBondSection";
+import SaidiHeritageSection from "./SaidiHeritageSection";
 import { Scene3PhysicsDesk } from "./Scene3PhysicsDesk";
 import { Scene4ZTunnel } from "./Scene4ZTunnel";
 import { Scene5InfiniteCanvas } from "./Scene5InfiniteCanvas";
 import { FloatingPetals } from "@/components/layout/FloatingPetals";
 import { Volume2, VolumeX, Maximize2, Minimize2, Heart } from "lucide-react";
-import { romanticAudio } from "@/utils/audioSynthesizer";
+import { sceneAudio } from "@/utils/sceneAudioController";
 
 const SCENE_TITLES = [
-  "01 Spotlight (1-2)",
-  "02 Filmstrip (3-20)",
-  "03 Physics Desk (21-50)",
-  "04 3D Tunnel (51-70)",
-  "05 Infinite Canvas (71-80)",
+  "01 Spotlight",
+  "02 Egyptian Heritage",
+  "03 Saidi Heritage",
+  "04 Physics Desk",
+  "05 3D Tunnel",
+  "06 Infinite Canvas",
 ];
 
 export const PhysicsSceneManager: React.FC = () => {
@@ -24,12 +26,114 @@ export const PhysicsSceneManager: React.FC = () => {
   const [isPlayingMusic, setIsPlayingMusic] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
 
-  const toggleMusic = () => {
-    if (romanticAudio) {
-      const active = romanticAudio.toggle();
-      setIsPlayingMusic(active);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const section1Ref = useRef<HTMLDivElement>(null);
+  const section2Ref = useRef<HTMLDivElement>(null);
+  const section3Ref = useRef<HTMLDivElement>(null);
+
+  const scrollToSection1 = useCallback(() => {
+    setCurrentScene(0);
+    if (section1Ref.current) {
+      section1Ref.current.scrollIntoView({ behavior: "smooth" });
+    } else if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, []);
+
+  const scrollToSection2 = useCallback(() => {
+    setCurrentScene(1);
+    if (section2Ref.current) {
+      section2Ref.current.scrollIntoView({ behavior: "smooth" });
+    } else if (scrollContainerRef.current) {
+      const top = section2Ref.current
+        ? (section2Ref.current as HTMLElement).offsetTop
+        : scrollContainerRef.current.clientHeight;
+      scrollContainerRef.current.scrollTo({ top, behavior: "smooth" });
+    }
+  }, []);
+
+  const scrollToSection3 = useCallback(() => {
+    setCurrentScene(2);
+    if (section3Ref.current) {
+      section3Ref.current.scrollIntoView({ behavior: "smooth" });
+    } else if (scrollContainerRef.current) {
+      const top = section3Ref.current
+        ? (section3Ref.current as HTMLElement).offsetTop
+        : scrollContainerRef.current.clientHeight * 2;
+      scrollContainerRef.current.scrollTo({ top, behavior: "smooth" });
+    }
+  }, []);
+
+  const handleNavClick = (idx: number) => {
+    if (idx === 0) {
+      if (currentScene > 2) {
+        setCurrentScene(0);
+        setTimeout(() => scrollToSection1(), 60);
+      } else {
+        scrollToSection1();
+      }
+    } else if (idx === 1) {
+      if (currentScene > 2) {
+        setCurrentScene(1);
+        setTimeout(() => scrollToSection2(), 60);
+      } else {
+        scrollToSection2();
+      }
+    } else if (idx === 2) {
+      if (currentScene > 2) {
+        setCurrentScene(2);
+        setTimeout(() => scrollToSection3(), 60);
+      } else {
+        scrollToSection3();
+      }
+    } else {
+      setCurrentScene(idx);
     }
   };
+
+  // Organic scroll listener to automatically synchronize HUD and dynamic audio
+  // when scrolling smoothly between Section 1, Section 2, and Section 3
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container || currentScene > 2) return;
+
+    const handleScroll = () => {
+      const scrollPos = container.scrollTop;
+      const height = container.clientHeight;
+      if (scrollPos > height * 1.35) {
+        if (currentScene !== 2) {
+          setCurrentScene(2);
+        }
+      } else if (scrollPos > height * 0.35) {
+        if (currentScene !== 1) {
+          setCurrentScene(1);
+        }
+      } else {
+        if (currentScene !== 0) {
+          setCurrentScene(0);
+        }
+      }
+    };
+
+    container.addEventListener("scroll", handleScroll, { passive: true });
+    return () => container.removeEventListener("scroll", handleScroll);
+  }, [currentScene]);
+
+  const toggleMusic = () => {
+    const nextState = !isPlayingMusic;
+    setIsPlayingMusic(nextState);
+    if (sceneAudio) {
+      sceneAudio.toggleMute(nextState);
+    }
+  };
+
+  // Dynamic Scene Audio Crossfade Controller:
+  // Smoothly crossfades between Scene 1 (Arabic Track) and Scene 2 (Pharaonic Track)
+  useEffect(() => {
+    if (sceneAudio) {
+      sceneAudio.transitionToScene(currentScene, isPlayingMusic);
+    }
+  }, [currentScene, isPlayingMusic]);
 
   const toggleFullscreen = () => {
     if (typeof document === "undefined") return;
@@ -45,12 +149,24 @@ export const PhysicsSceneManager: React.FC = () => {
   };
 
   const nextScene = useCallback(() => {
-    setCurrentScene((prev) => Math.min(SCENE_TITLES.length - 1, prev + 1));
-  }, []);
+    if (currentScene === 0) {
+      scrollToSection2();
+    } else if (currentScene === 1) {
+      scrollToSection3();
+    } else {
+      setCurrentScene((prev) => Math.min(SCENE_TITLES.length - 1, prev + 1));
+    }
+  }, [currentScene, scrollToSection2, scrollToSection3]);
 
   const prevScene = useCallback(() => {
-    setCurrentScene((prev) => Math.max(0, prev - 1));
-  }, []);
+    if (currentScene === 2) {
+      scrollToSection2();
+    } else if (currentScene === 1) {
+      scrollToSection1();
+    } else {
+      setCurrentScene((prev) => Math.max(0, prev - 1));
+    }
+  }, [currentScene, scrollToSection1, scrollToSection2]);
 
   // Global keydown listeners for scene switching
   useEffect(() => {
@@ -78,7 +194,7 @@ export const PhysicsSceneManager: React.FC = () => {
       <header className="fixed top-0 left-0 right-0 z-50 h-16 px-6 lg:px-12 flex items-center justify-between pointer-events-auto bg-black/35 backdrop-blur-xl border-b border-romantic-roseGold/25">
         {/* Monogram Brand */}
         <div
-          onClick={() => setCurrentScene(0)}
+          onClick={() => handleNavClick(0)}
           className="flex items-center gap-2.5 cursor-pointer group"
         >
           <div className="w-8 h-8 rounded-full bg-white/15 backdrop-blur-md border border-romantic-roseGold/40 shadow-sm flex items-center justify-center group-hover:scale-105 transition-transform">
@@ -101,7 +217,7 @@ export const PhysicsSceneManager: React.FC = () => {
             return (
               <button
                 key={idx}
-                onClick={() => setCurrentScene(idx)}
+                onClick={() => handleNavClick(idx)}
                 className={`px-3 py-1 rounded-full text-xs font-semibold transition-all duration-300 cursor-pointer ${
                   isActive
                     ? "bg-gradient-to-r from-romantic-roseGold to-romantic-roseGoldLight text-romantic-charcoal shadow-md ring-1 ring-white/30"
@@ -161,38 +277,57 @@ export const PhysicsSceneManager: React.FC = () => {
         </div>
       </header>
 
-      {/* ACTIVE STAGE VIEWPORT (Crossfade via AnimatePresence) */}
-      <main className="relative w-full h-full pt-16 flex items-center justify-center">
+      {/* ACTIVE STAGE VIEWPORT */}
+      <main className="relative w-full h-full pt-16 flex items-center justify-center overflow-hidden">
         <AnimatePresence mode="wait">
-          {currentScene === 0 && (
+          {currentScene <= 2 && (
             <motion.div
-              key="scene-1-spotlight"
+              key="scene-1-2-3-scroll-stream"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0, scale: 0.96 }}
-              transition={{ duration: 0.6 }}
-              className="w-full h-full"
+              transition={{ duration: 0.5 }}
+              ref={scrollContainerRef}
+              className="w-full h-full overflow-y-auto overflow-x-hidden scroll-smooth"
             >
-              <Scene1HeroSpotlight onNext={nextScene} />
+              {/* Scene 1: Hero Spotlight */}
+              <div
+                ref={section1Ref}
+                id="scene-1-spotlight"
+                className="w-full min-h-[calc(100vh-4rem)] flex flex-col justify-between"
+              >
+                <Scene1HeroSpotlight onNext={scrollToSection2} />
+              </div>
+
+              {/* Scene 2: Timeless Bond (Egyptian Heritage) */}
+              <div
+                ref={section2Ref}
+                id="scene-2-timeless"
+                className="w-full min-h-[calc(100vh-4rem)] flex flex-col justify-between"
+              >
+                <TimelessBondSection
+                  onNext={scrollToSection3}
+                  scrollContainerRef={scrollContainerRef}
+                />
+              </div>
+
+              {/* Scene 3: Saidi Heritage (أصالة وجذور) */}
+              <div
+                ref={section3Ref}
+                id="scene-3-saidi"
+                className="w-full min-h-[calc(100vh-4rem)] flex flex-col justify-between"
+              >
+                <SaidiHeritageSection
+                  onNext={() => setCurrentScene(3)}
+                  scrollContainerRef={scrollContainerRef}
+                />
+              </div>
             </motion.div>
           )}
 
-          {currentScene === 1 && (
+          {currentScene === 3 && (
             <motion.div
-              key="scene-2-filmstrip"
-              initial={{ opacity: 0, x: 80 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -80 }}
-              transition={{ duration: 0.6 }}
-              className="w-full h-full"
-            >
-              <Scene2DraggableFilmstrip onNext={nextScene} />
-            </motion.div>
-          )}
-
-          {currentScene === 2 && (
-            <motion.div
-              key="scene-3-desk"
+              key="scene-4-desk"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 1.05 }}
@@ -203,9 +338,9 @@ export const PhysicsSceneManager: React.FC = () => {
             </motion.div>
           )}
 
-          {currentScene === 3 && (
+          {currentScene === 4 && (
             <motion.div
-              key="scene-4-tunnel"
+              key="scene-5-tunnel"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -216,16 +351,16 @@ export const PhysicsSceneManager: React.FC = () => {
             </motion.div>
           )}
 
-          {currentScene === 4 && (
+          {currentScene === 5 && (
             <motion.div
-              key="scene-5-canvas"
+              key="scene-6-canvas"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.6 }}
               className="w-full h-full"
             >
-              <Scene5InfiniteCanvas onRestart={() => setCurrentScene(0)} />
+              <Scene5InfiniteCanvas onRestart={() => handleNavClick(0)} />
             </motion.div>
           )}
         </AnimatePresence>
