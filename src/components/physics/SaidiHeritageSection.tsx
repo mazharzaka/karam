@@ -16,6 +16,7 @@ import {
   useScroll,
   useTransform,
 } from "framer-motion";
+import { useGlobalAudio } from "@/utils/globalAudioCoordinator";
 
 /* -------------------------------------------------------------------------- */
 /* MEDIA PLACEHOLDERS (Easily Replaceable)                                     */
@@ -425,7 +426,6 @@ export default function SaidiHeritageSection({
 
   // Dedicated Audio reference for Section 3 Saidi track
   const audioRef = useRef<HTMLAudioElement>(null);
-  const fadeAnimationRef = useRef<number | null>(null);
 
   // Marquee controls & state
   const controls = useAnimation();
@@ -438,7 +438,8 @@ export default function SaidiHeritageSection({
   const pausedRef = useRef<boolean>(false);
 
   const [isPaused, setIsPaused] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
+  const { isEnabled: isGlobalAudioEnabled, toggleAudio, playTrack, stopTrack } = useGlobalAudio();
+  const isMuted = !isGlobalAudioEnabled;
 
   // Sync posRef with the latest motion value
   useMotionValueEvent(x, "change", (latest) => {
@@ -548,11 +549,7 @@ export default function SaidiHeritageSection({
 
   /* ---- Audio Mute Handler ---- */
   const toggleMute = () => {
-    const nextMuted = !isMuted;
-    setIsMuted(nextMuted);
-    if (audioRef.current) {
-      audioRef.current.muted = nextMuted;
-    }
+    toggleAudio();
   };
 
   /* ---- Strict Saidi Audio Crossfade & Playback Controller ---- */
@@ -560,76 +557,12 @@ export default function SaidiHeritageSection({
     const audio = audioRef.current;
     if (!audio) return;
 
-    if (fadeAnimationRef.current) {
-      cancelAnimationFrame(fadeAnimationRef.current);
-      fadeAnimationRef.current = null;
-    }
-
-    const DURATION = 1200; // 1.2 seconds smooth audio crossfade
-    const startTime = performance.now();
-
-    if (inView) {
-      // 1. Immediately pause any other audio tracks (e.g., Section 2 Pharaonic audio)
-      document.querySelectorAll("audio").forEach((otherAudio) => {
-        if (otherAudio !== audio && !otherAudio.paused) {
-          otherAudio.pause();
-        }
-      });
-
-      // 2. Play Section 3 Saidi track with smooth volume fade-in
-      const startVol = audio.volume;
-      const playPromise = audio.play();
-      if (playPromise !== undefined) {
-        playPromise.catch(() => {
-          const unlock = () => {
-            audio.play().catch(() => {});
-          };
-          window.addEventListener("pointerdown", unlock, { once: true });
-        });
-      }
-
-      const animateIn = (currentTime: number) => {
-        const elapsed = currentTime - startTime;
-        const progress = Math.min(1, elapsed / DURATION);
-        audio.volume = Math.max(0, Math.min(1, startVol + (1 - startVol) * progress));
-
-        if (progress < 1) {
-          fadeAnimationRef.current = requestAnimationFrame(animateIn);
-        } else {
-          audio.volume = 1;
-          fadeAnimationRef.current = null;
-        }
-      };
-
-      fadeAnimationRef.current = requestAnimationFrame(animateIn);
+    if (inView && isGlobalAudioEnabled) {
+      playTrack(audio, 0.85);
     } else {
-      // Fade out Saidi track when leaving view, then pause
-      const startVol = audio.volume;
-
-      const animateOut = (currentTime: number) => {
-        const elapsed = currentTime - startTime;
-        const progress = Math.min(1, elapsed / DURATION);
-        audio.volume = Math.max(0, Math.min(1, startVol * (1 - progress)));
-
-        if (progress < 1) {
-          fadeAnimationRef.current = requestAnimationFrame(animateOut);
-        } else {
-          audio.pause();
-          audio.volume = 0;
-          fadeAnimationRef.current = null;
-        }
-      };
-
-      fadeAnimationRef.current = requestAnimationFrame(animateOut);
+      stopTrack(audio, 800);
     }
-
-    return () => {
-      if (fadeAnimationRef.current) {
-        cancelAnimationFrame(fadeAnimationRef.current);
-        fadeAnimationRef.current = null;
-      }
-    };
-  }, [inView]);
+  }, [inView, isGlobalAudioEnabled, playTrack, stopTrack]);
 
   const loopedCards = [...CARDS, ...CARDS];
 

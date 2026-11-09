@@ -16,6 +16,7 @@ import { KeyboardShortcutsPill } from "./KeyboardShortcutsPill";
 import { FloatingPetals } from "@/components/layout/FloatingPetals";
 import { Volume2, VolumeX, Maximize2, Minimize2, Heart } from "lucide-react";
 import { sceneAudio } from "@/utils/sceneAudioController";
+import { useGlobalAudio } from "@/utils/globalAudioCoordinator";
 
 const SCENE_TITLES = [
   "01 Spotlight",
@@ -32,8 +33,8 @@ const SCENE_TITLES = [
 
 export const PhysicsSceneManager: React.FC = () => {
   const [currentScene, setCurrentScene] = useState<number>(0);
-  const [isPlayingMusic, setIsPlayingMusic] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+  const { isEnabled: isPlayingMusic, toggleAudio: toggleMusic } = useGlobalAudio();
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const section1Ref = useRef<HTMLDivElement>(null);
@@ -104,15 +105,7 @@ export const PhysicsSceneManager: React.FC = () => {
     return () => container.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const toggleMusic = () => {
-    const nextState = !isPlayingMusic;
-    setIsPlayingMusic(nextState);
-    if (sceneAudio) {
-      sceneAudio.toggleMute(nextState);
-    }
-  };
-
-  // Dynamic Scene Audio Crossfade Controller
+  // Dynamic Scene Audio Crossfade Controller (for Web Audio synthesizer scenes)
   useEffect(() => {
     if (sceneAudio) {
       sceneAudio.transitionToScene(currentScene, isPlayingMusic);
@@ -132,29 +125,70 @@ export const PhysicsSceneManager: React.FC = () => {
     }
   };
 
-  const nextScene = useCallback(() => {
-    scrollToSection(Math.min(SCENE_TITLES.length - 1, currentScene + 1));
-  }, [currentScene, scrollToSection]);
-
-  const prevScene = useCallback(() => {
-    scrollToSection(Math.max(0, currentScene - 1));
-  }, [currentScene, scrollToSection]);
-
-  // Global keydown listeners for scene switching
+  // Global keydown listeners for smooth keyboard scrolling & accessibility
   useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    // Focus container on mount so keyboard navigation is active immediately
+    container.focus();
+
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "PageDown") {
+      // Do not intercept keystrokes if the user is typing in form fields
+      const target = e.target as HTMLElement | null;
+      if (target) {
+        const tagName = target.tagName.toLowerCase();
+        if (
+          tagName === "input" ||
+          tagName === "textarea" ||
+          tagName === "select" ||
+          target.isContentEditable
+        ) {
+          return;
+        }
+      }
+
+      // 1. Arrow keys: smooth incremental scrolling
+      if (e.key === "ArrowDown") {
         e.preventDefault();
-        nextScene();
+        container.scrollBy({ top: 180, behavior: "smooth" });
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        container.scrollBy({ top: -180, behavior: "smooth" });
+      }
+      // 2. PageDown / PageUp: smooth large viewport jumps (~85% viewport)
+      else if (e.key === "PageDown") {
+        e.preventDefault();
+        const scrollAmount = Math.max(400, container.clientHeight * 0.85);
+        container.scrollBy({ top: scrollAmount, behavior: "smooth" });
       } else if (e.key === "PageUp") {
         e.preventDefault();
-        prevScene();
+        const scrollAmount = Math.max(400, container.clientHeight * 0.85);
+        container.scrollBy({ top: -scrollAmount, behavior: "smooth" });
+      }
+      // 3. Space / Shift+Space: smooth scroll down / up
+      else if (e.key === " " || e.key === "Spacebar") {
+        // Do not intercept if actively pressing a button
+        if (target?.tagName.toLowerCase() !== "button") {
+          e.preventDefault();
+          const scrollAmount = Math.max(400, container.clientHeight * 0.85);
+          const direction = e.shiftKey ? -1 : 1;
+          container.scrollBy({ top: scrollAmount * direction, behavior: "smooth" });
+        }
+      }
+      // 4. Home / End: smooth jump to beginning or end
+      else if (e.key === "Home") {
+        e.preventDefault();
+        container.scrollTo({ top: 0, behavior: "smooth" });
+      } else if (e.key === "End") {
+        e.preventDefault();
+        container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [nextScene, prevScene]);
+  }, []);
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-[#24181B] text-[#FDECEF] flex flex-col justify-between select-none">
@@ -252,7 +286,8 @@ export const PhysicsSceneManager: React.FC = () => {
       <main className="relative w-full h-full pt-16 flex items-center justify-center overflow-hidden">
         <div
           ref={scrollContainerRef}
-          className="w-full h-full overflow-y-auto overflow-x-hidden scroll-smooth"
+          tabIndex={0}
+          className="w-full h-full overflow-y-auto overflow-x-hidden scroll-smooth outline-none focus:outline-none"
         >
           {/* Section 1: Hero Spotlight */}
           <div

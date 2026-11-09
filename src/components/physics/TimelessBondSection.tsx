@@ -15,6 +15,7 @@ import {
   useScroll,
   useTransform,
 } from "framer-motion";
+import { useGlobalAudio } from "@/utils/globalAudioCoordinator";
 
 /* -------------------------------------------------------------------------- */
 /* Config                                                                      */
@@ -218,7 +219,8 @@ export default function TimelessBondSection({
 
   const [loopDistance, setLoopDistance] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const [isAudioMuted, setIsAudioMuted] = useState(false);
+  const { isEnabled: isGlobalAudioEnabled, toggleAudio: toggleGlobalAudio, playTrack, stopTrack } = useGlobalAudio();
+  const isAudioMuted = !isGlobalAudioEnabled;
 
   const pausedRef = useRef(false);
   const runIdRef = useRef(0);
@@ -317,41 +319,20 @@ export default function TimelessBondSection({
   };
 
   const toggleAudio = () => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    if (audio.paused || isAudioMuted) {
-      audio
-        .play()
-        .then(() => setIsAudioMuted(false))
-        .catch(() => {});
-    } else {
-      audio.pause();
-      setIsAudioMuted(true);
-    }
+    toggleGlobalAudio();
   };
 
-  /* ---- Audio: play while the section is in view ---- */
+  /* ---- Audio: play while the section is in view with smooth crossfade ---- */
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
-    if (!isInView || isAudioMuted) {
-      audio.pause();
-      return;
+    if (isInView && isGlobalAudioEnabled) {
+      playTrack(audio, 0.85);
+    } else {
+      stopTrack(audio, 800);
     }
-
-    let unlock: (() => void) | null = null;
-    audio.play().catch(() => {
-      unlock = () => {
-        if (!isAudioMuted) audio.play().catch(() => {});
-      };
-      window.addEventListener("pointerdown", unlock, { once: true });
-    });
-
-    return () => {
-      if (unlock) window.removeEventListener("pointerdown", unlock);
-    };
-  }, [isInView, isAudioMuted]);
+  }, [isInView, isGlobalAudioEnabled, playTrack, stopTrack]);
 
   const loopedCards = [...CARDS, ...CARDS];
 

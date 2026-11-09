@@ -16,6 +16,7 @@ import {
   useScroll,
   useTransform,
 } from "framer-motion";
+import { useGlobalAudio } from "@/utils/globalAudioCoordinator";
 
 /* -------------------------------------------------------------------------- */
 /* MEDIA PLACEHOLDERS (CRITICAL FOR USER REPLACEMENT)                         */
@@ -388,7 +389,6 @@ export default function ZamalekThemeSection({
   const sectionRef = useRef<HTMLElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
-  const fadeAnimationRef = useRef<number | null>(null);
 
   // Marquee controls & state
   const controls = useAnimation();
@@ -401,7 +401,8 @@ export default function ZamalekThemeSection({
   const pausedRef = useRef<boolean>(false);
 
   const [isPaused, setIsPaused] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
+  const { isEnabled: isGlobalAudioEnabled, toggleAudio, playTrack, stopTrack } = useGlobalAudio();
+  const isMuted = !isGlobalAudioEnabled;
 
   useMotionValueEvent(x, "change", (latest) => {
     posRef.current = latest;
@@ -507,11 +508,7 @@ export default function ZamalekThemeSection({
 
   /* ---- Audio Mute Handler ---- */
   const toggleMute = () => {
-    const nextMuted = !isMuted;
-    setIsMuted(nextMuted);
-    if (audioRef.current) {
-      audioRef.current.muted = nextMuted;
-    }
+    toggleAudio();
   };
 
   /* ---- Audio Playback & Auto Crossfade Controller ---- */
@@ -519,73 +516,12 @@ export default function ZamalekThemeSection({
     const audio = audioRef.current;
     if (!audio) return;
 
-    if (fadeAnimationRef.current) {
-      cancelAnimationFrame(fadeAnimationRef.current);
-      fadeAnimationRef.current = null;
-    }
-
-    const DURATION = 1400; // 1.4s smooth crossfade
-    const startTime = performance.now();
-
-    if (inView) {
-      document.querySelectorAll("audio").forEach((otherAudio) => {
-        if (otherAudio !== audio && !otherAudio.paused) {
-          otherAudio.pause();
-        }
-      });
-
-      const startVol = audio.volume;
-      const playPromise = audio.play();
-      if (playPromise !== undefined) {
-        playPromise.catch(() => {
-          const unlock = () => {
-            audio.play().catch(() => {});
-          };
-          window.addEventListener("pointerdown", unlock, { once: true });
-        });
-      }
-
-      const animateIn = (currentTime: number) => {
-        const elapsed = currentTime - startTime;
-        const progress = Math.min(1, elapsed / DURATION);
-        audio.volume = Math.max(0, Math.min(1, startVol + (1 - startVol) * progress));
-
-        if (progress < 1) {
-          fadeAnimationRef.current = requestAnimationFrame(animateIn);
-        } else {
-          audio.volume = 1;
-          fadeAnimationRef.current = null;
-        }
-      };
-
-      fadeAnimationRef.current = requestAnimationFrame(animateIn);
+    if (inView && isGlobalAudioEnabled) {
+      playTrack(audio, 0.85);
     } else {
-      const startVol = audio.volume;
-
-      const animateOut = (currentTime: number) => {
-        const elapsed = currentTime - startTime;
-        const progress = Math.min(1, elapsed / DURATION);
-        audio.volume = Math.max(0, Math.min(1, startVol * (1 - progress)));
-
-        if (progress < 1) {
-          fadeAnimationRef.current = requestAnimationFrame(animateOut);
-        } else {
-          audio.pause();
-          audio.volume = 0;
-          fadeAnimationRef.current = null;
-        }
-      };
-
-      fadeAnimationRef.current = requestAnimationFrame(animateOut);
+      stopTrack(audio, 800);
     }
-
-    return () => {
-      if (fadeAnimationRef.current) {
-        cancelAnimationFrame(fadeAnimationRef.current);
-        fadeAnimationRef.current = null;
-      }
-    };
-  }, [inView]);
+  }, [inView, isGlobalAudioEnabled, playTrack, stopTrack]);
 
   const loopedCards = [...CARDS, ...CARDS];
 

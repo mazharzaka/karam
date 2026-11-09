@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
+import { useGlobalAudio } from "@/utils/globalAudioCoordinator";
 
 /* -------------------------------------------------------------------------- */
 /* 1. MEDIA CONSTANTS (AT THE TOP FOR EASY REPLACEMENT)                       */
@@ -57,7 +58,8 @@ export default function WeddingRaceSection() {
 
   const [groomKartError, setGroomKartError] = useState<boolean>(false);
   const [brideKartError, setBrideKartError] = useState<boolean>(false);
-  const [isAudioMuted, setIsAudioMuted] = useState<boolean>(false);
+  const { isEnabled: isGlobalAudioEnabled, toggleAudio, playTrack, stopTrack } = useGlobalAudio();
+  const isAudioMuted = !isGlobalAudioEnabled;
   const [prefersReducedMotion, setPrefersReducedMotion] = useState<boolean>(false);
 
   /* Punishment Wheel States */
@@ -105,19 +107,18 @@ export default function WeddingRaceSection() {
     return () => mediaQuery.removeEventListener("change", handler);
   }, []);
 
-  // Audio playback during race
+  // Audio playback during race with global coordinator
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
-    if (isPlaying && !isAudioMuted) {
+    if (isPlaying && isGlobalAudioEnabled) {
       audio.currentTime = 0;
-      audio.volume = 0.55;
-      audio.play().catch(() => {});
+      playTrack(audio, 0.55);
     } else {
-      audio.pause();
+      stopTrack(audio, 500);
     }
-  }, [isPlaying, isAudioMuted]);
+  }, [isPlaying, isGlobalAudioEnabled, playTrack, stopTrack]);
 
   // Timer interval: 30-second countdown every 1000ms while isPlaying is true
   useEffect(() => {
@@ -384,7 +385,7 @@ export default function WeddingRaceSection() {
                   </span>
                   <button
                     type="button"
-                    onClick={() => setIsAudioMuted((prev) => !prev)}
+                    onClick={() => toggleAudio()}
                     className="text-xs p-1 rounded-full hover:bg-black/5 cursor-pointer"
                     title={isAudioMuted ? "تشغيل الموسيقى" : "كتم الموسيقى"}
                     aria-label={isAudioMuted ? "تشغيل الموسيقى" : "كتم الموسيقى"}

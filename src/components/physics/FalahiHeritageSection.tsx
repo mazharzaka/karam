@@ -14,6 +14,7 @@ import {
   useScroll,
   useTransform,
 } from "framer-motion";
+import { useGlobalAudio } from "@/utils/globalAudioCoordinator";
 
 /* -------------------------------------------------------------------------- */
 /* 1. MEDIA CONSTANTS (Hardcoded with Provided Assets)                         */
@@ -412,11 +413,11 @@ export default function FalahiHeritageSection({
   const sectionRef = useRef<HTMLElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const fadeAnimationRef = useRef<number | null>(null);
 
-  const [isMuted, setIsMuted] = useState<boolean>(false);
   const [isPaused, setIsPaused] = useState<boolean>(false);
   const [trackWidth, setTrackWidth] = useState<number>(0);
+  const { isEnabled: isGlobalAudioEnabled, toggleAudio, playTrack, stopTrack } = useGlobalAudio();
+  const isMuted = !isGlobalAudioEnabled;
 
   // Marquee Motion Value
   const x = useMotionValue(0);
@@ -488,87 +489,15 @@ export default function FalahiHeritageSection({
     const audio = audioRef.current;
     if (!audio) return;
 
-    if (fadeAnimationRef.current) {
-      cancelAnimationFrame(fadeAnimationRef.current);
-      fadeAnimationRef.current = null;
-    }
-
-    const DURATION = 1200; // 1.2s smooth crossfade
-    const startTime = performance.now();
-
-    if (inView && !isMuted) {
-      // 1. Pause any other audio on the page (Section 4 Cinema, Section 3 Saidi, etc.)
-      document.querySelectorAll("audio").forEach((otherAudio) => {
-        if (otherAudio !== audio && !otherAudio.paused) {
-          otherAudio.pause();
-        }
-      });
-
-      const startVol = audio.volume;
-      const playPromise = audio.play();
-      if (playPromise !== undefined) {
-        playPromise.catch(() => {
-          const unlock = () => {
-            audio.play().catch(() => {});
-          };
-          window.addEventListener("pointerdown", unlock, { once: true });
-        });
-      }
-
-      // Smooth volume fade-in
-      const animateIn = (currentTime: number) => {
-        const elapsed = currentTime - startTime;
-        const progress = Math.min(1, elapsed / DURATION);
-        audio.volume = Math.max(0, Math.min(1, startVol + (0.85 - startVol) * progress));
-
-        if (progress < 1) {
-          fadeAnimationRef.current = requestAnimationFrame(animateIn);
-        } else {
-          audio.volume = 0.85;
-          fadeAnimationRef.current = null;
-        }
-      };
-
-      fadeAnimationRef.current = requestAnimationFrame(animateIn);
+    if (inView && isGlobalAudioEnabled) {
+      playTrack(audio, 0.85);
     } else {
-      // Smooth volume fade-out and pause when out of view
-      const startVol = audio.volume;
-
-      const animateOut = (currentTime: number) => {
-        const elapsed = currentTime - startTime;
-        const progress = Math.min(1, elapsed / DURATION);
-        audio.volume = Math.max(0, Math.min(1, startVol * (1 - progress)));
-
-        if (progress < 1) {
-          fadeAnimationRef.current = requestAnimationFrame(animateOut);
-        } else {
-          audio.pause();
-          audio.volume = 0;
-          fadeAnimationRef.current = null;
-        }
-      };
-
-      fadeAnimationRef.current = requestAnimationFrame(animateOut);
+      stopTrack(audio, 800);
     }
-
-    return () => {
-      if (fadeAnimationRef.current) {
-        cancelAnimationFrame(fadeAnimationRef.current);
-      }
-    };
-  }, [inView, isMuted]);
+  }, [inView, isGlobalAudioEnabled, playTrack, stopTrack]);
 
   const toggleMute = () => {
-    const nextMuted = !isMuted;
-    setIsMuted(nextMuted);
-    if (audioRef.current) {
-      audioRef.current.muted = nextMuted;
-      if (nextMuted) {
-        audioRef.current.pause();
-      } else if (inView) {
-        audioRef.current.play().catch(() => {});
-      }
-    }
+    toggleAudio();
   };
 
   const togglePause = () => {

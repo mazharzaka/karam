@@ -191,8 +191,8 @@ class SceneAudioController {
     const fadeDuration = 1.6; // 1.6s cinematic smooth crossfade
 
     try {
-      if (sceneIndex === 1 || sceneIndex === 2 || sceneIndex === 3) {
-        // TRANSITION TO SCENE 2 (Pharaonic), SCENE 3 (Saidi), or SCENE 4 (Golden Age Cinema)
+      if (sceneIndex >= 1 && sceneIndex <= 6) {
+        // TRANSITION TO SCENES 2 through 7 (Pharaonic, Saidi, Cinema, Falahi, Zamalek, Race)
         // Real MP3 audio tracks are handled directly by their respective section components
         this.gainA.gain.cancelScheduledValues(now);
         this.gainB.gain.cancelScheduledValues(now);

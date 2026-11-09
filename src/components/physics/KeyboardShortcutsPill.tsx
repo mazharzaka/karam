@@ -16,15 +16,15 @@ export const KeyboardShortcutsPill: React.FC = () => {
               <span>Cinema Mode</span>
             </div>
             <div className="flex items-center justify-between gap-4 text-stone-300">
-              <span>Next Scene / Memory:</span>
+              <span>Scroll Down:</span>
               <kbd className="px-1.5 py-0.5 rounded bg-white/15 font-mono text-[10px] text-white">
-                &rarr; / &darr; / Space
+                &darr; / Space / PgDn
               </kbd>
             </div>
             <div className="flex items-center justify-between gap-4 text-stone-300">
-              <span>Previous:</span>
+              <span>Scroll Up:</span>
               <kbd className="px-1.5 py-0.5 rounded bg-white/15 font-mono text-[10px] text-white">
-                &larr; / &uarr;
+                &uarr; / Shift+Space / PgUp
               </kbd>
             </div>
             <div className="flex items-center justify-between gap-4 text-stone-300">
