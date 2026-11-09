@@ -18,6 +18,7 @@ import {
   differenceInSeconds,
   intervalToDuration,
 } from "date-fns";
+import { useWeddingConfig } from "@/context/WeddingConfigContext";
 
 type TimeFormatMode = "hms" | "days" | "years" | "detailed";
 
@@ -39,6 +40,9 @@ export const Scene1HeroSpotlight: React.FC<Scene1HeroSpotlightProps> = ({
   onNext,
   startDate = "2021-06-12T00:00:00",
 }) => {
+  const { config } = useWeddingConfig();
+  const effectiveStartDate = config?.weddingDate || config?.engagementDate || startDate;
+
   const [mounted, setMounted] = useState<boolean>(false);
   const [currentTime, setCurrentTime] = useState<Date>(() => new Date());
   const [formatMode, setFormatMode] = useState<TimeFormatMode>("hms");
@@ -48,7 +52,7 @@ export const Scene1HeroSpotlight: React.FC<Scene1HeroSpotlightProps> = ({
     y: typeof window !== "undefined" ? window.innerHeight / 2 : 400,
   });
 
-  const parsedStartDate = useMemo(() => new Date(startDate), [startDate]);
+  const parsedStartDate = useMemo(() => new Date(effectiveStartDate), [effectiveStartDate]);
 
   // Hourly Celebration: Track hours passed using useRef
   const hoursPassed = useMemo(() => {

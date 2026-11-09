@@ -9,34 +9,19 @@ import React, {
 import {
   motion,
   useAnimation,
+  useInView,
   useMotionValue,
   useScroll,
   useTransform,
 } from "framer-motion";
 
 /* -------------------------------------------------------------------------- */
-/* MEDIA CONSTANTS (Easily Replaceable by User)                               */
+/* 1. MEDIA CONSTANTS (Hardcoded with Provided Assets)                         */
 /* -------------------------------------------------------------------------- */
 
-export const FALAHI_AUDIO_SRC = "PLACEHOLDER_FALAHI_AUDIO"; // (Track: Hadret El Omda)
-export const FALAHI_GROOM_SRC = "PLACEHOLDER_FALAHI_GROOM";
-export const FALAHI_BRIDE_SRC = "PLACEHOLDER_FALAHI_BRIDE";
-
-// Safe fallbacks if placeholders are present
-const RESOLVED_AUDIO_SRC =
-  FALAHI_AUDIO_SRC && !FALAHI_AUDIO_SRC.startsWith("PLACEHOLDER")
-    ? FALAHI_AUDIO_SRC
-    : "/audio/saidi.mp3";
-
-const RESOLVED_GROOM_SRC =
-  FALAHI_GROOM_SRC && !FALAHI_GROOM_SRC.startsWith("PLACEHOLDER")
-    ? FALAHI_GROOM_SRC
-    : "/statues/saidi-man.png";
-
-const RESOLVED_BRIDE_SRC =
-  FALAHI_BRIDE_SRC && !FALAHI_BRIDE_SRC.startsWith("PLACEHOLDER")
-    ? FALAHI_BRIDE_SRC
-    : "/statues/saidi-woman.png";
+export const FALAHI_AUDIO_SRC = "/audio/hadret-el-omda.mp3"; // (Track: Hadret El Omda)
+export const FALAHI_GROOM_SRC = "/statues/falahi-groom.png";
+export const FALAHI_BRIDE_SRC = "/statues/falahi-bride.png";
 
 /* -------------------------------------------------------------------------- */
 /* Styling Constants (Fresh Delta Pastel Green & Vibrant Tangerines)          */
@@ -162,7 +147,7 @@ function TangerineSVG({ className = "w-12 h-12" }: { className?: string }) {
         cy="62"
         rx="36"
         ry="32"
-        fill="url(#tangerineGrad)"
+        fill="url(#tangerineGradFalahi)"
       />
 
       {/* Citrus Top Dip */}
@@ -188,7 +173,7 @@ function TangerineSVG({ className = "w-12 h-12" }: { className?: string }) {
       {/* Gradients */}
       <defs>
         <radialGradient
-          id="tangerineGrad"
+          id="tangerineGradFalahi"
           cx="42%"
           cy="48%"
           r="52%"
@@ -427,6 +412,7 @@ export default function FalahiHeritageSection({
   const sectionRef = useRef<HTMLElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const fadeAnimationRef = useRef<number | null>(null);
 
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const [isPaused, setIsPaused] = useState<boolean>(false);
@@ -446,6 +432,9 @@ export default function FalahiHeritageSection({
   // Characters emerge naturally from bottom
   const heroY = useTransform(scrollYProgress, [0, 0.35, 0.7, 1], [180, 0, 0, 180]);
   const heroOpacity = useTransform(scrollYProgress, [0, 0.25, 0.75, 1], [0, 1, 1, 0]);
+
+  // Section in-view detector for audio triggering
+  const inView = useInView(sectionRef, { amount: 0.35 });
 
   // Tripled looped cards for infinite marquee
   const loopedCards = [...CARDS, ...CARDS, ...CARDS];
@@ -492,27 +481,93 @@ export default function FalahiHeritageSection({
     };
   }, [trackWidth, isPaused, controls, x]);
 
-  // Audio Playback
+  /* -------------------------------------------------------------------------- */
+  /* 3. AUDIO TRIGGER: Exclusively Play When Section 5 is In-View & Crossfade   */
+  /* -------------------------------------------------------------------------- */
   useEffect(() => {
-    const audio = new Audio(RESOLVED_AUDIO_SRC);
-    audio.loop = true;
-    audio.volume = 0.6;
-    audioRef.current = audio;
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (fadeAnimationRef.current) {
+      cancelAnimationFrame(fadeAnimationRef.current);
+      fadeAnimationRef.current = null;
+    }
+
+    const DURATION = 1200; // 1.2s smooth crossfade
+    const startTime = performance.now();
+
+    if (inView && !isMuted) {
+      // 1. Pause any other audio on the page (Section 4 Cinema, Section 3 Saidi, etc.)
+      document.querySelectorAll("audio").forEach((otherAudio) => {
+        if (otherAudio !== audio && !otherAudio.paused) {
+          otherAudio.pause();
+        }
+      });
+
+      const startVol = audio.volume;
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          const unlock = () => {
+            audio.play().catch(() => {});
+          };
+          window.addEventListener("pointerdown", unlock, { once: true });
+        });
+      }
+
+      // Smooth volume fade-in
+      const animateIn = (currentTime: number) => {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(1, elapsed / DURATION);
+        audio.volume = Math.max(0, Math.min(1, startVol + (0.85 - startVol) * progress));
+
+        if (progress < 1) {
+          fadeAnimationRef.current = requestAnimationFrame(animateIn);
+        } else {
+          audio.volume = 0.85;
+          fadeAnimationRef.current = null;
+        }
+      };
+
+      fadeAnimationRef.current = requestAnimationFrame(animateIn);
+    } else {
+      // Smooth volume fade-out and pause when out of view
+      const startVol = audio.volume;
+
+      const animateOut = (currentTime: number) => {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(1, elapsed / DURATION);
+        audio.volume = Math.max(0, Math.min(1, startVol * (1 - progress)));
+
+        if (progress < 1) {
+          fadeAnimationRef.current = requestAnimationFrame(animateOut);
+        } else {
+          audio.pause();
+          audio.volume = 0;
+          fadeAnimationRef.current = null;
+        }
+      };
+
+      fadeAnimationRef.current = requestAnimationFrame(animateOut);
+    }
 
     return () => {
-      audio.pause();
-      audio.src = "";
+      if (fadeAnimationRef.current) {
+        cancelAnimationFrame(fadeAnimationRef.current);
+      }
     };
-  }, []);
+  }, [inView, isMuted]);
 
   const toggleMute = () => {
-    if (!audioRef.current) return;
-    if (isMuted) {
-      audioRef.current.play().catch(() => {});
-      setIsMuted(false);
-    } else {
-      audioRef.current.pause();
-      setIsMuted(true);
+    const nextMuted = !isMuted;
+    setIsMuted(nextMuted);
+    if (audioRef.current) {
+      audioRef.current.muted = nextMuted;
+      if (nextMuted) {
+        audioRef.current.pause();
+      } else if (inView) {
+        audioRef.current.play().catch(() => {});
+      }
     }
   };
 
@@ -525,6 +580,14 @@ export default function FalahiHeritageSection({
       ref={sectionRef}
       className="relative flex min-h-[calc(100vh-4rem)] w-full flex-col justify-between overflow-x-hidden bg-gradient-to-b from-[#E8F5E9] via-[#F1F8E9] to-[#E8F5E9] select-none text-[#1B5E20]"
     >
+      {/* Native HTML5 Audio with Hadret El Omda */}
+      <audio
+        ref={audioRef}
+        src={FALAHI_AUDIO_SRC}
+        preload="auto"
+        loop
+      />
+
       {/* -------------------------------------------------------------------- */}
       {/* 1. FRESH DELTA VIBE & BACKGROUND MOTIFS: TANGERINES & SAQIA          */}
       {/* -------------------------------------------------------------------- */}
@@ -541,7 +604,7 @@ export default function FalahiHeritageSection({
       {/* Top Left Tangerine Cluster */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute left-8 sm:left-14 top-12 z-[4] opacity-85 transition-transform hover:scale-110 drop-shadow-md animate-bounce duration-3000"
+        className="pointer-events-none absolute left-8 sm:left-14 top-12 z-[4] opacity-85 drop-shadow-md"
       >
         <TangerineSVG className="w-14 h-14 sm:w-16 sm:h-16 rotate-[-12deg]" />
       </div>
@@ -549,7 +612,7 @@ export default function FalahiHeritageSection({
       {/* Top Right Tangerine Cluster */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute right-16 sm:right-28 top-16 z-[4] opacity-90 transition-transform hover:scale-110 drop-shadow-md"
+        className="pointer-events-none absolute right-16 sm:right-28 top-16 z-[4] opacity-90 drop-shadow-md"
       >
         <TangerineSVG className="w-12 h-12 sm:w-14 sm:h-14 rotate-[18deg]" />
       </div>
@@ -636,7 +699,7 @@ export default function FalahiHeritageSection({
       </div>
 
       {/* -------------------------------------------------------------------- */}
-      {/* 3. CENTERED HEADER: أفراح الريف with generous bottom mb-24            */}
+      {/* Centered Header: أفراح الريف with generous bottom mb-24               */}
       {/* -------------------------------------------------------------------- */}
       <header className="relative z-30 px-6 pt-8 text-center md:pt-10 mb-20 md:mb-24 pb-10 md:pb-12">
         <span className="inline-flex items-center gap-2 rounded-full border border-[#2E7D32]/35 bg-white/85 px-4 py-1 text-xs font-bold text-[#2E7D32] shadow-xs">
@@ -655,7 +718,7 @@ export default function FalahiHeritageSection({
       </header>
 
       {/* -------------------------------------------------------------------- */}
-      {/* 4. MARQUEE ROW: 3-Card Focus Scrolling Strip                         */}
+      {/* Marquee Row: 3-Card Focus Scrolling Strip                            */}
       {/* -------------------------------------------------------------------- */}
       <div className="relative z-10 my-auto h-[440px] min-h-[400px] overflow-hidden">
         <motion.div
@@ -675,40 +738,34 @@ export default function FalahiHeritageSection({
       </div>
 
       {/* -------------------------------------------------------------------- */}
-      {/* 5. HERO CHARACTERS: Massive Responsive Sizing                        */}
-      {/* Left Character: Falahi Groom (Mirrored Inward -scale-x-100)          */}
+      {/* 2. ENFORCE SIZING & MIRRORING: Massive Responsive Characters         */}
+      {/* Left Character: Falahi Groom (Strictly Mirrored Inward -scale-x-100) */}
       {/* -------------------------------------------------------------------- */}
       <motion.div
         style={{ y: heroY, opacity: heroOpacity }}
-        className="pointer-events-none absolute bottom-0 left-0 z-20 h-[95%] max-h-[800px] w-auto max-w-[42vw] min-w-[300px] flex items-end justify-start will-change-transform"
+        className="pointer-events-none absolute inset-0 z-20 will-change-transform"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={RESOLVED_GROOM_SRC}
-          alt="Groom in Rural Egyptian Attire"
+          src={FALAHI_GROOM_SRC}
+          alt="Groom in Rural Egyptian Attire with Tangerine"
           aria-hidden="true"
-          className="pointer-events-none -scale-x-100 h-full w-auto object-contain object-bottom drop-shadow-2xl"
+          className="pointer-events-none absolute bottom-0 left-0 z-20 h-[95%] min-w-[300px] w-auto object-contain object-bottom -scale-x-100 drop-shadow-2xl"
           style={{ transform: "scaleX(-1)" }}
-          onError={(e) => {
-            (e.currentTarget as HTMLImageElement).src = "/statues/saidi-man.png";
-          }}
         />
       </motion.div>
 
-      {/* Right Character: Falahi Bride (Facing Inward toward Groom) */}
+      {/* Right Character: Falahi Bride (Strictly Facing Inward toward Groom) */}
       <motion.div
         style={{ y: heroY, opacity: heroOpacity }}
-        className="pointer-events-none absolute bottom-0 right-0 z-20 h-[95%] max-h-[800px] w-auto max-w-[42vw] min-w-[300px] flex items-end justify-end will-change-transform"
+        className="pointer-events-none absolute inset-0 z-20 will-change-transform"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={RESOLVED_BRIDE_SRC}
-          alt="Bride in Rural Egyptian Attire"
+          src={FALAHI_BRIDE_SRC}
+          alt="Bride in Rural Egyptian Attire with Tangerine"
           aria-hidden="true"
-          className="pointer-events-none h-full w-auto object-contain object-bottom drop-shadow-2xl"
-          onError={(e) => {
-            (e.currentTarget as HTMLImageElement).src = "/statues/saidi-woman.png";
-          }}
+          className="pointer-events-none absolute bottom-0 right-0 z-20 h-[95%] min-w-[300px] w-auto object-contain object-bottom drop-shadow-2xl"
         />
       </motion.div>
 
