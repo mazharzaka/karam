@@ -135,3 +135,4 @@ export const WeddingConfigProvider: React.FC<{ children: React.ReactNode }> = ({
 };
 
 export const useWeddingConfig = () => useContext(WeddingConfigContext);
+

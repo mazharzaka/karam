@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Playfair_Display, Plus_Jakarta_Sans, Caveat } from "next/font/google";
+import { WeddingConfigProvider } from "@/context/WeddingConfigContext";
 import "./globals.css";
 
 const playfair = Playfair_Display({
@@ -44,7 +45,7 @@ export default function RootLayout({
       <body
         className={`${playfair.variable} ${plusJakarta.variable} ${caveat.variable} font-sans h-full w-full overflow-hidden bg-gradient-to-b from-[#FFF5F7] via-[#FDECEF] to-[#FCE4EC] text-romantic-charcoal`}
       >
-        {children}
+        <WeddingConfigProvider>{children}</WeddingConfigProvider>
       </body>
     </html>
   );

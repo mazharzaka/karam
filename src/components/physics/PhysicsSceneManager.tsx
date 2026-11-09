@@ -6,6 +6,7 @@ import { Scene1HeroSpotlight } from "./Scene1HeroSpotlight";
 import TimelessBondSection from "./TimelessBondSection";
 import SaidiHeritageSection from "./SaidiHeritageSection";
 import GoldenAgeCinemaSection from "./GoldenAgeCinemaSection";
+import FalahiHeritageSection from "./FalahiHeritageSection";
 import ZamalekThemeSection from "./ZamalekThemeSection";
 import WeddingRaceSection from "./WeddingRaceSection";
 import { Scene3PhysicsDesk } from "./Scene3PhysicsDesk";
@@ -21,11 +22,12 @@ const SCENE_TITLES = [
   "02 Egyptian Heritage",
   "03 Saidi Heritage",
   "04 Golden Age Cinema",
-  "05 Zamalek SC",
-  "06 تحدي الأزواج",
-  "07 Physics Desk",
-  "08 3D Tunnel",
-  "09 Infinite Canvas",
+  "05 أفراح الريف",
+  "06 Zamalek SC",
+  "07 تحدي الأزواج",
+  "08 Physics Desk",
+  "09 3D Tunnel",
+  "10 Infinite Canvas",
 ];
 
 export const PhysicsSceneManager: React.FC = () => {
@@ -43,6 +45,7 @@ export const PhysicsSceneManager: React.FC = () => {
   const section7Ref = useRef<HTMLDivElement>(null);
   const section8Ref = useRef<HTMLDivElement>(null);
   const section9Ref = useRef<HTMLDivElement>(null);
+  const section10Ref = useRef<HTMLDivElement>(null);
 
   const scrollToSection = useCallback((idx: number) => {
     setCurrentScene(idx);
@@ -56,6 +59,7 @@ export const PhysicsSceneManager: React.FC = () => {
       section7Ref,
       section8Ref,
       section9Ref,
+      section10Ref,
     ];
     const target = refs[idx]?.current;
     if (target) {
@@ -82,6 +86,7 @@ export const PhysicsSceneManager: React.FC = () => {
       section7Ref,
       section8Ref,
       section9Ref,
+      section10Ref,
     ];
 
     const handleScroll = () => {
@@ -294,31 +299,43 @@ export const PhysicsSceneManager: React.FC = () => {
             />
           </div>
 
-          {/* Section 5: Zamalek SC (مدرسة الفن والهندسة - The White Knights) */}
+          {/* Section 5: Egyptian Rural/Delta Heritage (الفلاحي - أفراح الريف) */}
           <div
             ref={section5Ref}
-            id="scene-5-zamalek"
+            id="scene-5-falahi"
             className="w-full min-h-[calc(100vh-4rem)] flex flex-col justify-between overflow-x-hidden"
           >
-            <ZamalekThemeSection
+            <FalahiHeritageSection
               onNext={() => scrollToSection(5)}
               scrollContainerRef={scrollContainerRef}
             />
           </div>
 
-          {/* Section 6: Wedding Race (تحدي الأزواج) */}
+          {/* Section 6: Zamalek SC (مدرسة الفن والهندسة - The White Knights) */}
           <div
             ref={section6Ref}
-            id="section-6-race"
+            id="scene-6-zamalek"
+            className="w-full min-h-[calc(100vh-4rem)] flex flex-col justify-between overflow-x-hidden"
+          >
+            <ZamalekThemeSection
+              onNext={() => scrollToSection(6)}
+              scrollContainerRef={scrollContainerRef}
+            />
+          </div>
+
+          {/* Section 7: Wedding Race (تحدي الأزواج) */}
+          <div
+            ref={section7Ref}
+            id="section-7-race"
             className="w-full min-h-[calc(100vh-4rem)] flex flex-col justify-between overflow-x-hidden"
           >
             <WeddingRaceSection />
           </div>
 
-          {/* Section 7: Physics Desk (Scrapbook Desk - whileInView) */}
+          {/* Section 8: Physics Desk (Scrapbook Desk - whileInView) */}
           <motion.div
-            ref={section7Ref}
-            id="section-7-desk"
+            ref={section8Ref}
+            id="section-8-desk"
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.15 }}
@@ -328,10 +345,10 @@ export const PhysicsSceneManager: React.FC = () => {
             <Scene3PhysicsDesk />
           </motion.div>
 
-          {/* Section 8: Z-Axis Memory Tunnel (whileInView) */}
+          {/* Section 9: Z-Axis Memory Tunnel (whileInView) */}
           <motion.div
-            ref={section8Ref}
-            id="section-8-tunnel"
+            ref={section9Ref}
+            id="section-9-tunnel"
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.15 }}
@@ -341,10 +358,10 @@ export const PhysicsSceneManager: React.FC = () => {
             <Scene4ZTunnel />
           </motion.div>
 
-          {/* Section 9: Infinite Canvas (whileInView) */}
+          {/* Section 10: Infinite Canvas (whileInView) */}
           <motion.div
-            ref={section9Ref}
-            id="section-9-canvas"
+            ref={section10Ref}
+            id="section-10-canvas"
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.15 }}
