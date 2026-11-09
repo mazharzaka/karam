@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { CldUploadWidget } from "next-cloudinary";
 import {
   Calendar,
@@ -24,6 +25,10 @@ import {
   ArrowLeft,
   RefreshCw,
   Eye,
+  LogOut,
+  Bot,
+  Car,
+  Scissors,
 } from "lucide-react";
 
 /* -------------------------------------------------------------------------- */
@@ -96,10 +101,20 @@ const DEFAULT_CONFIG: SiteConfiguration = {
 const STORAGE_KEY = "WEDDING_ADMIN_CONFIG";
 
 /* -------------------------------------------------------------------------- */
+/* AI Prompt Cheat Sheet Constants                                            */
+/* -------------------------------------------------------------------------- */
+
+const GROOM_CAR_PROMPT = `A 3D Pixar-style cute, small, fast [لون العربية، مثلا: red] open-roof toy racing car, side profile view perfectly centered. The car has a bold, large letter "[أول حرف من اسم العريس]" printed on its side door. Sitting inside and driving is a 3D Pixar-style handsome Egyptian groom with [وصف شعره] wearing [وصف لبسه]. He is smiling and looking competitive. Centered composition with 10% empty padding margin around the car. Tires resting exactly at the bottom of the frame. 3/4 camera angle slightly from above. Consistent soft studio lighting from the top-left. Isolated on a solid pure white background for easy cutout. 8k resolution --ar 2:1`;
+
+const BRIDE_CAR_PROMPT = `A 3D Pixar-style cute, small, fast [لون العربية، مثلا: pink] open-roof toy racing car, side profile view perfectly centered. The car has a bold, large letter "[أول حرف من اسم العروسة]" printed on its side door. Sitting inside and driving is a 3D Pixar-style beautiful Egyptian bride with [وصف شعرها/طرحتها] wearing [وصف فستانها]. She is smiling and having fun. Centered composition with 10% empty padding margin around the car. Tires resting exactly at the bottom of the frame. 3/4 camera angle slightly from above. Consistent soft studio lighting from the top-left. Isolated on a solid pure white background for easy cutout. 8k resolution --ar 2:1`;
+
+/* -------------------------------------------------------------------------- */
 /* Component: AdminPage                                                       */
 /* -------------------------------------------------------------------------- */
 
 export default function AdminPage() {
+  const router = useRouter();
+
   // 1. GLOBAL CONFIGURATION (Dates & Audio)
   const [groomName, setGroomName] = useState<string>(DEFAULT_CONFIG.groomName);
   const [brideName, setBrideName] = useState<string>(DEFAULT_CONFIG.brideName);
@@ -121,12 +136,15 @@ export default function AdminPage() {
   const [gallery, setGallery] = useState<GalleryItem[]>(DEFAULT_CONFIG.gallery);
 
   // UI & Action states
-  const [activeTab, setActiveTab] = useState<"all" | "global" | "heroes" | "gallery" | "json">("all");
+  const [activeTab, setActiveTab] = useState<"all" | "global" | "heroes" | "gallery" | "prompts" | "json">("all");
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
   const [showJsonInspector, setShowJsonInspector] = useState<boolean>(false);
   const [copiedJson, setCopiedJson] = useState<boolean>(false);
+  const [copiedGroomPrompt, setCopiedGroomPrompt] = useState<boolean>(false);
+  const [copiedBridePrompt, setCopiedBridePrompt] = useState<boolean>(false);
   const [manualAddUrl, setManualAddUrl] = useState<string>("");
+  const [isLoggingOut, setIsLoggingOut] = useState<boolean>(false);
 
   // Load saved configuration from localStorage if available
   useEffect(() => {
@@ -178,7 +196,6 @@ export default function AdminPage() {
   /* Gallery State Handlers                                                     */
   /* -------------------------------------------------------------------------- */
 
-  // Helper to add a new photo to the gallery
   const handleAddPhotoToGallery = useCallback((url: string, caption = "", date = "") => {
     if (!url.trim()) return;
     const newItem: GalleryItem = {
@@ -190,7 +207,6 @@ export default function AdminPage() {
     setGallery((prev) => [newItem, ...prev]);
   }, []);
 
-  // Update specific fields of a gallery item
   const handleUpdateGalleryItem = useCallback(
     (id: string, field: "caption" | "date" | "url", value: string) => {
       setGallery((prev) =>
@@ -200,13 +216,27 @@ export default function AdminPage() {
     []
   );
 
-  // Remove a photo from the gallery
   const handleRemoveGalleryItem = useCallback((id: string) => {
     setGallery((prev) => prev.filter((item) => item.id !== id));
   }, []);
 
   /* -------------------------------------------------------------------------- */
-  /* 4. SAVE ACTION: Bundle full state into single JSON payload                 */
+  /* Logout Handler                                                             */
+  /* -------------------------------------------------------------------------- */
+  const handleLogout = async () => {
+    setIsLoggingOut(true);
+    try {
+      await fetch("/api/auth", { method: "DELETE" });
+      router.push("/admin/login");
+      router.refresh();
+    } catch (err) {
+      console.error("Logout error:", err);
+      router.push("/admin/login");
+    }
+  };
+
+  /* -------------------------------------------------------------------------- */
+  /* SAVE ACTION: Bundle full state into single JSON payload                     */
   /* -------------------------------------------------------------------------- */
   const fullConfigPayload: SiteConfiguration = useMemo(
     () => ({
@@ -270,7 +300,7 @@ export default function AdminPage() {
         console.log("✅ Successfully saved to /api/config");
       }
     } catch (err) {
-      console.log("ℹ️ /api/config not reachable or pending endpoint; state is safely preserved locally.", err);
+      console.log("ℹ️ /api/config endpoint note:", err);
     }
 
     setTimeout(() => {
@@ -286,8 +316,19 @@ export default function AdminPage() {
     setTimeout(() => setCopiedJson(false), 2500);
   };
 
+  const handleCopyText = (text: string, type: "groom" | "bride") => {
+    navigator.clipboard.writeText(text);
+    if (type === "groom") {
+      setCopiedGroomPrompt(true);
+      setTimeout(() => setCopiedGroomPrompt(false), 2500);
+    } else {
+      setCopiedBridePrompt(true);
+      setTimeout(() => setCopiedBridePrompt(false), 2500);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-[#FDF9FA] text-[#33272A] font-sans antialiased">
+    <div className="min-h-screen bg-[#FDF9FA] text-[#33272A] font-sans antialiased pb-16">
       {/* -------------------------------------------------------------------- */}
       {/* Top Navigation & Sticky Publish Action Header                        */}
       {/* -------------------------------------------------------------------- */}
@@ -313,22 +354,34 @@ export default function AdminPage() {
                 </span>
               </div>
               <p className="text-xs text-[#7B6A6E] font-medium hidden sm:block">
-                Fully customize dates, dynamic audio, hero characters & memory gallery
+                Fully customize dates, dynamic audio, hero characters &amp; memory gallery
               </p>
             </div>
           </div>
 
-          {/* Top Actions: Live Preview Link & Massive Save Button */}
+          {/* Top Actions: Live Preview Link, Logout & Massive Save Button */}
           <div className="flex items-center gap-2 sm:gap-3">
             <Link
               href="/"
               target="_blank"
-              className="hidden md:inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl border border-gray-200 hover:border-gray-300 text-gray-700 bg-white hover:bg-gray-50 transition-all shadow-xs"
+              className="hidden md:inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl border border-gray-200 hover:border-gray-300 text-gray-700 bg-white hover:bg-gray-50 transition-all shadow-xs"
             >
               <Eye className="w-4 h-4 text-[#D4AF37]" />
               <span>Live Site</span>
               <ExternalLink className="w-3.5 h-3.5 text-gray-400" />
             </Link>
+
+            {/* Logout Button */}
+            <button
+              type="button"
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="p-2 sm:px-3 sm:py-2 rounded-xl border border-rose-200 hover:bg-rose-50 text-rose-600 text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer"
+              title="تسجيل الخروج من لوحة التحكم"
+            >
+              <LogOut className="w-4 h-4" />
+              <span className="hidden sm:inline">Logout</span>
+            </button>
 
             {/* Massive SAVE & PUBLISH Button */}
             <button
@@ -369,7 +422,7 @@ export default function AdminPage() {
         <div className="bg-emerald-50 border-b border-emerald-200 px-4 py-3 text-emerald-800 text-sm font-semibold flex items-center justify-center gap-2 text-center transition-all animate-in fade-in">
           <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
           <span>
-            Changes saved and published! Complete JSON bundle was logged to the console and saved to local configuration.
+            Changes saved and published! Complete JSON bundle was logged to the console and sent to /api/config.
           </span>
         </div>
       )}
@@ -385,6 +438,7 @@ export default function AdminPage() {
             { id: "global", label: "1. Global & Audio", icon: Calendar },
             { id: "heroes", label: "2. Hero Characters", icon: ImageIcon },
             { id: "gallery", label: `3. Memory Gallery (${gallery.length})`, icon: Layers },
+            { id: "prompts", label: "🤖 AI Prompt Cheat Sheet", icon: Bot },
             { id: "json", label: "4. JSON Config Payload", icon: Sparkles },
           ].map((tab) => {
             const Icon = tab.icon;
@@ -500,10 +554,7 @@ export default function AdminPage() {
                       💡 How the Live &quot;Time Together&quot; Counter Works:
                     </p>
                     <p className="text-amber-800 text-xs mt-0.5">
-                      The <strong>Wedding Date</strong> is utilized throughout the Hero Spotlight and Story
-                      chapters to automatically compute a real-time counter (Days, Hours, and Minutes). If the
-                      wedding has passed, it counts days celebrated together; if ahead, it creates an active
-                      countdown to the big day!
+                      The <strong>Wedding Date</strong> will be used to calculate a live &quot;Time Together&quot; counter (days, hours, minutes) across the site. If the date is in the past, it displays days since the big day; if in the future, it renders the live wedding countdown!
                     </p>
                   </div>
                 </div>
@@ -612,7 +663,7 @@ export default function AdminPage() {
         )}
 
         {/* ================================================================== */}
-        {/* SECTION 2: HERO IMAGES UPLOAD (CldUploadWidget)                    */}
+        {/* SECTION 2: HERO IMAGES UPLOAD (next-cloudinary CldUploadWidget)    */}
         {/* ================================================================== */}
         {(activeTab === "all" || activeTab === "heroes") && (
           <section className="bg-white rounded-2xl border border-gray-200/80 shadow-xs overflow-hidden">
@@ -626,7 +677,7 @@ export default function AdminPage() {
                     2. Hero Characters Upload
                   </h2>
                   <p className="text-xs sm:text-sm text-[#7B6A6E]">
-                    Upload Groom, Bride and 3D Avatar characters via Cloudinary
+                    Upload Groom, Bride and Avatar characters via Cloudinary with instant previews
                   </p>
                 </div>
               </div>
@@ -720,7 +771,7 @@ export default function AdminPage() {
                       className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#2B1D24] hover:bg-[#3d2b34] text-white text-xs font-bold shadow-xs transition-all cursor-pointer"
                     >
                       <UploadCloud className="w-4 h-4 text-[#D4AF37]" />
-                      <span>Upload Memory Photos (Cloudinary)</span>
+                      <span>Add Memory Photos (Cloudinary)</span>
                     </button>
                   )}
                 </CldUploadWidget>
@@ -761,7 +812,7 @@ export default function AdminPage() {
                   <ImageIcon className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                   <p className="text-sm font-bold text-gray-700">No memory photos yet</p>
                   <p className="text-xs text-gray-400 mt-1 max-w-sm mx-auto">
-                    Click &quot;Upload Memory Photos&quot; above to add your first romantic picture.
+                    Click &quot;Add Memory Photos&quot; above to upload your first romantic picture.
                   </p>
                 </div>
               ) : (
@@ -850,62 +901,64 @@ export default function AdminPage() {
         {/* ================================================================== */}
         {/* SECTION 4: JSON CONFIG INSPECTOR & EXPORT                           */}
         {/* ================================================================== */}
-        <section className="bg-white rounded-2xl border border-gray-200/80 shadow-xs overflow-hidden">
-          <div
-            onClick={() => setShowJsonInspector((prev) => !prev)}
-            className="p-6 border-b border-gray-100 bg-gray-50/60 flex items-center justify-between cursor-pointer hover:bg-gray-100/50 transition-all"
-          >
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-gray-200 text-gray-700">
-                <Sparkles className="w-5 h-5 text-[#D4AF37]" />
+        {(activeTab === "all" || activeTab === "json") && (
+          <section className="bg-white rounded-2xl border border-gray-200/80 shadow-xs overflow-hidden">
+            <div
+              onClick={() => setShowJsonInspector((prev) => !prev)}
+              className="p-6 border-b border-gray-100 bg-gray-50/60 flex items-center justify-between cursor-pointer hover:bg-gray-100/50 transition-all"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-gray-200 text-gray-700">
+                  <Sparkles className="w-5 h-5 text-[#D4AF37]" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-[#2B1D24]">
+                    Live Dynamic JSON Payload (Ready for API / Export)
+                  </h3>
+                  <p className="text-xs text-gray-500">
+                    Inspect the compiled bundle sent on Save &amp; Publish
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-sm font-bold text-[#2B1D24]">
-                  Live Dynamic JSON Payload (Ready for API / Export)
-                </h3>
-                <p className="text-xs text-gray-500">
-                  Inspect the compiled bundle sent on Save &amp; Publish
-                </p>
-              </div>
-            </div>
 
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-mono font-semibold text-gray-500">
-                {gallery.length} moments • 4 anthems
-              </span>
-              {showJsonInspector ? (
-                <ChevronUp className="w-4 h-4 text-gray-500" />
-              ) : (
-                <ChevronDown className="w-4 h-4 text-gray-500" />
-              )}
-            </div>
-          </div>
-
-          {(showJsonInspector || activeTab === "json") && (
-            <div className="p-6 bg-[#1C1518] text-gray-200">
-              <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/10 text-xs">
-                <span className="font-mono text-romantic-roseGold">
-                  payload.json (application/json)
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-mono font-semibold text-gray-500">
+                  {gallery.length} moments • 4 anthems
                 </span>
-                <button
-                  type="button"
-                  onClick={handleCopyJson}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white font-mono text-xs transition-all cursor-pointer"
-                >
-                  <Copy className="w-3.5 h-3.5" />
-                  <span>{copiedJson ? "Copied to Clipboard!" : "Copy JSON"}</span>
-                </button>
+                {showJsonInspector ? (
+                  <ChevronUp className="w-4 h-4 text-gray-500" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-gray-500" />
+                )}
               </div>
-
-              <pre className="max-h-96 overflow-y-auto text-xs font-mono p-4 rounded-xl bg-black/40 text-emerald-300 scrollbar-thin">
-                {JSON.stringify(fullConfigPayload, null, 2)}
-              </pre>
             </div>
-          )}
-        </section>
+
+            {(showJsonInspector || activeTab === "json") && (
+              <div className="p-6 bg-[#1C1518] text-gray-200">
+                <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/10 text-xs">
+                  <span className="font-mono text-romantic-roseGold">
+                    payload.json (application/json)
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleCopyJson}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white font-mono text-xs transition-all cursor-pointer"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                    <span>{copiedJson ? "Copied to Clipboard!" : "Copy JSON"}</span>
+                  </button>
+                </div>
+
+                <pre className="max-h-96 overflow-y-auto text-xs font-mono p-4 rounded-xl bg-black/40 text-emerald-300 scrollbar-thin">
+                  {JSON.stringify(fullConfigPayload, null, 2)}
+                </pre>
+              </div>
+            )}
+          </section>
+        )}
 
         {/* ================================================================== */}
-        {/* Massive Bottom SAVE & PUBLISH Trigger Banner                       */}
+        {/* Massive Primary SAVE & PUBLISH Action Card                         */}
         {/* ================================================================== */}
         <div className="p-8 rounded-3xl bg-gradient-to-r from-[#2B1D24] via-[#3a2630] to-[#2B1D24] text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
           <div>
@@ -917,8 +970,7 @@ export default function AdminPage() {
               Publish All Updates to Wedding Experience
             </h3>
             <p className="text-sm text-gray-300 mt-1 max-w-xl">
-              Bundles names, dates, Cloudinary images, soundtrack tracks, and dynamic gallery
-              metadata into a synchronized payload.
+              Bundles couple names, milestone dates, Cloudinary images, soundtrack tracks, and dynamic gallery metadata into a single synchronized payload sent to /api/config.
             </p>
           </div>
 
@@ -932,9 +984,106 @@ export default function AdminPage() {
                 : "bg-gradient-to-r from-[#D4AF37] via-[#F2D98D] to-[#B89335] text-[#2B1D24] hover:opacity-95 hover:scale-102 active:scale-98 shadow-[#D4AF37]/30"
             } disabled:opacity-50`}
           >
-            {isSaving ? "SAVING &amp; PUBLISHING..." : saveSuccess ? "✓ SAVED &amp; LIVE!" : "SAVE &amp; PUBLISH NOW"}
+            {isSaving ? "SAVING &amp; PUBLISHING..." : saveSuccess ? "✓ SAVED &amp; LIVE!" : "SAVE &amp; PUBLISH"}
           </button>
         </div>
+
+        {/* ================================================================== */}
+        {/* 3. EMBEDDED AI PROMPT GUIDE (AT THE BOTTOM OF THE DASHBOARD)       */}
+        {/* ================================================================== */}
+        {(activeTab === "all" || activeTab === "prompts") && (
+          <section className="bg-gradient-to-br from-amber-50/70 via-rose-50/50 to-white rounded-3xl border-2 border-[#D4AF37]/40 shadow-md overflow-hidden">
+            <div className="p-6 sm:p-8 border-b border-[#D4AF37]/20 bg-white/60 backdrop-blur-xs flex items-center justify-between">
+              <div className="flex items-center gap-3.5">
+                <div className="p-3 rounded-2xl bg-gradient-to-br from-[#D4AF37] to-[#B89335] text-white shadow-sm">
+                  <Bot className="w-6 h-6" />
+                </div>
+                <div>
+                  <h2 className="text-xl sm:text-2xl font-serif font-black text-[#2B1D24]">
+                    دليل توليد صور الذكاء الاصطناعي (Cheat Sheet)
+                  </h2>
+                  <p className="text-xs sm:text-sm text-[#7B6A6E] font-medium">
+                    برومبتات جاهزة لتوليد عربيات السباق والشخصيات الكارتونية للعبة الزفاف (Section 6)
+                  </p>
+                </div>
+              </div>
+
+              <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#D4AF37]/15 border border-[#D4AF37]/30 text-xs font-bold text-[#B89335]">
+                <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
+                <span>3D Pixar Prompts</span>
+              </span>
+            </div>
+
+            <div className="p-6 sm:p-8 space-y-6">
+              {/* Introduction Note in Arabic */}
+              <div className="p-4 rounded-2xl bg-white border border-[#D4AF37]/30 text-[#2B1D24] text-sm leading-relaxed shadow-2xs">
+                <p className="font-bold text-base text-[#B89335]">
+                  يا عريس، خد البرومبتات دي زي ما هي كده، بس غير الكلام اللي بين الأقواس [ ] عشان يطلع شبهك إنت وعروستك.
+                </p>
+              </div>
+
+              {/* Prompt 1: Groom Kart */}
+              <div className="p-5 rounded-2xl bg-white border border-gray-200 hover:border-[#D4AF37]/60 shadow-xs transition-all space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-100 pb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded-lg bg-red-100 text-red-700">
+                      <Car className="w-4 h-4" />
+                    </div>
+                    <h3 className="font-bold text-sm sm:text-base text-[#2B1D24]">
+                      1. صورة عربية العريس (العريس سايق عربية سباق بسقف مفتوح):
+                    </h3>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handleCopyText(GROOM_CAR_PROMPT, "groom")}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 text-xs font-bold transition-all cursor-pointer self-start sm:self-auto"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                    <span>{copiedGroomPrompt ? "تم النسخ بنجاح! ✓" : "نسخ البرومبت (Copy)"}</span>
+                  </button>
+                </div>
+
+                <div className="relative p-4 rounded-xl bg-gray-900 text-gray-100 font-mono text-xs leading-relaxed select-all">
+                  {GROOM_CAR_PROMPT}
+                </div>
+              </div>
+
+              {/* Prompt 2: Bride Kart */}
+              <div className="p-5 rounded-2xl bg-white border border-gray-200 hover:border-[#D4AF37]/60 shadow-xs transition-all space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-100 pb-3">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded-lg bg-pink-100 text-pink-700">
+                      <Car className="w-4 h-4" />
+                    </div>
+                    <h3 className="font-bold text-sm sm:text-base text-[#2B1D24]">
+                      2. صورة عربية العروسة (العروسة سايقة عربية سباق بسقف مفتوح):
+                    </h3>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => handleCopyText(BRIDE_CAR_PROMPT, "bride")}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-pink-50 hover:bg-pink-100 border border-pink-200 text-pink-700 text-xs font-bold transition-all cursor-pointer self-start sm:self-auto"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                    <span>{copiedBridePrompt ? "تم النسخ بنجاح! ✓" : "نسخ البرومبت (Copy)"}</span>
+                  </button>
+                </div>
+
+                <div className="relative p-4 rounded-xl bg-gray-900 text-gray-100 font-mono text-xs leading-relaxed select-all">
+                  {BRIDE_CAR_PROMPT}
+                </div>
+              </div>
+
+              {/* Cutout Note Footer */}
+              <div className="p-4 rounded-xl bg-amber-100/60 border border-amber-300 text-amber-900 text-xs sm:text-sm font-bold flex items-center gap-2.5">
+                <Scissors className="w-5 h-5 text-amber-700 shrink-0" />
+                <span>(تذكر تفريغ الخلفية البيضاء من الصور بعد توليدها لتصبح شفافة PNG)</span>
+              </div>
+            </div>
+          </section>
+        )}
       </main>
     </div>
   );
