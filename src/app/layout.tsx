@@ -30,9 +30,9 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Romantic Wrapped 2025 | A Cinematic Experience",
+  title: "Our Wedding Story | A Cinematic Experience",
   description:
-    "An Awwwards-grade interactive cinematic desktop experience celebrating our love story, milestones, and memories.",
+    "An interactive cinematic experience celebrating our love story, milestones, and memories.",
 };
 
 export default function RootLayout({
@@ -41,9 +41,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full w-full overflow-hidden select-none">
+    <html lang="en" className="min-h-full w-full">
       <body
-        className={`${playfair.variable} ${plusJakarta.variable} ${caveat.variable} font-sans h-full w-full overflow-hidden bg-gradient-to-b from-[#FFF5F7] via-[#FDECEF] to-[#FCE4EC] text-romantic-charcoal`}
+        className={`${playfair.variable} ${plusJakarta.variable} ${caveat.variable} font-sans min-h-screen w-full overflow-x-hidden bg-gradient-to-b from-[#FFF5F7] via-[#FDECEF] to-[#FCE4EC] text-romantic-charcoal`}
       >
         <WeddingConfigProvider>{children}</WeddingConfigProvider>
       </body>

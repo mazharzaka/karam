@@ -15,6 +15,10 @@ import {
   useTransform,
 } from "framer-motion";
 import { useGlobalAudio } from "@/utils/globalAudioCoordinator";
+import {
+  useWeddingConfig,
+  mergeGalleryIntoCards,
+} from "@/context/WeddingConfigContext";
 
 /* -------------------------------------------------------------------------- */
 /* 1. MEDIA CONSTANTS (Hardcoded with Provided Assets)                         */
@@ -403,7 +407,7 @@ function PhotoCard({ card, rotation }: PhotoCardProps) {
 
 export interface FalahiHeritageSectionProps {
   onNext?: () => void;
-  scrollContainerRef?: React.RefObject<HTMLElement>;
+  scrollContainerRef?: React.RefObject<HTMLElement | HTMLDivElement | null>;
 }
 
 export default function FalahiHeritageSection({
@@ -413,6 +417,12 @@ export default function FalahiHeritageSection({
   const sectionRef = useRef<HTMLElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const { config } = useWeddingConfig();
+  const dynamicCards = React.useMemo(
+    () => mergeGalleryIntoCards(CARDS, config.gallery, 18),
+    [config.gallery]
+  );
 
   const [isPaused, setIsPaused] = useState<boolean>(false);
   const [trackWidth, setTrackWidth] = useState<number>(0);
@@ -426,7 +436,7 @@ export default function FalahiHeritageSection({
   // Scroll parallax for emergence of Groom and Bride characters
   const { scrollYProgress } = useScroll({
     target: sectionRef,
-    container: scrollContainerRef,
+    container: scrollContainerRef?.current ? scrollContainerRef : undefined,
     offset: ["start end", "end start"],
   });
 
@@ -438,7 +448,7 @@ export default function FalahiHeritageSection({
   const inView = useInView(sectionRef, { amount: 0.35 });
 
   // Tripled looped cards for infinite marquee
-  const loopedCards = [...CARDS, ...CARDS, ...CARDS];
+  const loopedCards = [...dynamicCards, ...dynamicCards, ...dynamicCards];
 
   // Measure card track
   useLayoutEffect(() => {
@@ -512,7 +522,7 @@ export default function FalahiHeritageSection({
       {/* Native HTML5 Audio with Hadret El Omda */}
       <audio
         ref={audioRef}
-        src={FALAHI_AUDIO_SRC}
+        src={config.audioFalahi || FALAHI_AUDIO_SRC}
         preload="auto"
         loop
       />
@@ -676,8 +686,8 @@ export default function FalahiHeritageSection({
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={FALAHI_GROOM_SRC}
-          alt="Groom in Rural Egyptian Attire with Tangerine"
+          src={config.falahiGroomUrl || FALAHI_GROOM_SRC}
+          alt={`${config.groomName} in Rural Egyptian Attire`}
           aria-hidden="true"
           className="pointer-events-none absolute bottom-0 left-0 z-20 h-[95%] min-w-[300px] w-auto object-contain object-bottom -scale-x-100 drop-shadow-2xl"
           style={{ transform: "scaleX(-1)" }}
@@ -691,8 +701,8 @@ export default function FalahiHeritageSection({
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={FALAHI_BRIDE_SRC}
-          alt="Bride in Rural Egyptian Attire with Tangerine"
+          src={config.falahiBrideUrl || FALAHI_BRIDE_SRC}
+          alt={`${config.brideName} in Rural Egyptian Attire`}
           aria-hidden="true"
           className="pointer-events-none absolute bottom-0 right-0 z-20 h-[95%] min-w-[300px] w-auto object-contain object-bottom drop-shadow-2xl"
         />

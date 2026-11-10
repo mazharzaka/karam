@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useMemo } from "react";
 import Image from "next/image";
 import { useGesture } from "@use-gesture/react";
 import confetti from "canvas-confetti";
+import { differenceInDays } from "date-fns";
 import {
   ZoomIn,
   ZoomOut,
@@ -14,8 +15,11 @@ import {
   Share2,
   Check,
 } from "lucide-react";
-import { ALL_80_IMAGES } from "@/data/romanticImages";
 import { romanticAudio } from "@/utils/audioSynthesizer";
+import {
+  useWeddingConfig,
+  buildDynamicRomanceImages,
+} from "@/context/WeddingConfigContext";
 
 interface Scene5InfiniteCanvasProps {
   onRestart?: () => void;
@@ -24,6 +28,17 @@ interface Scene5InfiniteCanvasProps {
 export const Scene5InfiniteCanvas: React.FC<Scene5InfiniteCanvasProps> = ({
   onRestart,
 }) => {
+  const { config } = useWeddingConfig();
+  const canvasImages = useMemo(
+    () => buildDynamicRomanceImages(config.gallery),
+    [config.gallery]
+  );
+  const daysLoved = useMemo(() => {
+    const start = new Date(config.engagementDate || config.weddingDate);
+    if (Number.isNaN(start.getTime())) return 0;
+    return Math.max(0, Math.abs(differenceInDays(new Date(), start)));
+  }, [config.engagementDate, config.weddingDate]);
+
   const targetRef = useRef<HTMLDivElement>(null);
 
   // 2D Pan Coordinates & Zoom Factor
@@ -75,7 +90,7 @@ export const Scene5InfiniteCanvas: React.FC<Scene5InfiniteCanvasProps> = ({
     triggerConfetti();
     if (typeof navigator !== "undefined" && navigator.clipboard) {
       navigator.clipboard.writeText(
-        "Sophia & Julian • Romantic Wrapped 2025: All 80 Moments Explored!"
+        `${config.groomName} & ${config.brideName} • Wedding Story: All ${canvasImages.length} Moments Explored!`
       );
       setCopied(true);
       setTimeout(() => setCopied(false), 3000);
@@ -89,7 +104,7 @@ export const Scene5InfiniteCanvas: React.FC<Scene5InfiniteCanvasProps> = ({
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-romantic-roseGold/30 text-xs font-semibold text-romantic-roseGoldLight mb-1">
             <Move className="w-3.5 h-3.5 text-romantic-roseGold" />
-            <span>Scene 05 • The Infinite Canvas (Images 71 — 80+)</span>
+            <span>Scene 10 • The Infinite Canvas ({canvasImages.length} Memories)</span>
           </div>
           <h2 className="font-serif text-2xl sm:text-3xl font-bold text-white">
             The Infinite Memory Cosmos
@@ -153,26 +168,26 @@ export const Scene5InfiniteCanvas: React.FC<Scene5InfiniteCanvasProps> = ({
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-40 w-[420px] bg-white/90 backdrop-blur-2xl rounded-3xl p-8 border-2 border-romantic-roseGold/60 shadow-2xl text-center text-romantic-charcoal">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-romantic-roseGold/15 text-xs font-bold text-romantic-roseGoldDark mb-3">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>All 80 Memories Complete</span>
+              <span>All {canvasImages.length} Memories Complete</span>
             </div>
             <h3 className="font-serif text-3xl font-bold text-romantic-charcoal">
-              Sophia &amp; Julian
+              {config.groomName} &amp; {config.brideName}
             </h3>
             <p className="font-serif text-lg text-romantic-roseGoldDark italic mt-0.5">
               Forever &amp; Always Bound
             </p>
             <p className="text-xs text-romantic-muted mt-2 leading-relaxed">
-              You&apos;ve navigated through the spotlight, the film reel, the messy polaroids, the 3D tunnel, and the infinite cosmos.
+              You&apos;ve navigated through every chapter, portrait, and shared memory in our wedding story.
             </p>
 
             <div className="grid grid-cols-2 gap-2 my-4">
               <div className="p-2.5 rounded-xl bg-romantic-creamy border border-romantic-roseGold/20">
                 <span className="text-[10px] text-romantic-muted uppercase">Days Loved</span>
-                <p className="font-serif text-lg font-bold">1,245</p>
+                <p className="font-serif text-lg font-bold">{daysLoved.toLocaleString()}</p>
               </div>
               <div className="p-2.5 rounded-xl bg-romantic-creamy border border-romantic-roseGold/20">
                 <span className="text-[10px] text-romantic-muted uppercase">Memories</span>
-                <p className="font-serif text-lg font-bold">80 / 80</p>
+                <p className="font-serif text-lg font-bold">{canvasImages.length} / {canvasImages.length}</p>
               </div>
             </div>
 
@@ -195,8 +210,8 @@ export const Scene5InfiniteCanvas: React.FC<Scene5InfiniteCanvasProps> = ({
             </div>
           </div>
 
-          {/* SPREAD OF CANVAS MEMORY CARDS (Images 71 to 80+ plus ambient halo cards) */}
-          {ALL_80_IMAGES.map((img) => {
+          {/* SPREAD OF DYNAMIC CANVAS MEMORY CARDS */}
+          {canvasImages.map((img) => {
             return (
               <div
                 key={img.id}
@@ -213,6 +228,7 @@ export const Scene5InfiniteCanvas: React.FC<Scene5InfiniteCanvasProps> = ({
                     src={img.url}
                     alt={img.caption}
                     fill
+                    unoptimized
                     sizes="240px"
                     className="object-cover"
                   />
@@ -242,10 +258,10 @@ export const Scene5InfiniteCanvas: React.FC<Scene5InfiniteCanvasProps> = ({
       <footer className="relative z-30 px-6 py-3 bg-black/40 backdrop-blur-md border-t border-romantic-roseGold/20 flex items-center justify-between text-xs text-romantic-muted">
         <span className="flex items-center gap-1.5">
           <Move className="w-3.5 h-3.5 text-romantic-roseGold" />
-          Click &amp; drag anywhere to Pan. Scroll mouse wheel or pinch to Zoom across all 80 memories.
+          Click &amp; drag anywhere to Pan. Scroll mouse wheel or pinch to Zoom across all {canvasImages.length} memories.
         </span>
         <span className="font-semibold text-romantic-roseGoldLight">
-          Awwwards Physics Engine Active • 80/80 Memories
+          Physics Engine Active • {canvasImages.length}/{canvasImages.length} Memories
         </span>
       </footer>
     </div>

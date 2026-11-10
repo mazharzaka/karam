@@ -16,6 +16,10 @@ import {
   useTransform,
 } from "framer-motion";
 import { useGlobalAudio } from "@/utils/globalAudioCoordinator";
+import {
+  useWeddingConfig,
+  mergeGalleryIntoCards,
+} from "@/context/WeddingConfigContext";
 
 /* -------------------------------------------------------------------------- */
 /* Config                                                                      */
@@ -214,6 +218,12 @@ export default function TimelessBondSection({
   const trackRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
 
+  const { config } = useWeddingConfig();
+  const dynamicCards = React.useMemo(
+    () => mergeGalleryIntoCards(CARDS, config.gallery, 0),
+    [config.gallery]
+  );
+
   const controls = useAnimation();
   const x = useMotionValue(0);
 
@@ -334,7 +344,7 @@ export default function TimelessBondSection({
     }
   }, [isInView, isGlobalAudioEnabled, playTrack, stopTrack]);
 
-  const loopedCards = [...CARDS, ...CARDS];
+  const loopedCards = [...dynamicCards, ...dynamicCards];
 
   return (
     <section
@@ -342,7 +352,13 @@ export default function TimelessBondSection({
       id="section-2-timeless"
       className="relative isolate flex min-h-[calc(100vh-4rem)] w-full flex-col justify-between overflow-hidden bg-[#FCEBF0]"
     >
-      <audio ref={audioRef} src={AUDIO_SRC} loop preload="auto" className="hidden" />
+      <audio
+        ref={audioRef}
+        src={config.audioPharaonic || AUDIO_SRC}
+        loop
+        preload="auto"
+        className="hidden"
+      />
 
       {/* Faint Egyptian line pattern (~6%) */}
       <div
@@ -405,11 +421,11 @@ export default function TimelessBondSection({
         </span>
 
         <h2 className="mt-3 font-serif text-3xl sm:text-4xl md:text-5xl font-bold leading-tight text-[#2B1D24] max-w-3xl tracking-tight">
-          Your Custom Words Here
+          {config.groomName} &amp; {config.brideName}
         </h2>
 
         <p className="mt-2 font-serif text-sm italic text-[#B08A2E] md:text-base max-w-2xl">
-          Across every lifetime and every horizon, our hearts always find their way together.
+          Across every lifetime and every horizon, {config.groomName} &amp; {config.brideName}&apos;s hearts always find their way together.
         </p>
       </header>
 
@@ -432,15 +448,15 @@ export default function TimelessBondSection({
 
       {/* Hero statues (Scroll-linked Elevator / Parallax Emergence) */}
       <motion.img
-        src={STATUE_LEFT_SRC}
-        alt="King Tutankhamun Guardian"
+        src={config.pharaonicGroomUrl || STATUE_LEFT_SRC}
+        alt={`${config.groomName} Pharaonic Guardian`}
         aria-hidden="true"
         style={{ y: statueY, opacity: statueOpacity }}
         className="pointer-events-none absolute bottom-0 left-0 z-20 h-[95%] w-auto max-w-[42vw] min-w-[300px] object-contain object-bottom will-change-transform"
       />
       <motion.img
-        src={STATUE_RIGHT_SRC}
-        alt="Queen Nefertiti Guardian"
+        src={config.pharaonicBrideUrl || STATUE_RIGHT_SRC}
+        alt={`${config.brideName} Pharaonic Guardian`}
         aria-hidden="true"
         style={{ y: statueY, opacity: statueOpacity }}
         className="pointer-events-none absolute bottom-0 right-0 z-20 h-[95%] w-auto max-w-[42vw] min-w-[300px] object-contain object-bottom will-change-transform"

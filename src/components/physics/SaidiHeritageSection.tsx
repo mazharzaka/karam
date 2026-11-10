@@ -17,6 +17,10 @@ import {
   useTransform,
 } from "framer-motion";
 import { useGlobalAudio } from "@/utils/globalAudioCoordinator";
+import {
+  useWeddingConfig,
+  mergeGalleryIntoCards,
+} from "@/context/WeddingConfigContext";
 
 /* -------------------------------------------------------------------------- */
 /* MEDIA PLACEHOLDERS (Easily Replaceable)                                     */
@@ -424,6 +428,12 @@ export default function SaidiHeritageSection({
   const sectionRef = useRef<HTMLElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
 
+  const { config } = useWeddingConfig();
+  const dynamicCards = React.useMemo(
+    () => mergeGalleryIntoCards(CARDS, config.gallery, 6),
+    [config.gallery]
+  );
+
   // Dedicated Audio reference for Section 3 Saidi track
   const audioRef = useRef<HTMLAudioElement>(null);
 
@@ -564,7 +574,7 @@ export default function SaidiHeritageSection({
     }
   }, [inView, isGlobalAudioEnabled, playTrack, stopTrack]);
 
-  const loopedCards = [...CARDS, ...CARDS];
+  const loopedCards = [...dynamicCards, ...dynamicCards];
 
   return (
     <section
@@ -575,7 +585,7 @@ export default function SaidiHeritageSection({
       {/* Saidi Audio Element */}
       <audio
         ref={audioRef}
-        src={SAIDI_SECTION_ASSETS.saidiTrack}
+        src={config.audioSaidi || SAIDI_SECTION_ASSETS.saidiTrack}
         loop
         preload="auto"
         className="hidden"
@@ -718,8 +728,8 @@ export default function SaidiHeritageSection({
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={SAIDI_SECTION_ASSETS.groomImage}
-          alt="Saidi Groom"
+          src={config.saidiGroomUrl || SAIDI_SECTION_ASSETS.groomImage}
+          alt={`${config.groomName} Saidi Groom`}
           aria-hidden="true"
           className="-scale-x-100 h-full w-auto object-contain object-bottom drop-shadow-2xl"
           style={{ transform: "scaleX(-1)" }}
@@ -733,8 +743,8 @@ export default function SaidiHeritageSection({
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={SAIDI_SECTION_ASSETS.brideImage}
-          alt="Saidi Bride"
+          src={config.saidiBrideUrl || SAIDI_SECTION_ASSETS.brideImage}
+          alt={`${config.brideName} Saidi Bride`}
           aria-hidden="true"
           className="h-full w-auto object-contain object-bottom drop-shadow-2xl"
         />

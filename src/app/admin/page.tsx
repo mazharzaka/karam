@@ -4,1160 +4,1410 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CldUploadWidget } from "next-cloudinary";
+import { intervalToDuration } from "date-fns";
 import {
-  Calendar,
-  Clock,
-  Heart,
-  Music,
-  UploadCloud,
-  Trash2,
-  Plus,
-  Save,
-  CheckCircle2,
-  Image as ImageIcon,
-  Sparkles,
-  Sliders,
-  ExternalLink,
-  Copy,
-  ChevronDown,
-  ChevronUp,
-  Layers,
-  ArrowLeft,
-  RefreshCw,
-  Eye,
-  LogOut,
   Bot,
-  Car,
-  Scissors,
+  Calendar,
+  CheckCircle2,
+  Clock,
+  Copy,
+  ExternalLink,
+  Eye,
+  Image as ImageIcon,
+  Layers,
+  LogOut,
+  Music,
+  Palette,
+  Plus,
+  RefreshCw,
+  Save,
+  Sparkles,
+  Trash2,
+  UploadCloud,
+  Users,
+  ArrowLeft,
+  Wand2,
+  AlertCircle,
 } from "lucide-react";
+import {
+  useWeddingConfig,
+  SiteConfiguration,
+  GalleryItem,
+  ThemeId,
+  AVAILABLE_THEMES,
+  MAX_ACTIVE_THEMES,
+  isThemeCheckboxDisabled,
+} from "@/context/WeddingConfigContext";
 
-/* -------------------------------------------------------------------------- */
-/* Types & Interfaces                                                         */
-/* -------------------------------------------------------------------------- */
+// Replace "wedding_uploads" if you named your Cloudinary unsigned upload preset differently
+const CLOUDINARY_UPLOAD_PRESET = "wedding_uploads";
 
-export interface GalleryItem {
-  id: string;
-  url: string;
-  caption: string;
-  date: string;
+const HYPER_REALISTIC_PROMPTS: { id: string; title: string; prompt: string }[] = [
+  {
+    id: "ahly-groom",
+    title: "1. العريس (الأهلي):",
+    prompt:
+      "Hyper-realistic, cinematic full-body portrait of a handsome real Egyptian man with [وصف شعرك] wearing a red Al Ahly SC football jersey. He is smiling enthusiastically. 10% empty padding margin. Feet firmly at the bottom. 3/4 camera angle slightly from above. Pure white background for easy cutout. 8k resolution --ar 2:3",
+  },
+  {
+    id: "ahly-bride",
+    title: "2. العروسة (الأهلي):",
+    prompt:
+      "Hyper-realistic, cinematic full-body portrait of a beautiful real Egyptian woman with [وصف شعرها/طرحتها] wearing a sporty red Al Ahly SC jersey. She is cheering happily. 10% empty padding margin. Feet firmly at the bottom. 3/4 camera angle slightly from above. Pure white background. 8k resolution --ar 2:3",
+  },
+  {
+    id: "indian-groom",
+    title: "3. العريس (الهندي):",
+    prompt:
+      "Hyper-realistic, cinematic full-body portrait of a real Egyptian man with [وصف شعرك] dressed in a traditional vibrant royal Indian Sherwani. 10% padding. Pure white background. 8k resolution --ar 2:3",
+  },
+  {
+    id: "indian-bride",
+    title: "4. العروسة (الهندي):",
+    prompt:
+      "Hyper-realistic, cinematic full-body portrait of a real Egyptian woman with [وصف شعرها] dressed in a stunning, colorful Indian Lehenga. 10% padding. Pure white background. 8k resolution --ar 2:3",
+  },
+  {
+    id: "mexican-groom",
+    title: "5. العريس (المكسيكي):",
+    prompt:
+      "Hyper-realistic, cinematic full-body portrait of a real Egyptian man dressed in a festive Mexican Charro suit with a Sombrero. 10% padding. Pure white background. 8k resolution --ar 2:3",
+  },
+  {
+    id: "mexican-bride",
+    title: "6. العروسة (المكسيكية):",
+    prompt:
+      "Hyper-realistic, cinematic full-body portrait of a real Egyptian woman dressed in a colorful embroidered Mexican fiesta dress. 10% padding. Pure white background. 8k resolution --ar 2:3",
+  },
+];
+
+const FULL_CHEAT_SHEET_TEXT = `دليل توليد الصور (شخصيات حقيقية 100%):
+استخدم هذه الأوامر للحصول على صور واقعية سينمائية. استبدل ما بين الأقواس بملامحك.
+
+${HYPER_REALISTIC_PROMPTS.map((p) => `${p.title}\n${p.prompt}`).join("\n\n")}
+
+(ملاحظة: صور سيارات السباق فقط هي التي تظل 3D Pixar style لتناسب اللعبة)`;
+
+interface MagicGenerationTask {
+  key: CharacterFieldKey;
+  role: "groom" | "bride";
+  label: string;
+  prompt: string;
 }
 
-export interface SiteConfiguration {
-  groomName: string;
-  brideName: string;
-  weddingDate: string;
-  engagementDate: string;
-  audioTrackA: string;
-  audioTrackB: string;
-  audioTrackC: string;
-  audioTrackD: string;
-  heroGroomUrl: string;
-  heroBrideUrl: string;
-  avatarGroomUrl: string;
-  avatarBrideUrl: string;
-  gallery: GalleryItem[];
-  lastUpdated?: string;
+const GROOM_GENERATION_TASKS: MagicGenerationTask[] = [
+  {
+    key: "pharaonicGroomUrl",
+    role: "groom",
+    label: "Pharaonic Groom",
+    prompt:
+      "Hyper-realistic, cinematic full-body studio portrait of a handsome real Egyptian man dressed as an ancient Egyptian king Pharaoh in ornate golden Nemes headdress, royal gold collar, and linen tunic, confident noble smile, 10% empty padding margin, feet firmly at bottom, 3/4 camera angle, pure solid white background for easy cutout, 8k photorealistic photography",
+  },
+  {
+    key: "saidiGroomUrl",
+    role: "groom",
+    label: "Saidi Groom",
+    prompt:
+      "Hyper-realistic, cinematic full-body studio portrait of a handsome real Upper Egyptian Saidi man wearing an authentic crisp traditional wool Galabeya, wrapped white Saidi turban, and draped shawl, warm proud smile, 10% empty padding margin, feet firmly at bottom, 3/4 camera angle, pure solid white background for easy cutout, 8k photorealistic photography",
+  },
+  {
+    key: "falahiGroomUrl",
+    role: "groom",
+    label: "Falahi Groom",
+    prompt:
+      "Hyper-realistic, cinematic full-body studio portrait of a charming real Egyptian Delta groom wearing traditional rural Egyptian festive linen Galabeya and vest holding fresh tangerines, joyful warm smile, 10% empty padding margin, feet firmly at bottom, 3/4 camera angle, pure solid white background for easy cutout, 8k photorealistic photography",
+  },
+  {
+    key: "cinemaGroomUrl",
+    role: "groom",
+    label: "Cinema Groom",
+    prompt:
+      "Hyper-realistic, cinematic full-body studio portrait of a handsome real Egyptian man in classic 1950s Cairo Golden Age Cinema black tailored tuxedo with bow tie and vintage slicked hairstyle, nostalgic monochrome sepia film lighting, charming smile, 10% empty padding margin, pure solid white background for easy cutout, 8k photorealistic photography",
+  },
+  {
+    key: "zamalekGroomUrl",
+    role: "groom",
+    label: "Zamalek Groom",
+    prompt:
+      "Hyper-realistic, cinematic full-body studio portrait of a handsome real Egyptian man wearing the classic white Zamalek SC football jersey with two horizontal red stripes, enthusiastic celebratory smile, 10% empty padding margin, feet firmly at bottom, 3/4 camera angle, pure solid white background for easy cutout, 8k photorealistic photography",
+  },
+  {
+    key: "ahlyGroomUrl",
+    role: "groom",
+    label: "Al Ahly Groom",
+    prompt:
+      "Hyper-realistic, cinematic full-body studio portrait of a handsome real Egyptian man wearing a vibrant red Al Ahly SC football jersey, smiling enthusiastically in celebration, 10% empty padding margin, feet firmly at bottom, 3/4 camera angle, pure solid white background for easy cutout, 8k photorealistic photography",
+  },
+  {
+    key: "indianGroomUrl",
+    role: "groom",
+    label: "Indian Groom",
+    prompt:
+      "Hyper-realistic, cinematic full-body studio portrait of a handsome real Egyptian man dressed in an opulent embroidered royal Indian Sherwani in deep crimson and gold with traditional stole, warm festive smile, 10% empty padding margin, feet firmly at bottom, pure solid white background for easy cutout, 8k photorealistic photography",
+  },
+  {
+    key: "mexicanGroomUrl",
+    role: "groom",
+    label: "Mexican Groom",
+    prompt:
+      "Hyper-realistic, cinematic full-body studio portrait of a handsome real Egyptian man dressed in a traditional embroidered Mexican Charro mariachi suit with an ornate festive Sombrero, joyful smile, 10% empty padding margin, feet firmly at bottom, pure solid white background for easy cutout, 8k photorealistic photography",
+  },
+];
+
+const BRIDE_GENERATION_TASKS: MagicGenerationTask[] = [
+  {
+    key: "pharaonicBrideUrl",
+    role: "bride",
+    label: "Pharaonic Bride",
+    prompt:
+      "Hyper-realistic, cinematic full-body studio portrait of a beautiful real Egyptian woman dressed as Queen Nefertiti in an ornate golden Pharaonic crown, jeweled broad collar, and flowing pleated white royal gown, radiant smile, 10% empty padding margin, feet firmly at bottom, 3/4 camera angle, pure solid white background for easy cutout, 8k photorealistic photography",
+  },
+  {
+    key: "saidiBrideUrl",
+    role: "bride",
+    label: "Saidi Bride",
+    prompt:
+      "Hyper-realistic, cinematic full-body studio portrait of a beautiful real Upper Egyptian Saidi woman wearing a richly embroidered traditional black and gold Talli dress, delicate head veil, and traditional Egyptian gold jewelry, radiant smile, 10% empty padding margin, feet firmly at bottom, pure solid white background for easy cutout, 8k photorealistic photography",
+  },
+  {
+    key: "falahiBrideUrl",
+    role: "bride",
+    label: "Falahi Bride",
+    prompt:
+      "Hyper-realistic, cinematic full-body studio portrait of a beautiful real Egyptian Delta bride wearing an authentic colorful floral embroidered Falahi traditional dress and delicate headscarf holding tangerines, joyful smile, 10% empty padding margin, feet firmly at bottom, pure solid white background for easy cutout, 8k photorealistic photography",
+  },
+  {
+    key: "cinemaBrideUrl",
+    role: "bride",
+    label: "Cinema Bride",
+    prompt:
+      "Hyper-realistic, cinematic full-body studio portrait of a glamorous real Egyptian woman styled like a 1950s Cairo Golden Age film star in an elegant vintage polka-dot evening dress holding a rose, classic retro hair waves, nostalgic sepia film lighting, pure solid white background for easy cutout, 8k photorealistic photography",
+  },
+  {
+    key: "zamalekBrideUrl",
+    role: "bride",
+    label: "Zamalek Bride",
+    prompt:
+      "Hyper-realistic, cinematic full-body studio portrait of a beautiful real Egyptian woman wearing a sporty white Zamalek SC football jersey with two horizontal red stripes, cheering happily with a bright smile, 10% empty padding margin, feet firmly at bottom, pure solid white background for easy cutout, 8k photorealistic photography",
+  },
+  {
+    key: "ahlyBrideUrl",
+    role: "bride",
+    label: "Al Ahly Bride",
+    prompt:
+      "Hyper-realistic, cinematic full-body studio portrait of a beautiful real Egyptian woman wearing a sporty red Al Ahly SC football jersey, cheering happily with a joyful smile, 10% empty padding margin, feet firmly at bottom, 3/4 camera angle, pure solid white background for easy cutout, 8k photorealistic photography",
+  },
+  {
+    key: "indianBrideUrl",
+    role: "bride",
+    label: "Indian Bride",
+    prompt:
+      "Hyper-realistic, cinematic full-body studio portrait of a beautiful real Egyptian woman dressed in a stunning richly embroidered crimson, magenta, and gold Indian bridal Lehenga with sheer dupatta and traditional jewelry, radiant smile, 10% empty padding margin, pure solid white background for easy cutout, 8k photorealistic photography",
+  },
+  {
+    key: "mexicanBrideUrl",
+    role: "bride",
+    label: "Mexican Bride",
+    prompt:
+      "Hyper-realistic, cinematic full-body studio portrait of a beautiful real Egyptian woman dressed in a vibrant colorful floral embroidered Mexican fiesta dress with festive ribbons, joyful radiant smile, 10% empty padding margin, feet firmly at bottom, pure solid white background for easy cutout, 8k photorealistic photography",
+  },
+];
+
+const ALL_16_GENERATION_TASKS: MagicGenerationTask[] = GROOM_GENERATION_TASKS.flatMap(
+  (groomTask, idx) => [groomTask, BRIDE_GENERATION_TASKS[idx]]
+);
+
+type CharacterFieldKey =
+  | "pharaonicGroomUrl"
+  | "pharaonicBrideUrl"
+  | "saidiGroomUrl"
+  | "saidiBrideUrl"
+  | "cinemaGroomUrl"
+  | "cinemaBrideUrl"
+  | "falahiGroomUrl"
+  | "falahiBrideUrl"
+  | "zamalekGroomUrl"
+  | "zamalekBrideUrl"
+  | "ahlyGroomUrl"
+  | "ahlyBrideUrl"
+  | "indianGroomUrl"
+  | "indianBrideUrl"
+  | "mexicanGroomUrl"
+  | "mexicanBrideUrl"
+  | "raceGroomAvatarUrl"
+  | "raceBrideAvatarUrl"
+  | "raceGroomKartUrl"
+  | "raceBrideKartUrl";
+
+const CHARACTER_FIELDS: {
+  key: CharacterFieldKey;
+  title: string;
+  subtitle: string;
+  themeId?: ThemeId;
+}[] = [
+    { key: "pharaonicGroomUrl", title: "Pharaonic Groom", subtitle: "Theme: pharaonic", themeId: "pharaonic" },
+    { key: "pharaonicBrideUrl", title: "Pharaonic Bride", subtitle: "Theme: pharaonic", themeId: "pharaonic" },
+    { key: "saidiGroomUrl", title: "Saidi Groom (الصعيدي)", subtitle: "Theme: saidi", themeId: "saidi" },
+    { key: "saidiBrideUrl", title: "Saidi Bride (الصعيدية)", subtitle: "Theme: saidi", themeId: "saidi" },
+    { key: "cinemaGroomUrl", title: "1950s Cinema Groom", subtitle: "Theme: cinema", themeId: "cinema" },
+    { key: "cinemaBrideUrl", title: "1950s Cinema Bride", subtitle: "Theme: cinema", themeId: "cinema" },
+    { key: "falahiGroomUrl", title: "Falahi Groom (أفراح الريف)", subtitle: "Theme: falahi", themeId: "falahi" },
+    { key: "falahiBrideUrl", title: "Falahi Bride (أفراح الريف)", subtitle: "Theme: falahi", themeId: "falahi" },
+    { key: "zamalekGroomUrl", title: "Zamalek Groom (الملكي)", subtitle: "Theme: zamalek", themeId: "zamalek" },
+    { key: "zamalekBrideUrl", title: "Zamalek Bride (الملكية)", subtitle: "Theme: zamalek", themeId: "zamalek" },
+    { key: "ahlyGroomUrl", title: "Al Ahly Groom (نادي القرن)", subtitle: "Theme: ahly", themeId: "ahly" },
+    { key: "ahlyBrideUrl", title: "Al Ahly Bride (نادي القرن)", subtitle: "Theme: ahly", themeId: "ahly" },
+    { key: "indianGroomUrl", title: "Indian Groom (ليالي بوليوود)", subtitle: "Theme: indian", themeId: "indian" },
+    { key: "indianBrideUrl", title: "Indian Bride (ليالي بوليوود)", subtitle: "Theme: indian", themeId: "indian" },
+    { key: "mexicanGroomUrl", title: "Mexican Groom (فييستا مكسيكية)", subtitle: "Theme: mexican", themeId: "mexican" },
+    { key: "mexicanBrideUrl", title: "Mexican Bride (فييستا مكسيكية)", subtitle: "Theme: mexican", themeId: "mexican" },
+    { key: "raceGroomAvatarUrl", title: "Race Groom Avatar", subtitle: "Couples Race Challenge" },
+    { key: "raceBrideAvatarUrl", title: "Race Bride Avatar", subtitle: "Couples Race Challenge" },
+    { key: "raceGroomKartUrl", title: "Groom Racing Kart (3D)", subtitle: "Race Lane 1" },
+    { key: "raceBrideKartUrl", title: "Bride Racing Kart (3D)", subtitle: "Race Lane 2" },
+  ];
+
+const AUDIO_FIELDS: {
+  key: keyof Pick<
+    SiteConfiguration,
+    | "audioPharaonic"
+    | "audioSaidi"
+    | "audioCinema"
+    | "audioFalahi"
+    | "audioZamalek"
+    | "audioAhly"
+    | "audioIndian"
+    | "audioMexican"
+  >;
+  label: string;
+  badge: string;
+  placeholder: string;
+}[] = [
+    {
+      key: "audioPharaonic",
+      label: "1. Pharaonic Theme Audio URL",
+      badge: "pharaonic",
+      placeholder: "/audio/pharaonic-track.mp3",
+    },
+    {
+      key: "audioSaidi",
+      label: "2. Saidi Theme Audio URL",
+      badge: "saidi",
+      placeholder: "/audio/track-c-saidi.mp3",
+    },
+    {
+      key: "audioCinema",
+      label: "3. Cinema (1950s) Theme Audio URL",
+      badge: "cinema",
+      placeholder: "/audio/track-d-cinema.mp3",
+    },
+    {
+      key: "audioFalahi",
+      label: "4. Falahi Theme Audio URL",
+      badge: "falahi",
+      placeholder: "/audio/hadret-el-omda.mp3",
+    },
+    {
+      key: "audioZamalek",
+      label: "5. Zamalek SC Theme Audio URL",
+      badge: "zamalek",
+      placeholder: "/audio/zamalek-curva-sud.mp3",
+    },
+    {
+      key: "audioAhly",
+      label: "6. Al Ahly SC Theme Audio URL",
+      badge: "ahly",
+      placeholder: "/audio/ahly-theme.mp3",
+    },
+    {
+      key: "audioIndian",
+      label: "7. Indian Bollywood Theme Audio URL",
+      badge: "indian",
+      placeholder: "/audio/indian-theme.mp3",
+    },
+    {
+      key: "audioMexican",
+      label: "8. Mexican Fiesta Theme Audio URL",
+      badge: "mexican",
+      placeholder: "/audio/mexican-theme.mp3",
+    },
+  ];
+
+function computeDurationLabel(dateStr: string): string {
+  if (!dateStr) return "Select a date";
+  const target = new Date(dateStr);
+  if (Number.isNaN(target.getTime())) return "Invalid date";
+  const now = new Date();
+  const isFuture = target.getTime() > now.getTime();
+  const duration = intervalToDuration({
+    start: isFuture ? now : target,
+    end: isFuture ? target : now,
+  });
+  return `${duration.years ?? 0}y • ${duration.months ?? 0}m • ${duration.days ?? 0}d • ${duration.hours ?? 0}h ${isFuture ? "(countdown)" : "together"
+    }`;
 }
-
-/* -------------------------------------------------------------------------- */
-/* Initial Default Values                                                     */
-/* -------------------------------------------------------------------------- */
-
-const DEFAULT_CONFIG: SiteConfiguration = {
-  groomName: "كرم",
-  brideName: "هدير",
-  weddingDate: "2024-11-15",
-  engagementDate: "2023-08-10",
-  audioTrackA: "/audio/pharaonic-track.mp3",
-  audioTrackB: "/audio/saidi.mp3",
-  audioTrackC: "/audio/track-d-cinema.mp3",
-  audioTrackD: "/audio/zamalek-curva-sud.mp3",
-  heroGroomUrl: "/statues/zamalek-groom.png",
-  heroBrideUrl: "/statues/zamalek-bride.png",
-  avatarGroomUrl: "/race/groom-avatar.png",
-  avatarBrideUrl: "/race/bride-avatar.png",
-  gallery: [
-    {
-      id: "mem-01",
-      url: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1000&q=80",
-      caption: "أول خطوة في رحلتنا مع بعض 💍",
-      date: "2023-08-10",
-    },
-    {
-      id: "mem-02",
-      url: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1000&q=80",
-      caption: "غروب النيل في ليلة لا تُنسى ✨",
-      date: "2023-11-20",
-    },
-    {
-      id: "mem-03",
-      url: "https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=1000&q=80",
-      caption: "ضحكة من القلب مع بداية تجهيزات الفرح 🤍",
-      date: "2024-05-14",
-    },
-  ],
-};
-
-const STORAGE_KEY = "WEDDING_ADMIN_CONFIG";
-
-/* -------------------------------------------------------------------------- */
-/* AI Prompt Cheat Sheet Constants                                            */
-/* -------------------------------------------------------------------------- */
-
-const GROOM_CAR_PROMPT = `A 3D Pixar-style cute, small, fast [لون العربية، مثلا: red] open-roof toy racing car, side profile view perfectly centered. The car has a bold, large letter "[أول حرف من اسم العريس]" printed on its side door. Sitting inside and driving is a 3D Pixar-style handsome Egyptian groom with [وصف شعره] wearing [وصف لبسه]. He is smiling and looking competitive. Centered composition with 10% empty padding margin around the car. Tires resting exactly at the bottom of the frame. 3/4 camera angle slightly from above. Consistent soft studio lighting from the top-left. Isolated on a solid pure white background for easy cutout. 8k resolution --ar 2:1`;
-
-const BRIDE_CAR_PROMPT = `A 3D Pixar-style cute, small, fast [لون العربية، مثلا: pink] open-roof toy racing car, side profile view perfectly centered. The car has a bold, large letter "[أول حرف من اسم العروسة]" printed on its side door. Sitting inside and driving is a 3D Pixar-style beautiful Egyptian bride with [وصف شعرها/طرحتها] wearing [وصف فستانها]. She is smiling and having fun. Centered composition with 10% empty padding margin around the car. Tires resting exactly at the bottom of the frame. 3/4 camera angle slightly from above. Consistent soft studio lighting from the top-left. Isolated on a solid pure white background for easy cutout. 8k resolution --ar 2:1`;
-
-/* -------------------------------------------------------------------------- */
-/* Component: AdminPage                                                       */
-/* -------------------------------------------------------------------------- */
 
 export default function AdminPage() {
   const router = useRouter();
+  const { config, updateConfig } = useWeddingConfig();
 
-  // 1. GLOBAL CONFIGURATION (Dates & Audio)
-  const [groomName, setGroomName] = useState<string>(DEFAULT_CONFIG.groomName);
-  const [brideName, setBrideName] = useState<string>(DEFAULT_CONFIG.brideName);
-  const [weddingDate, setWeddingDate] = useState<string>(DEFAULT_CONFIG.weddingDate);
-  const [engagementDate, setEngagementDate] = useState<string>(DEFAULT_CONFIG.engagementDate);
+  const [draft, setDraft] = useState<SiteConfiguration>(config);
+  const [isDirty, setIsDirty] = useState(false);
 
-  const [audioTrackA, setAudioTrackA] = useState<string>(DEFAULT_CONFIG.audioTrackA);
-  const [audioTrackB, setAudioTrackB] = useState<string>(DEFAULT_CONFIG.audioTrackB);
-  const [audioTrackC, setAudioTrackC] = useState<string>(DEFAULT_CONFIG.audioTrackC);
-  const [audioTrackD, setAudioTrackD] = useState<string>(DEFAULT_CONFIG.audioTrackD);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [manualAddUrl, setManualAddUrl] = useState("");
+  const [lastUploadedGalleryUrl, setLastUploadedGalleryUrl] = useState("");
+  const [copiedPromptId, setCopiedPromptId] = useState<string | null>(null);
 
-  // 2. HERO IMAGES UPLOAD
-  const [heroGroomUrl, setHeroGroomUrl] = useState<string>(DEFAULT_CONFIG.heroGroomUrl);
-  const [heroBrideUrl, setHeroBrideUrl] = useState<string>(DEFAULT_CONFIG.heroBrideUrl);
-  const [avatarGroomUrl, setAvatarGroomUrl] = useState<string>(DEFAULT_CONFIG.avatarGroomUrl);
-  const [avatarBrideUrl, setAvatarBrideUrl] = useState<string>(DEFAULT_CONFIG.avatarBrideUrl);
+  // Magic AI Generator state
+  const [groomSourceUrl, setGroomSourceUrl] = useState("");
+  const [brideSourceUrl, setBrideSourceUrl] = useState("");
+  const [isGeneratingAll, setIsGeneratingAll] = useState(false);
+  const [generationProgress, setGenerationProgress] = useState<{
+    current: number;
+    total: number;
+    currentLabel: string;
+  }>({ current: 0, total: ALL_16_GENERATION_TASKS.length, currentLabel: "" });
+  const [generationStatuses, setGenerationStatuses] = useState<
+    Record<string, "idle" | "generating" | "done" | "error">
+  >({});
+  const [generationError, setGenerationError] = useState<string | null>(null);
 
-  // 3. DYNAMIC GALLERY WITH METADATA (CRITICAL)
-  const [gallery, setGallery] = useState<GalleryItem[]>(DEFAULT_CONFIG.gallery);
-
-  // UI & Action states
-  const [activeTab, setActiveTab] = useState<"all" | "global" | "heroes" | "gallery" | "prompts" | "json">("all");
-  const [isSaving, setIsSaving] = useState<boolean>(false);
-  const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
-  const [showJsonInspector, setShowJsonInspector] = useState<boolean>(false);
-  const [copiedJson, setCopiedJson] = useState<boolean>(false);
-  const [copiedGroomPrompt, setCopiedGroomPrompt] = useState<boolean>(false);
-  const [copiedBridePrompt, setCopiedBridePrompt] = useState<boolean>(false);
-  const [manualAddUrl, setManualAddUrl] = useState<string>("");
-  const [isLoggingOut, setIsLoggingOut] = useState<boolean>(false);
-
-  // Load saved configuration from localStorage if available
+  // Keep draft synced with context hydration from localStorage / /api/config until user edits
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed: SiteConfiguration = JSON.parse(saved);
-        if (parsed.groomName) setGroomName(parsed.groomName);
-        if (parsed.brideName) setBrideName(parsed.brideName);
-        if (parsed.weddingDate) setWeddingDate(parsed.weddingDate);
-        if (parsed.engagementDate) setEngagementDate(parsed.engagementDate);
-        if (parsed.audioTrackA) setAudioTrackA(parsed.audioTrackA);
-        if (parsed.audioTrackB) setAudioTrackB(parsed.audioTrackB);
-        if (parsed.audioTrackC) setAudioTrackC(parsed.audioTrackC);
-        if (parsed.audioTrackD) setAudioTrackD(parsed.audioTrackD);
-        if (parsed.heroGroomUrl) setHeroGroomUrl(parsed.heroGroomUrl);
-        if (parsed.heroBrideUrl) setHeroBrideUrl(parsed.heroBrideUrl);
-        if (parsed.avatarGroomUrl) setAvatarGroomUrl(parsed.avatarGroomUrl);
-        if (parsed.avatarBrideUrl) setAvatarBrideUrl(parsed.avatarBrideUrl);
-        if (Array.isArray(parsed.gallery)) setGallery(parsed.gallery);
-      }
-    } catch (err) {
-      console.warn("Could not load stored admin config:", err);
+    if (!isDirty) {
+      setDraft(config);
     }
+  }, [config, isDirty]);
+
+  const setField = useCallback(
+    <K extends keyof SiteConfiguration>(key: K, value: SiteConfiguration[K]) => {
+      setIsDirty(true);
+      setDraft((prev) => ({ ...prev, [key]: value }));
+    },
+    []
+  );
+
+  const handleToggleTheme = useCallback((id: ThemeId) => {
+    setIsDirty(true);
+    setDraft((prev) => {
+      const current = prev.activeThemes || [];
+      if (current.includes(id)) {
+        return {
+          ...prev,
+          activeThemes: current.filter((t) => t !== id),
+        };
+      }
+      if (isThemeCheckboxDisabled(current, id)) {
+        return prev;
+      }
+      return {
+        ...prev,
+        activeThemes: [...current, id],
+      };
+    });
   }, []);
 
-  /* -------------------------------------------------------------------------- */
-  /* Live Counter Calculation Preview                                           */
-  /* -------------------------------------------------------------------------- */
-  const timeTogetherPreview = useMemo(() => {
-    if (!weddingDate) return { days: 0, hours: 0, minutes: 0, isFuture: false };
-    const target = new Date(weddingDate).getTime();
-    const now = new Date().getTime();
-    const diff = target > now ? target - now : now - target;
+  const engagementPreview = useMemo(
+    () => computeDurationLabel(draft.engagementDate),
+    [draft.engagementDate]
+  );
+  const weddingPreview = useMemo(
+    () => computeDurationLabel(draft.weddingDate),
+    [draft.weddingDate]
+  );
 
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
-    const minutes = Math.floor((diff / (1000 * 60)) % 60);
-
-    return {
-      days,
-      hours,
-      minutes,
-      isFuture: target > now,
-    };
-  }, [weddingDate]);
-
-  /* -------------------------------------------------------------------------- */
-  /* Gallery State Handlers                                                     */
-  /* -------------------------------------------------------------------------- */
-
-  const handleAddPhotoToGallery = useCallback((url: string, caption = "", date = "") => {
+  const handleAddGalleryPhoto = useCallback((url: string) => {
     if (!url.trim()) return;
     const newItem: GalleryItem = {
-      id: "mem-" + Date.now() + "-" + Math.random().toString(36).substring(2, 6),
+      id: `mem-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
       url: url.trim(),
-      caption: caption || "لحظة جديدة جميلة 🌸",
-      date: date || new Date().toISOString().split("T")[0],
+      caption: "",
+      date: new Date().toISOString().split("T")[0],
     };
-    setGallery((prev) => [newItem, ...prev]);
+    setIsDirty(true);
+    setDraft((prev) => ({
+      ...prev,
+      gallery: [newItem, ...prev.gallery],
+    }));
   }, []);
 
   const handleUpdateGalleryItem = useCallback(
-    (id: string, field: "caption" | "date" | "url", value: string) => {
-      setGallery((prev) =>
-        prev.map((item) => (item.id === id ? { ...item, [field]: value } : item))
-      );
+    (id: string, field: "caption" | "date", value: string) => {
+      setIsDirty(true);
+      setDraft((prev) => ({
+        ...prev,
+        gallery: prev.gallery.map((item) =>
+          item.id === id ? { ...item, [field]: value } : item
+        ),
+      }));
     },
     []
   );
 
   const handleRemoveGalleryItem = useCallback((id: string) => {
-    setGallery((prev) => prev.filter((item) => item.id !== id));
+    setIsDirty(true);
+    setDraft((prev) => ({
+      ...prev,
+      gallery: prev.gallery.filter((item) => item.id !== id),
+    }));
   }, []);
 
-  /* -------------------------------------------------------------------------- */
-  /* Logout Handler                                                             */
-  /* -------------------------------------------------------------------------- */
+  const handleCopyPrompt = (text: string, id: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedPromptId(id);
+    setTimeout(() => {
+      setCopiedPromptId((prev) => (prev === id ? null : prev));
+    }, 2500);
+  };
+
+  const handleGenerateAll16 = async () => {
+    if (!groomSourceUrl || !brideSourceUrl || isGeneratingAll) return;
+
+    setIsGeneratingAll(true);
+    setGenerationError(null);
+    setGenerationProgress({
+      current: 0,
+      total: ALL_16_GENERATION_TASKS.length,
+      currentLabel: "Starting Magic AI Pipeline...",
+    });
+    setGenerationStatuses({});
+
+    for (let i = 0; i < ALL_16_GENERATION_TASKS.length; i++) {
+      const task = ALL_16_GENERATION_TASKS[i];
+      const sourceImageUrl =
+        task.role === "groom" ? groomSourceUrl : brideSourceUrl;
+
+      setGenerationProgress({
+        current: i + 1,
+        total: ALL_16_GENERATION_TASKS.length,
+        currentLabel: `Generating ${task.label}... ${i + 1}/${ALL_16_GENERATION_TASKS.length}`,
+      });
+      setGenerationStatuses((prev) => ({ ...prev, [task.key]: "generating" }));
+
+      try {
+        const res = await fetch("/api/generate-character", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            sourceImageUrl,
+            prompt: task.prompt,
+          }),
+        });
+
+        const data = (await res.json()) as {
+          success?: boolean;
+          imageUrl?: string;
+          url?: string;
+          error?: string;
+        };
+
+        const generatedUrl = data.imageUrl || data.url;
+        if (!res.ok || !generatedUrl) {
+          throw new Error(
+            data.error || `Failed generating ${task.label} (HTTP ${res.status})`
+          );
+        }
+
+        // Immediately persist each generated URL into local draft & global WeddingConfigContext
+        setDraft((prev) => ({ ...prev, [task.key]: generatedUrl }));
+        updateConfig({ [task.key]: generatedUrl });
+        setGenerationStatuses((prev) => ({ ...prev, [task.key]: "done" }));
+      } catch (err) {
+        const msg =
+          err instanceof Error ? err.message : `Error generating ${task.label}`;
+        setGenerationStatuses((prev) => ({ ...prev, [task.key]: "error" }));
+        setGenerationError(msg);
+        // Stop early if REPLICATE_API_TOKEN is not configured so we don't fail 16 times in a row
+        if (msg.includes("REPLICATE_API_TOKEN")) {
+          break;
+        }
+      }
+    }
+
+    setIsGeneratingAll(false);
+  };
+
   const handleLogout = async () => {
     setIsLoggingOut(true);
     try {
       await fetch("/api/auth", { method: "DELETE" });
       router.push("/admin/login");
       router.refresh();
-    } catch (err) {
-      console.error("Logout error:", err);
+    } catch {
       router.push("/admin/login");
     }
   };
-
-  /* -------------------------------------------------------------------------- */
-  /* SAVE ACTION: Bundle full state into single JSON payload                     */
-  /* -------------------------------------------------------------------------- */
-  const fullConfigPayload: SiteConfiguration = useMemo(
-    () => ({
-      groomName,
-      brideName,
-      weddingDate,
-      engagementDate,
-      audioTrackA,
-      audioTrackB,
-      audioTrackC,
-      audioTrackD,
-      heroGroomUrl,
-      heroBrideUrl,
-      avatarGroomUrl,
-      avatarBrideUrl,
-      gallery,
-      lastUpdated: new Date().toISOString(),
-    }),
-    [
-      groomName,
-      brideName,
-      weddingDate,
-      engagementDate,
-      audioTrackA,
-      audioTrackB,
-      audioTrackC,
-      audioTrackD,
-      heroGroomUrl,
-      heroBrideUrl,
-      avatarGroomUrl,
-      avatarBrideUrl,
-      gallery,
-    ]
-  );
 
   const handleSaveAndPublish = async () => {
     setIsSaving(true);
     setSaveSuccess(false);
 
-    // 1. Bundle entire state into a single JSON object and console.log it
-    console.log("==========================================");
-    console.log("🚀 PUBLISHING WEDDING SITE CONFIGURATION:");
-    console.log(JSON.stringify(fullConfigPayload, null, 2));
-    console.log("==========================================");
+    const payload: SiteConfiguration = {
+      ...draft,
+      lastUpdated: new Date().toISOString(),
+    };
 
-    // 2. Persist to localStorage for client-side live site consumption
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(fullConfigPayload));
-    } catch (e) {
-      console.warn("Local storage save failed:", e);
-    }
+    // Persist immediately into global context + localStorage
+    updateConfig(payload);
+    setIsDirty(false);
 
-    // 3. Post to API /api/config
+    // Persist to /api/config server endpoint
     try {
-      const res = await fetch("/api/config", {
+      await fetch("/api/config", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(fullConfigPayload),
+        body: JSON.stringify(payload),
       });
-      if (res.ok) {
-        console.log("✅ Successfully saved to /api/config");
-      }
     } catch (err) {
-      console.log("ℹ️ /api/config endpoint note:", err);
+      console.warn("Could not save to /api/config:", err);
     }
 
     setTimeout(() => {
       setIsSaving(false);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 5000);
-    }, 600);
-  };
-
-  const handleCopyJson = () => {
-    navigator.clipboard.writeText(JSON.stringify(fullConfigPayload, null, 2));
-    setCopiedJson(true);
-    setTimeout(() => setCopiedJson(false), 2500);
-  };
-
-  const handleCopyText = (text: string, type: "groom" | "bride") => {
-    navigator.clipboard.writeText(text);
-    if (type === "groom") {
-      setCopiedGroomPrompt(true);
-      setTimeout(() => setCopiedGroomPrompt(false), 2500);
-    } else {
-      setCopiedBridePrompt(true);
-      setTimeout(() => setCopiedBridePrompt(false), 2500);
-    }
+    }, 350);
   };
 
   return (
-    <div className="min-h-screen bg-[#FDF9FA] text-[#33272A] font-sans antialiased pb-16">
-      {/* -------------------------------------------------------------------- */}
-      {/* Top Navigation & Sticky Publish Action Header                        */}
-      {/* -------------------------------------------------------------------- */}
-      <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-[#F2D98D]/40 shadow-xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
-          {/* Logo & Subtitle */}
+    <div className="min-h-screen overflow-y-auto bg-gray-50 p-4 pb-32 text-[#33272A] font-sans antialiased">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Top Bar */}
+        <header className="bg-white rounded-2xl border border-gray-200 shadow-xs px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <Link
               href="/"
               className="p-2 rounded-xl bg-amber-50 hover:bg-amber-100 text-[#D4AF37] transition-all"
-              title="Return to Romantic Wrapped Experience"
+              title="Back to Wedding Site"
             >
               <ArrowLeft className="w-5 h-5" />
             </Link>
             <div>
               <div className="flex items-center gap-2">
-                <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                <h1 className="text-xl sm:text-2xl font-serif font-black tracking-tight text-[#2B1D24]">
-                  Wedding Website Admin
+                <span className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                <h1 className="text-xl sm:text-2xl font-serif font-black text-[#2B1D24]">
+                  Wedding Control Dashboard
                 </h1>
-                <span className="hidden sm:inline-block px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#D4AF37]/15 text-[#B89335]">
-                  Control Hub
-                </span>
               </div>
-              <p className="text-xs text-[#7B6A6E] font-medium hidden sm:block">
-                Fully customize dates, dynamic audio, hero characters &amp; memory gallery
+              <p className="text-xs text-gray-500">
+                100% Dynamic Configuration — Changes appear live across all sections
               </p>
             </div>
           </div>
 
-          {/* Top Actions: Live Preview Link, Logout & Massive Save Button */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-2.5">
             <Link
               href="/"
               target="_blank"
-              className="hidden md:inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-xl border border-gray-200 hover:border-gray-300 text-gray-700 bg-white hover:bg-gray-50 transition-all shadow-xs"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-700 transition-all"
             >
               <Eye className="w-4 h-4 text-[#D4AF37]" />
-              <span>Live Site</span>
+              <span>Preview Live Site</span>
               <ExternalLink className="w-3.5 h-3.5 text-gray-400" />
             </Link>
 
-            {/* Logout Button */}
             <button
               type="button"
               onClick={handleLogout}
               disabled={isLoggingOut}
-              className="p-2 sm:px-3 sm:py-2 rounded-xl border border-rose-200 hover:bg-rose-50 text-rose-600 text-xs font-bold inline-flex items-center gap-1.5 transition-all cursor-pointer"
-              title="تسجيل الخروج من لوحة التحكم"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-rose-200 hover:bg-rose-50 text-rose-600 text-xs font-bold transition-all cursor-pointer"
             >
               <LogOut className="w-4 h-4" />
-              <span className="hidden sm:inline">Logout</span>
-            </button>
-
-            {/* Massive SAVE & PUBLISH Button */}
-            <button
-              type="button"
-              onClick={handleSaveAndPublish}
-              disabled={isSaving}
-              className={`inline-flex items-center gap-2.5 px-5 sm:px-8 py-3 rounded-xl font-bold text-sm sm:text-base text-white shadow-md transition-all duration-200 cursor-pointer ${
-                saveSuccess
-                  ? "bg-emerald-600 hover:bg-emerald-700 scale-102"
-                  : "bg-gradient-to-r from-[#D4AF37] via-[#C9A227] to-[#B89335] hover:opacity-95 hover:shadow-lg active:scale-98"
-              } disabled:opacity-50`}
-            >
-              {isSaving ? (
-                <>
-                  <RefreshCw className="w-5 h-5 animate-spin" />
-                  <span>Publishing Changes...</span>
-                </>
-              ) : saveSuccess ? (
-                <>
-                  <CheckCircle2 className="w-5 h-5" />
-                  <span>Published Successfully!</span>
-                </>
-              ) : (
-                <>
-                  <Save className="w-5 h-5" />
-                  <span>SAVE &amp; PUBLISH</span>
-                </>
-              )}
+              <span>Logout</span>
             </button>
           </div>
-        </div>
-      </header>
+        </header>
 
-      {/* -------------------------------------------------------------------- */}
-      {/* Notification Toast Alert                                             */}
-      {/* -------------------------------------------------------------------- */}
-      {saveSuccess && (
-        <div className="bg-emerald-50 border-b border-emerald-200 px-4 py-3 text-emerald-800 text-sm font-semibold flex items-center justify-center gap-2 text-center transition-all animate-in fade-in">
-          <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-          <span>
-            Changes saved and published! Complete JSON bundle was logged to the console and sent to /api/config.
-          </span>
-        </div>
-      )}
+        {/* ================================================================== */}
+        {/* TOP CARD: ✨ MAGIC AI CHARACTER GENERATOR (REPLICATE INSTANTID)    */}
+        {/* ================================================================== */}
+        <section className="bg-white rounded-2xl border-2 border-[#D4AF37]/50 shadow-md overflow-hidden">
+          <div className="p-6 border-b border-[#D4AF37]/20 bg-gradient-to-r from-[#2B1D24] via-[#3d2631] to-[#2B1D24] text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3.5">
+              <div className="p-3 rounded-xl bg-gradient-to-br from-[#D4AF37] to-[#B89335] text-[#2B1D24] shadow-md">
+                <Wand2 className="w-6 h-6" />
+              </div>
+              <div>
+                <h2 className="text-xl sm:text-2xl font-serif font-black tracking-tight">
+                  ✨ Magic AI Generator
+                </h2>
+                <p className="text-xs sm:text-sm text-amber-100/85">
+                  Upload 1 clear photo of the Groom &amp; 1 of the Bride — InstantID generates all 16 hyper-realistic theme characters progressively.
+                </p>
+              </div>
+            </div>
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-[#D4AF37]/40 text-xs font-bold text-[#F2D98D] self-start sm:self-auto">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Replicate InstantID • 16 Characters</span>
+            </span>
+          </div>
 
-      {/* -------------------------------------------------------------------- */}
-      {/* Main Content Dashboard Container                                     */}
-      {/* -------------------------------------------------------------------- */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        {/* Navigation Tabs Pill Bar */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-2 border-b border-gray-200 text-xs sm:text-sm font-semibold scrollbar-none">
-          {[
-            { id: "all", label: "Overview & All Sections", icon: Sliders },
-            { id: "global", label: "1. Global & Audio", icon: Calendar },
-            { id: "heroes", label: "2. Hero Characters", icon: ImageIcon },
-            { id: "gallery", label: `3. Memory Gallery (${gallery.length})`, icon: Layers },
-            { id: "prompts", label: "🤖 AI Prompt Cheat Sheet", icon: Bot },
-            { id: "json", label: "4. JSON Config Payload", icon: Sparkles },
-          ].map((tab) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
+          <div className="p-6 space-y-6">
+            {/* 2 Source Photo Uploaders */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <CloudinaryImageCard
+                title="1. Groom Source Photo (صورة العريس الأصلية)"
+                subtitle="Clear front-facing portrait for InstantID face preservation"
+                imageUrl={groomSourceUrl}
+                onUrlChange={setGroomSourceUrl}
+              />
+              <CloudinaryImageCard
+                title="2. Bride Source Photo (صورة العروسة الأصلية)"
+                subtitle="Clear front-facing portrait for InstantID face preservation"
+                imageUrl={brideSourceUrl}
+                onUrlChange={setBrideSourceUrl}
+              />
+            </div>
+
+            {/* Error Alert */}
+            {generationError && (
+              <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs sm:text-sm font-semibold flex items-start gap-2.5">
+                <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-bold">Generation Notice:</p>
+                  <p>{generationError}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Progress Bar & Live Status Text */}
+            {(isGeneratingAll || generationProgress.current > 0) && (
+              <div className="p-4 rounded-xl bg-amber-50/70 border border-[#D4AF37]/40 space-y-3">
+                <div className="flex items-center justify-between text-xs sm:text-sm font-bold text-[#2B1D24]">
+                  <span className="flex items-center gap-2">
+                    {isGeneratingAll && (
+                      <RefreshCw className="w-4 h-4 text-[#B89335] animate-spin" />
+                    )}
+                    <span>
+                      {isGeneratingAll
+                        ? generationProgress.currentLabel
+                        : `Completed ${Object.values(generationStatuses).filter(
+                          (s) => s === "done"
+                        ).length
+                        } / ${ALL_16_GENERATION_TASKS.length} Characters`}
+                    </span>
+                  </span>
+                  <span className="font-mono text-[#B89335]">
+                    {Math.round(
+                      (generationProgress.current / generationProgress.total) *
+                      100
+                    )}
+                    %
+                  </span>
+                </div>
+
+                <div className="w-full h-3 rounded-full bg-white border border-[#D4AF37]/30 overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-[#D4AF37] via-[#F2D98D] to-[#B89335] transition-all duration-300"
+                    style={{
+                      width: `${(generationProgress.current /
+                          generationProgress.total) *
+                        100
+                        }%`,
+                    }}
+                  />
+                </div>
+
+                {/* 16-Item Live Status Pills */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2 pt-1">
+                  {ALL_16_GENERATION_TASKS.map((task) => {
+                    const status = generationStatuses[task.key] || "idle";
+                    return (
+                      <div
+                        key={task.key}
+                        className={`px-2 py-1.5 rounded-lg border text-[10px] font-bold flex items-center justify-between gap-1 ${status === "generating"
+                            ? "border-[#D4AF37] bg-amber-100 text-[#2B1D24] animate-pulse"
+                            : status === "done"
+                              ? "border-emerald-300 bg-emerald-50 text-emerald-800"
+                              : status === "error"
+                                ? "border-rose-300 bg-rose-50 text-rose-800"
+                                : "border-gray-200 bg-white text-gray-500"
+                          }`}
+                      >
+                        <span className="truncate">{task.label}</span>
+                        <span>
+                          {status === "generating"
+                            ? "⏳"
+                            : status === "done"
+                              ? "✓"
+                              : status === "error"
+                                ? "✕"
+                                : "•"}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Massive Generate All 16 Characters Button */}
+            <div className="flex flex-col items-center gap-2 pt-1">
               <button
-                key={tab.id}
                 type="button"
-                onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl whitespace-nowrap transition-all cursor-pointer ${
-                  isActive
-                    ? "bg-[#2B1D24] text-white shadow-xs font-bold"
-                    : "text-[#7B6A6E] hover:text-[#2B1D24] hover:bg-gray-100"
-                }`}
+                onClick={handleGenerateAll16}
+                disabled={
+                  isGeneratingAll || !groomSourceUrl || !brideSourceUrl
+                }
+                className="w-full py-4 px-8 rounded-2xl font-black text-base sm:text-lg tracking-wide text-[#2B1D24] bg-gradient-to-r from-[#D4AF37] via-[#F2D98D] to-[#B89335] hover:opacity-95 shadow-lg transition-all flex items-center justify-center gap-3 cursor-pointer disabled:opacity-45 disabled:cursor-not-allowed"
               >
-                <Icon className={`w-4 h-4 ${isActive ? "text-[#D4AF37]" : "text-gray-400"}`} />
-                <span>{tab.label}</span>
+                {isGeneratingAll ? (
+                  <>
+                    <RefreshCw className="w-5 h-5 animate-spin" />
+                    <span>{generationProgress.currentLabel}</span>
+                  </>
+                ) : (
+                  <>
+                    <Wand2 className="w-5 h-5" />
+                    <span>Generate All 16 Characters</span>
+                  </>
+                )}
               </button>
-            );
-          })}
-        </div>
-
-        {/* ================================================================== */}
-        {/* SECTION 1: GLOBAL CONFIGURATION (Dates & Audio)                     */}
-        {/* ================================================================== */}
-        {(activeTab === "all" || activeTab === "global") && (
-          <section className="bg-white rounded-2xl border border-gray-200/80 shadow-xs overflow-hidden">
-            <div className="p-6 sm:p-8 border-b border-gray-100 bg-gradient-to-r from-amber-50/50 via-rose-50/30 to-white flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-[#D4AF37]/15 text-[#B89335]">
-                  <Calendar className="w-6 h-6" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-serif font-black text-[#2B1D24]">
-                    1. Global Configuration
-                  </h2>
-                  <p className="text-xs sm:text-sm text-[#7B6A6E]">
-                    Couple names, milestone dates, live counter engine &amp; soundtrack anthems
-                  </p>
-                </div>
-              </div>
-              <span className="text-xs font-bold px-3 py-1 rounded-full bg-amber-100 text-amber-800">
-                Core Engine
-              </span>
+              {(!groomSourceUrl || !brideSourceUrl) && (
+                <p className="text-xs text-gray-500">
+                  Upload both the Groom and Bride source photos above to unlock Magic AI Generation.
+                </p>
+              )}
             </div>
+          </div>
+        </section>
 
-            <div className="p-6 sm:p-8 space-y-6">
-              {/* Couple Names Row */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-2">
-                    Groom Name (اسم العريس)
-                  </label>
-                  <input
-                    type="text"
-                    value={groomName}
-                    onChange={(e) => setGroomName(e.target.value)}
-                    placeholder="e.g. كرم"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/20 outline-none text-sm transition-all"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-2">
-                    Bride Name (اسم العروسة)
-                  </label>
-                  <input
-                    type="text"
-                    value={brideName}
-                    onChange={(e) => setBrideName(e.target.value)}
-                    placeholder="e.g. هدير"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/20 outline-none text-sm transition-all"
-                  />
-                </div>
+        {/* ================================================================== */}
+        {/* THEME SELECTOR CARD (MAX 5 THEMES + AHLY / ZAMALEK XOR)            */}
+        {/* ================================================================== */}
+        <section className="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden">
+          <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-emerald-50/50 via-amber-50/40 to-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-emerald-100 text-emerald-700">
+                <Palette className="w-6 h-6" />
               </div>
-
-              {/* Milestone Dates Row */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-2">
-                    Engagement Date (تاريخ الخطوبة)
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="date"
-                      value={engagementDate}
-                      onChange={(e) => setEngagementDate(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/20 outline-none text-sm transition-all bg-white"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-2">
-                    Wedding Date (تاريخ الزفاف)
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="date"
-                      value={weddingDate}
-                      onChange={(e) => setWeddingDate(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/20 outline-none text-sm transition-all bg-white"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* REQUIRED UI HINT: Explanation of "Time Together" Live Counter */}
-              <div className="p-4 rounded-xl bg-amber-50/70 border border-amber-200/80 text-amber-950 text-xs sm:text-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div className="flex items-start gap-3">
-                  <Clock className="w-5 h-5 text-[#B89335] shrink-0 mt-0.5" />
-                  <div>
-                    <p className="font-bold text-amber-900">
-                      💡 How the Live &quot;Time Together&quot; Counter Works:
-                    </p>
-                    <p className="text-amber-800 text-xs mt-0.5">
-                      The <strong>Wedding Date</strong> will be used to calculate a live &quot;Time Together&quot; counter (days, hours, minutes) across the site. If the date is in the past, it displays days since the big day; if in the future, it renders the live wedding countdown!
-                    </p>
-                  </div>
-                </div>
-
-                {/* Live Preview Pill */}
-                <div className="shrink-0 bg-white border border-amber-200 px-3.5 py-2 rounded-lg text-xs font-mono font-bold text-[#B89335] shadow-2xs">
-                  <span className="block text-[10px] uppercase font-sans text-gray-400">
-                    Live Calculation Preview
-                  </span>
-                  <span>
-                    {timeTogetherPreview.days.toLocaleString()} Days • {timeTogetherPreview.hours}h •{" "}
-                    {timeTogetherPreview.minutes}m {timeTogetherPreview.isFuture ? "until Wedding" : "Together"}
-                  </span>
-                </div>
-              </div>
-
-              {/* Audio URLs: 4 Anthems */}
-              <div className="pt-4 border-t border-gray-100">
-                <div className="flex items-center gap-2 mb-4">
-                  <Music className="w-4 h-4 text-[#D4AF37]" />
-                  <h3 className="text-sm font-bold uppercase tracking-wider text-gray-700">
-                    Soundtrack Anthems (4 Audio Tracks)
-                  </h3>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Track A */}
-                  <div className="p-4 rounded-xl border border-gray-200 hover:border-gray-300 bg-gray-50/50 transition-all">
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-xs font-bold text-gray-800">
-                        Track A: Pharaonic Heritage Anthem
-                      </span>
-                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-gray-200 text-gray-700">
-                        Scene 02
-                      </span>
-                    </div>
-                    <input
-                      type="text"
-                      value={audioTrackA}
-                      onChange={(e) => setAudioTrackA(e.target.value)}
-                      placeholder="/audio/pharaonic-track.mp3"
-                      className="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 bg-white focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] outline-none font-mono"
-                    />
-                  </div>
-
-                  {/* Track B */}
-                  <div className="p-4 rounded-xl border border-gray-200 hover:border-gray-300 bg-gray-50/50 transition-all">
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-xs font-bold text-gray-800">
-                        Track B: Saidi Heritage &amp; Mismar
-                      </span>
-                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-amber-100 text-amber-800">
-                        Scene 03
-                      </span>
-                    </div>
-                    <input
-                      type="text"
-                      value={audioTrackB}
-                      onChange={(e) => setAudioTrackB(e.target.value)}
-                      placeholder="/audio/saidi.mp3"
-                      className="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 bg-white focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] outline-none font-mono"
-                    />
-                  </div>
-
-                  {/* Track C */}
-                  <div className="p-4 rounded-xl border border-gray-200 hover:border-gray-300 bg-gray-50/50 transition-all">
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-xs font-bold text-gray-800">
-                        Track C: Golden Age Cinema Orchestra
-                      </span>
-                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-rose-100 text-rose-800">
-                        Scene 04
-                      </span>
-                    </div>
-                    <input
-                      type="text"
-                      value={audioTrackC}
-                      onChange={(e) => setAudioTrackC(e.target.value)}
-                      placeholder="/audio/track-d-cinema.mp3"
-                      className="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 bg-white focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] outline-none font-mono"
-                    />
-                  </div>
-
-                  {/* Track D */}
-                  <div className="p-4 rounded-xl border border-gray-200 hover:border-gray-300 bg-gray-50/50 transition-all">
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-xs font-bold text-gray-800">
-                        Track D: Zamalek SC Anthem (Curva Sud)
-                      </span>
-                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-red-100 text-red-800">
-                        Scene 05
-                      </span>
-                    </div>
-                    <input
-                      type="text"
-                      value={audioTrackD}
-                      onChange={(e) => setAudioTrackD(e.target.value)}
-                      placeholder="/audio/zamalek-curva-sud.mp3"
-                      className="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 bg-white focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] outline-none font-mono"
-                    />
-                  </div>
-                </div>
+              <div>
+                <h2 className="text-lg sm:text-xl font-serif font-black text-[#2B1D24]">
+                  Theme Selector (Choose up to {MAX_ACTIVE_THEMES} Themes)
+                </h2>
+                <p className="text-xs sm:text-sm text-gray-500">
+                  Select which cultural themes appear on your live timeline. Maximum 5 themes; Al Ahly &amp; Zamalek are mutually exclusive.
+                </p>
               </div>
             </div>
-          </section>
-        )}
+            <span
+              className={`text-xs font-bold px-3 py-1 rounded-full self-start sm:self-auto ${draft.activeThemes.length >= MAX_ACTIVE_THEMES
+                  ? "bg-amber-100 text-amber-800"
+                  : "bg-emerald-100 text-emerald-800"
+                }`}
+            >
+              {draft.activeThemes.length} / {MAX_ACTIVE_THEMES} Selected
+            </span>
+          </div>
 
-        {/* ================================================================== */}
-        {/* SECTION 2: HERO IMAGES UPLOAD (next-cloudinary CldUploadWidget)    */}
-        {/* ================================================================== */}
-        {(activeTab === "all" || activeTab === "heroes") && (
-          <section className="bg-white rounded-2xl border border-gray-200/80 shadow-xs overflow-hidden">
-            <div className="p-6 sm:p-8 border-b border-gray-100 bg-gradient-to-r from-rose-50/50 via-amber-50/30 to-white flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-rose-100 text-rose-700">
-                  <ImageIcon className="w-6 h-6" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-serif font-black text-[#2B1D24]">
-                    2. Hero Characters Upload
-                  </h2>
-                  <p className="text-xs sm:text-sm text-[#7B6A6E]">
-                    Upload Groom, Bride and Avatar characters via Cloudinary with instant previews
-                  </p>
-                </div>
-              </div>
-              <span className="text-xs font-bold px-3 py-1 rounded-full bg-rose-100 text-rose-800">
-                Cloudinary Widget
-              </span>
-            </div>
+          <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+            {AVAILABLE_THEMES.map((theme) => {
+              const checked = draft.activeThemes.includes(theme.id);
+              const disabled = isThemeCheckboxDisabled(draft.activeThemes, theme.id);
+              const isXorBlocked =
+                !checked &&
+                ((theme.id === "ahly" && draft.activeThemes.includes("zamalek")) ||
+                  (theme.id === "zamalek" && draft.activeThemes.includes("ahly")));
 
-            <div className="p-6 sm:p-8">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {/* Hero 1: Groom */}
-                <HeroImageUploaderCard
-                  title="Groom Hero Character"
-                  subtitle="Section 5 (Zamalek) / Section 3"
-                  imageUrl={heroGroomUrl}
-                  onUrlChange={setHeroGroomUrl}
-                  presetName="wedding_heroes"
-                />
-
-                {/* Hero 2: Bride */}
-                <HeroImageUploaderCard
-                  title="Bride Hero Character"
-                  subtitle="Section 5 (Zamalek) / Section 3"
-                  imageUrl={heroBrideUrl}
-                  onUrlChange={setHeroBrideUrl}
-                  presetName="wedding_heroes"
-                />
-
-                {/* Hero 3: 3D Groom Avatar */}
-                <HeroImageUploaderCard
-                  title="Groom 3D Avatar"
-                  subtitle="Section 6 (Race Challenge)"
-                  imageUrl={avatarGroomUrl}
-                  onUrlChange={setAvatarGroomUrl}
-                  presetName="wedding_avatars"
-                />
-
-                {/* Hero 4: 3D Bride Avatar */}
-                <HeroImageUploaderCard
-                  title="Bride 3D Avatar"
-                  subtitle="Section 6 (Race Challenge)"
-                  imageUrl={avatarBrideUrl}
-                  onUrlChange={setAvatarBrideUrl}
-                  presetName="wedding_avatars"
-                />
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* ================================================================== */}
-        {/* SECTION 3: DYNAMIC GALLERY WITH METADATA (CRITICAL)                */}
-        {/* ================================================================== */}
-        {(activeTab === "all" || activeTab === "gallery") && (
-          <section className="bg-white rounded-2xl border border-gray-200/80 shadow-xs overflow-hidden">
-            <div className="p-6 sm:p-8 border-b border-gray-100 bg-gradient-to-r from-purple-50/50 via-pink-50/30 to-white flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-xl bg-purple-100 text-purple-700">
-                  <Layers className="w-6 h-6" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-serif font-black text-[#2B1D24]">
-                    3. Dynamic Memory Gallery
-                  </h2>
-                  <p className="text-xs sm:text-sm text-[#7B6A6E]">
-                    Upload photos with individual captions, stories, and memory dates
-                  </p>
-                </div>
-              </div>
-
-              {/* Upload Controls for Gallery */}
-              <div className="flex items-center gap-2.5">
-                <CldUploadWidget
-                  config={{ cloud: { cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "demo" } }}
-                  uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "wedding_gallery"}
-                  onSuccess={(result) => {
-                    const info = result?.info as { secure_url?: string } | undefined;
-                    if (info?.secure_url) {
-                      handleAddPhotoToGallery(info.secure_url);
-                    }
-                  }}
-                  options={{
-                    maxFiles: 10,
-                    clientAllowedFormats: ["png", "jpeg", "jpg", "webp"],
-                  }}
+              return (
+                <label
+                  key={theme.id}
+                  className={`flex items-start gap-3 p-4 rounded-xl border transition-all ${checked
+                      ? "border-[#D4AF37] bg-amber-50/60 shadow-2xs cursor-pointer"
+                      : disabled
+                        ? "border-gray-200 bg-gray-100 opacity-55 cursor-not-allowed"
+                        : "border-gray-200 bg-white hover:border-gray-300 cursor-pointer"
+                    }`}
                 >
-                  {({ open }) => (
-                    <button
-                      type="button"
-                      onClick={() => open?.()}
-                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#2B1D24] hover:bg-[#3d2b34] text-white text-xs font-bold shadow-xs transition-all cursor-pointer"
-                    >
-                      <UploadCloud className="w-4 h-4 text-[#D4AF37]" />
-                      <span>Add Memory Photos (Cloudinary)</span>
-                    </button>
-                  )}
-                </CldUploadWidget>
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    disabled={disabled}
+                    onChange={() => handleToggleTheme(theme.id)}
+                    className="mt-0.5 h-4 w-4 rounded border-gray-300 accent-[#B89335] disabled:cursor-not-allowed"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-sm font-bold text-[#2B1D24]">
+                        {theme.label}
+                      </span>
+                      <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-white border border-gray-200 text-gray-500">
+                        {theme.id}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-600 mt-0.5">{theme.arabicTitle}</p>
+                    {isXorBlocked && (
+                      <p className="text-[10px] font-bold text-rose-600 mt-1">
+                        Disabled ({theme.id === "ahly" ? "Zamalek" : "Al Ahly"} selected)
+                      </p>
+                    )}
+                    {!isXorBlocked && disabled && (
+                      <p className="text-[10px] font-bold text-amber-700 mt-1">
+                        Max 5 themes reached
+                      </p>
+                    )}
+                  </div>
+                </label>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* ================================================================== */}
+        {/* CARD 1: GLOBAL INFO & SECTION 1                                    */}
+        {/* ================================================================== */}
+        <section className="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden">
+          <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-amber-50/60 via-rose-50/40 to-white flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-[#D4AF37]/15 text-[#B89335]">
+                <Calendar className="w-6 h-6" />
+              </div>
+              <div>
+                <h2 className="text-lg sm:text-xl font-serif font-black text-[#2B1D24]">
+                  Card 1: Global Info &amp; Section 1 (Hero Intro)
+                </h2>
+                <p className="text-xs sm:text-sm text-gray-500">
+                  Couple names, milestone dates, hero background, and childhood portraits
+                </p>
+              </div>
+            </div>
+            <span className="text-xs font-bold px-3 py-1 rounded-full bg-amber-100 text-amber-800">
+              Section 01
+            </span>
+          </div>
+
+          <div className="p-6 space-y-6">
+            {/* Couple Names */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1.5">
+                  Groom Name (اسم العريس)
+                </label>
+                <input
+                  type="text"
+                  value={draft.groomName}
+                  onChange={(e) => setField("groomName", e.target.value)}
+                  placeholder="e.g. كرم"
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/20 outline-none text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1.5">
+                  Bride Name (اسم العروسة)
+                </label>
+                <input
+                  type="text"
+                  value={draft.brideName}
+                  onChange={(e) => setField("brideName", e.target.value)}
+                  placeholder="e.g. هدير"
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/20 outline-none text-sm"
+                />
               </div>
             </div>
 
-            <div className="p-6 sm:p-8 space-y-6">
-              {/* Manual URL adder fallback */}
-              <div className="p-4 rounded-xl bg-gray-50 border border-gray-200 flex flex-col sm:flex-row items-center gap-3">
-                <div className="relative flex-1 w-full">
-                  <input
-                    type="url"
-                    value={manualAddUrl}
-                    onChange={(e) => setManualAddUrl(e.target.value)}
-                    placeholder="Or paste an image URL directly (e.g. Unsplash or Cloudinary URL)..."
-                    className="w-full px-4 py-2.5 text-xs rounded-lg border border-gray-200 bg-white focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] outline-none"
-                  />
+            {/* Engagement & Wedding Dates */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1.5">
+                  Engagement Date (تاريخ الخطوبة)
+                </label>
+                <input
+                  type="date"
+                  value={draft.engagementDate}
+                  onChange={(e) => setField("engagementDate", e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/20 outline-none text-sm bg-white"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-600 mb-1.5">
+                  Wedding Date (تاريخ الزفاف)
+                </label>
+                <input
+                  type="date"
+                  value={draft.weddingDate}
+                  onChange={(e) => setField("weddingDate", e.target.value)}
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/20 outline-none text-sm bg-white"
+                />
+              </div>
+            </div>
+
+            {/* Live Counter Preview Banner */}
+            <div className="p-4 rounded-xl bg-amber-50/70 border border-amber-200/80 grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+              <div className="flex items-center gap-2.5">
+                <Clock className="w-4 h-4 text-[#B89335] shrink-0" />
+                <div>
+                  <span className="font-bold text-amber-950 block">
+                    Since Engagement:
+                  </span>
+                  <span className="font-mono text-[#B89335] font-bold">
+                    {engagementPreview}
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2.5">
+                <Clock className="w-4 h-4 text-[#B89335] shrink-0" />
+                <div>
+                  <span className="font-bold text-amber-950 block">
+                    Since Wedding:
+                  </span>
+                  <span className="font-mono text-[#B89335] font-bold">
+                    {weddingPreview}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Section 1 Cloudinary Uploaders */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 pt-2">
+              <CloudinaryImageCard
+                title="Main Background Hero Image"
+                subtitle="Section 1 Spotlight Backdrop"
+                imageUrl={draft.mainHeroBgUrl}
+                onUrlChange={(url) => setField("mainHeroBgUrl", url)}
+              />
+              <CloudinaryImageCard
+                title="Groom Childhood Image"
+                subtitle={`Young ${draft.groomName || "Groom"} Portrait`}
+                imageUrl={draft.groomChildhoodUrl}
+                onUrlChange={(url) => setField("groomChildhoodUrl", url)}
+              />
+              <CloudinaryImageCard
+                title="Bride Childhood Image"
+                subtitle={`Young ${draft.brideName || "Bride"} Portrait`}
+                imageUrl={draft.brideChildhoodUrl}
+                onUrlChange={(url) => setField("brideChildhoodUrl", url)}
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* ================================================================== */}
+        {/* CARD 2: AUDIO TRACKS (5 THEMES)                                    */}
+        {/* ================================================================== */}
+        <section className="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden">
+          <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-indigo-50/50 via-purple-50/30 to-white flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-indigo-100 text-indigo-700">
+                <Music className="w-6 h-6" />
+              </div>
+              <div>
+                <h2 className="text-lg sm:text-xl font-serif font-black text-[#2B1D24]">
+                  Card 2: Audio Tracks (8 Cultural Themes)
+                </h2>
+                <p className="text-xs sm:text-sm text-gray-500">
+                  Soundtrack URLs for Pharaonic, Saidi, Cinema, Falahi, Zamalek, Al Ahly, Indian &amp; Mexican chapters
+                </p>
+              </div>
+            </div>
+            <span className="text-xs font-bold px-3 py-1 rounded-full bg-indigo-100 text-indigo-800">
+              8 Themes
+            </span>
+          </div>
+
+          <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {AUDIO_FIELDS.map((field) => (
+              <div
+                key={field.key}
+                className="p-4 rounded-xl border border-gray-200 bg-gray-50/50 space-y-2"
+              >
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-gray-800">
+                    {field.label}
+                  </label>
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-white border border-gray-200 text-gray-600">
+                    {field.badge}
+                  </span>
+                </div>
+                <input
+                  type="text"
+                  value={draft[field.key]}
+                  onChange={(e) => setField(field.key, e.target.value)}
+                  placeholder={field.placeholder}
+                  className="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 bg-white focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] outline-none font-mono"
+                />
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* ================================================================== */}
+        {/* CARD 3: AI CHARACTERS & EMBEDDED AI PROMPT CHEAT SHEET             */}
+        {/* ================================================================== */}
+        <section className="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden">
+          <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-rose-50/50 via-amber-50/30 to-white flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-rose-100 text-rose-700">
+                <Users className="w-6 h-6" />
+              </div>
+              <div>
+                <h2 className="text-lg sm:text-xl font-serif font-black text-[#2B1D24]">
+                  Card 3: AI Characters &amp; Cheat Sheet
+                </h2>
+                <p className="text-xs sm:text-sm text-gray-500">
+                  Upload hyper-realistic Groom &amp; Bride cutouts for all themes + 3D Wedding Race Karts
+                </p>
+              </div>
+            </div>
+            <span className="text-xs font-bold px-3 py-1 rounded-full bg-rose-100 text-rose-800">
+              {CHARACTER_FIELDS.length} Character Slots
+            </span>
+          </div>
+
+          <div className="p-6 space-y-8">
+            {/* Grid of Character Uploaders */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              {CHARACTER_FIELDS.map((item) => (
+                <CloudinaryImageCard
+                  key={item.key}
+                  title={item.title}
+                  subtitle={
+                    item.themeId && draft.activeThemes.includes(item.themeId)
+                      ? `${item.subtitle} • Active`
+                      : item.subtitle
+                  }
+                  imageUrl={draft[item.key]}
+                  isGenerating={generationStatuses[item.key] === "generating"}
+                  onUrlChange={(url) => setField(item.key, url)}
+                />
+              ))}
+            </div>
+
+            {/* Embedded Hyper-Realistic AI Prompt Cheat Sheet at bottom of Card 3 */}
+            <div
+              dir="rtl"
+              className="rounded-2xl border-2 border-[#D4AF37]/40 bg-gradient-to-br from-amber-50/70 via-rose-50/40 to-white p-6 space-y-5 text-right"
+            >
+              <div className="flex items-center justify-between flex-wrap gap-3 border-b border-[#D4AF37]/20 pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-gradient-to-br from-[#D4AF37] to-[#B89335] text-white">
+                    <Bot className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-serif font-black text-[#2B1D24]">
+                      دليل توليد الصور (شخصيات حقيقية 100%):
+                    </h3>
+                    <p className="text-xs sm:text-sm text-gray-700 font-medium">
+                      استخدم هذه الأوامر للحصول على صور واقعية سينمائية. استبدل ما بين الأقواس بملامحك.
+                    </p>
+                  </div>
                 </div>
                 <button
                   type="button"
-                  onClick={() => {
-                    if (manualAddUrl.trim()) {
-                      handleAddPhotoToGallery(manualAddUrl.trim());
-                      setManualAddUrl("");
-                    }
-                  }}
-                  disabled={!manualAddUrl.trim()}
-                  className="w-full sm:w-auto px-4 py-2.5 rounded-lg bg-[#D4AF37] hover:bg-[#C9A227] disabled:opacity-40 text-white font-bold text-xs inline-flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                  onClick={() => handleCopyPrompt(FULL_CHEAT_SHEET_TEXT, "all")}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#D4AF37]/15 hover:bg-[#D4AF37]/25 border border-[#D4AF37]/40 text-xs font-bold text-[#8A6A1F] cursor-pointer"
                 >
-                  <Plus className="w-4 h-4" />
-                  <span>Add Photo</span>
+                  <Copy className="w-3.5 h-3.5" />
+                  <span>
+                    {copiedPromptId === "all" ? "تم نسخ الدليل بالكامل ✓" : "نسخ الدليل بالكامل"}
+                  </span>
                 </button>
               </div>
 
-              {/* Gallery Items List with Side-by-Side Metadata Inputs */}
-              {gallery.length === 0 ? (
-                <div className="text-center py-12 px-4 rounded-2xl border-2 border-dashed border-gray-200">
-                  <ImageIcon className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-sm font-bold text-gray-700">No memory photos yet</p>
-                  <p className="text-xs text-gray-400 mt-1 max-w-sm mx-auto">
-                    Click &quot;Add Memory Photos&quot; above to upload your first romantic picture.
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between text-xs font-bold text-gray-500 px-1">
-                    <span>{gallery.length} Photos in Dynamic Gallery</span>
-                    <span>Edit captions &amp; dates below:</span>
-                  </div>
-
-                  {gallery.map((item, index) => (
-                    <div
-                      key={item.id}
-                      className="p-4 rounded-xl border border-gray-200 bg-white hover:border-[#D4AF37]/50 hover:shadow-xs transition-all flex flex-col md:flex-row items-center gap-4"
-                    >
-                      {/* Photo Thumbnail */}
-                      <div className="relative w-full md:w-32 h-32 md:h-24 shrink-0 rounded-lg overflow-hidden bg-gray-100 border border-gray-200 shadow-2xs">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={item.url}
-                          alt={item.caption || `Memory Photo ${index + 1}`}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            (e.currentTarget as HTMLImageElement).src =
-                              "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=300&q=80";
-                          }}
-                        />
-                        <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-black/70 text-white">
-                          #{index + 1 < 10 ? `0${index + 1}` : index + 1}
-                        </span>
-                      </div>
-
-                      {/* Side-by-Side Metadata Fields: Caption & Date */}
-                      <div className="flex-1 w-full grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        {/* Caption / Story Input */}
-                        <div className="sm:col-span-2">
-                          <label className="block text-[11px] font-bold text-gray-600 mb-1">
-                            Caption / Story (الوصف أو القصة)
-                          </label>
-                          <input
-                            type="text"
-                            value={item.caption}
-                            onChange={(e) =>
-                              handleUpdateGalleryItem(item.id, "caption", e.target.value)
-                            }
-                            placeholder="e.g. Our magical sunset in Dahab..."
-                            className="w-full px-3.5 py-2 text-xs rounded-lg border border-gray-200 focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] outline-none"
-                          />
-                        </div>
-
-                        {/* Date of Memory Input */}
-                        <div>
-                          <label className="block text-[11px] font-bold text-gray-600 mb-1">
-                            Date of Memory (تاريخ الذكرى)
-                          </label>
-                          <input
-                            type="date"
-                            value={item.date}
-                            onChange={(e) =>
-                              handleUpdateGalleryItem(item.id, "date", e.target.value)
-                            }
-                            className="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] outline-none bg-white"
-                          />
-                        </div>
-                      </div>
-
-                      {/* Remove Button */}
-                      <div className="w-full md:w-auto flex md:flex-col justify-end gap-2 pt-2 md:pt-0">
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveGalleryItem(item.id)}
-                          className="px-3 py-2 rounded-lg text-rose-600 hover:text-white hover:bg-rose-600 border border-rose-200 hover:border-rose-600 text-xs font-bold inline-flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-                          title="Remove Photo"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                          <span className="md:hidden">Remove</span>
-                        </button>
-                      </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {HYPER_REALISTIC_PROMPTS.map((item) => (
+                  <div
+                    key={item.id}
+                    className="p-4 rounded-xl bg-white border border-gray-200 space-y-2.5"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <h4 className="font-bold text-xs sm:text-sm text-[#2B1D24]">
+                        {item.title}
+                      </h4>
+                      <button
+                        type="button"
+                        onClick={() => handleCopyPrompt(item.prompt, item.id)}
+                        className="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 border border-amber-200 text-[#8A6A1F] text-xs font-bold cursor-pointer"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                        <span>{copiedPromptId === item.id ? "تم النسخ ✓" : "نسخ"}</span>
+                      </button>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </section>
-        )}
-
-        {/* ================================================================== */}
-        {/* SECTION 4: JSON CONFIG INSPECTOR & EXPORT                           */}
-        {/* ================================================================== */}
-        {(activeTab === "all" || activeTab === "json") && (
-          <section className="bg-white rounded-2xl border border-gray-200/80 shadow-xs overflow-hidden">
-            <div
-              onClick={() => setShowJsonInspector((prev) => !prev)}
-              className="p-6 border-b border-gray-100 bg-gray-50/60 flex items-center justify-between cursor-pointer hover:bg-gray-100/50 transition-all"
-            >
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-gray-200 text-gray-700">
-                  <Sparkles className="w-5 h-5 text-[#D4AF37]" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-[#2B1D24]">
-                    Live Dynamic JSON Payload (Ready for API / Export)
-                  </h3>
-                  <p className="text-xs text-gray-500">
-                    Inspect the compiled bundle sent on Save &amp; Publish
-                  </p>
-                </div>
+                    <div
+                      dir="ltr"
+                      className="p-3 rounded-lg bg-gray-900 text-gray-100 font-mono text-[11px] leading-relaxed text-left select-all"
+                    >
+                      {item.prompt}
+                    </div>
+                  </div>
+                ))}
               </div>
 
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-mono font-semibold text-gray-500">
-                  {gallery.length} moments • 4 anthems
-                </span>
-                {showJsonInspector ? (
-                  <ChevronUp className="w-4 h-4 text-gray-500" />
-                ) : (
-                  <ChevronDown className="w-4 h-4 text-gray-500" />
-                )}
+              <div className="p-3.5 rounded-xl bg-amber-100/70 border border-amber-300 text-amber-950 text-xs sm:text-sm font-bold flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-[#B89335] shrink-0" />
+                <span>(ملاحظة: صور سيارات السباق فقط هي التي تظل 3D Pixar style لتناسب اللعبة)</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ================================================================== */}
+        {/* CARD 4: MASS GALLERY (80+ PHOTOS WITH MULTIPLE UPLOAD)             */}
+        {/* ================================================================== */}
+        <section className="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden">
+          <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-purple-50/50 via-pink-50/30 to-white flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-purple-100 text-purple-700">
+                <Layers className="w-6 h-6" />
+              </div>
+              <div>
+                <h2 className="text-lg sm:text-xl font-serif font-black text-[#2B1D24]">
+                  Card 4: Mass Memory Gallery ({draft.gallery.length} Photos)
+                </h2>
+                <p className="text-xs sm:text-sm text-gray-500">
+                  Batch upload 80+ photos via Cloudinary, then customize each Caption &amp; Memory Date
+                </p>
               </div>
             </div>
 
-            {(showJsonInspector || activeTab === "json") && (
-              <div className="p-6 bg-[#1C1518] text-gray-200">
-                <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/10 text-xs">
-                  <span className="font-mono text-romantic-roseGold">
-                    payload.json (application/json)
-                  </span>
+            <div className="flex flex-col items-start sm:items-end">
+              <CldUploadWidget
+                config={{
+                  cloud: {
+                    cloudName:
+                      process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "demo",
+                  },
+                }}
+                uploadPreset={CLOUDINARY_UPLOAD_PRESET}
+                onSuccess={(result) => {
+                  if (
+                    typeof result?.info === "object" &&
+                    result.info?.secure_url
+                  ) {
+                    setLastUploadedGalleryUrl(result.info.secure_url);
+                    handleAddGalleryPhoto(result.info.secure_url);
+                  }
+                }}
+                options={{
+                  multiple: true,
+                  maxFiles: 120,
+                  clientAllowedFormats: ["png", "jpeg", "jpg", "webp"],
+                }}
+              >
+                {({ open }) => (
                   <button
                     type="button"
-                    onClick={handleCopyJson}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white font-mono text-xs transition-all cursor-pointer"
+                    onClick={() => open?.()}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#2B1D24] hover:bg-[#3d2b34] text-white text-xs font-bold shadow-xs transition-all cursor-pointer"
                   >
-                    <Copy className="w-3.5 h-3.5" />
-                    <span>{copiedJson ? "Copied to Clipboard!" : "Copy JSON"}</span>
+                    <UploadCloud className="w-4 h-4 text-[#D4AF37]" />
+                    <span>Mass Upload Photos (80+ Supported)</span>
                   </button>
-                </div>
+                )}
+              </CldUploadWidget>
 
-                <pre className="max-h-96 overflow-y-auto text-xs font-mono p-4 rounded-xl bg-black/40 text-emerald-300 scrollbar-thin">
-                  {JSON.stringify(fullConfigPayload, null, 2)}
-                </pre>
+              {lastUploadedGalleryUrl && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={lastUploadedGalleryUrl}
+                  alt="Latest Uploaded Preview"
+                  className="h-32 w-auto mt-2 border-2 border-green-500 rounded-lg object-contain bg-white"
+                />
+              )}
+            </div>
+          </div>
+
+          <div className="p-6 space-y-6">
+            {/* Quick Manual URL Fallback */}
+            <div className="p-3.5 rounded-xl bg-gray-50 border border-gray-200 flex flex-col sm:flex-row items-center gap-3">
+              <input
+                type="url"
+                value={manualAddUrl}
+                onChange={(e) => setManualAddUrl(e.target.value)}
+                placeholder="Or paste a direct image URL (https://...)..."
+                className="flex-1 w-full px-3.5 py-2 text-xs rounded-lg border border-gray-200 bg-white focus:border-[#D4AF37] outline-none"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  if (manualAddUrl.trim()) {
+                    handleAddGalleryPhoto(manualAddUrl.trim());
+                    setManualAddUrl("");
+                  }
+                }}
+                disabled={!manualAddUrl.trim()}
+                className="w-full sm:w-auto px-4 py-2 rounded-lg bg-[#D4AF37] hover:bg-[#C9A227] disabled:opacity-40 text-white font-bold text-xs inline-flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add URL</span>
+              </button>
+            </div>
+
+            {/* Responsive Photo Grid */}
+            {draft.gallery.length === 0 ? (
+              <div className="text-center py-12 px-4 rounded-2xl border-2 border-dashed border-gray-200">
+                <ImageIcon className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+                <p className="text-sm font-bold text-gray-700">
+                  No gallery photos yet
+                </p>
+                <p className="text-xs text-gray-400 mt-1">
+                  Use Mass Upload Photos above to batch-upload up to 80+ photos at once.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {draft.gallery.map((item, idx) => (
+                  <div
+                    key={item.id}
+                    className="rounded-xl border border-gray-200 bg-white p-3 flex flex-col gap-3 hover:border-[#D4AF37]/60 transition-all shadow-2xs"
+                  >
+                    <div className="relative w-full h-40 rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={item.url}
+                        alt={item.caption || `Gallery Photo ${idx + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                      <span className="absolute top-2 left-2 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-black/75 text-white">
+                        #{idx + 1}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveGalleryItem(item.id)}
+                        className="absolute top-2 right-2 p-1.5 rounded-lg bg-white/90 hover:bg-rose-600 text-rose-600 hover:text-white shadow-xs transition-all cursor-pointer"
+                        title="Remove Photo"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div>
+                        <label className="block text-[10px] font-bold uppercase text-gray-500 mb-0.5">
+                          Caption
+                        </label>
+                        <input
+                          type="text"
+                          value={item.caption}
+                          onChange={(e) =>
+                            handleUpdateGalleryItem(item.id, "caption", e.target.value)
+                          }
+                          placeholder="Write a memory caption..."
+                          className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-gray-200 focus:border-[#D4AF37] outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold uppercase text-gray-500 mb-0.5">
+                          Memory Date
+                        </label>
+                        <input
+                          type="date"
+                          value={item.date}
+                          onChange={(e) =>
+                            handleUpdateGalleryItem(item.id, "date", e.target.value)
+                          }
+                          className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-gray-200 focus:border-[#D4AF37] outline-none bg-white"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
-          </section>
-        )}
+          </div>
+        </section>
+      </div>
 
-        {/* ================================================================== */}
-        {/* Massive Primary SAVE & PUBLISH Action Card                         */}
-        {/* ================================================================== */}
-        <div className="p-8 rounded-3xl bg-gradient-to-r from-[#2B1D24] via-[#3a2630] to-[#2B1D24] text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-xs font-bold text-[#D4AF37] mb-2">
-              <Heart className="w-3.5 h-3.5 fill-[#D4AF37]" />
-              <span>Ready to Broadcast</span>
-            </div>
-            <h3 className="text-2xl font-serif font-black tracking-tight">
-              Publish All Updates to Wedding Experience
-            </h3>
-            <p className="text-sm text-gray-300 mt-1 max-w-xl">
-              Bundles couple names, milestone dates, Cloudinary images, soundtrack tracks, and dynamic gallery metadata into a single synchronized payload sent to /api/config.
-            </p>
+      {/* ==================================================================== */}
+      {/* STICKY MASSIVE SAVE & PUBLISH BAR AT THE BOTTOM                      */}
+      {/* ==================================================================== */}
+      <div className="fixed bottom-0 inset-x-0 z-50 bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] px-4 py-3.5">
+        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div className="text-xs text-gray-600 flex items-center gap-2">
+            {saveSuccess ? (
+              <span className="inline-flex items-center gap-1.5 text-emerald-700 font-bold">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                Saved! All frontend sections are now synced with your updates.
+              </span>
+            ) : (
+              <span>
+                Couple: <strong>{draft.groomName || "—"} &amp; {draft.brideName || "—"}</strong> •{" "}
+                <strong>{draft.gallery.length}</strong> gallery photos ready
+              </span>
+            )}
           </div>
 
           <button
             type="button"
             onClick={handleSaveAndPublish}
             disabled={isSaving}
-            className={`w-full md:w-auto px-10 py-4 rounded-2xl font-black text-base tracking-wide text-white shadow-2xl transition-all cursor-pointer ${
-              saveSuccess
-                ? "bg-emerald-600 scale-102"
-                : "bg-gradient-to-r from-[#D4AF37] via-[#F2D98D] to-[#B89335] text-[#2B1D24] hover:opacity-95 hover:scale-102 active:scale-98 shadow-[#D4AF37]/30"
-            } disabled:opacity-50`}
+            className={`w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-10 py-3.5 rounded-xl font-black text-sm sm:text-base tracking-wide shadow-lg transition-all cursor-pointer ${saveSuccess
+                ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                : "bg-gradient-to-r from-[#D4AF37] via-[#C9A227] to-[#B89335] hover:opacity-95 text-white"
+              } disabled:opacity-50`}
           >
-            {isSaving ? "SAVING &amp; PUBLISHING..." : saveSuccess ? "✓ SAVED &amp; LIVE!" : "SAVE &amp; PUBLISH"}
+            {isSaving ? (
+              <>
+                <RefreshCw className="w-5 h-5 animate-spin" />
+                <span>SAVING &amp; PUBLISHING...</span>
+              </>
+            ) : saveSuccess ? (
+              <>
+                <CheckCircle2 className="w-5 h-5" />
+                <span>SAVED &amp; PUBLISHED ✓</span>
+              </>
+            ) : (
+              <>
+                <Save className="w-5 h-5" />
+                <span>SAVE &amp; PUBLISH</span>
+              </>
+            )}
           </button>
         </div>
-
-        {/* ================================================================== */}
-        {/* 3. EMBEDDED AI PROMPT GUIDE (AT THE BOTTOM OF THE DASHBOARD)       */}
-        {/* ================================================================== */}
-        {(activeTab === "all" || activeTab === "prompts") && (
-          <section className="bg-gradient-to-br from-amber-50/70 via-rose-50/50 to-white rounded-3xl border-2 border-[#D4AF37]/40 shadow-md overflow-hidden">
-            <div className="p-6 sm:p-8 border-b border-[#D4AF37]/20 bg-white/60 backdrop-blur-xs flex items-center justify-between">
-              <div className="flex items-center gap-3.5">
-                <div className="p-3 rounded-2xl bg-gradient-to-br from-[#D4AF37] to-[#B89335] text-white shadow-sm">
-                  <Bot className="w-6 h-6" />
-                </div>
-                <div>
-                  <h2 className="text-xl sm:text-2xl font-serif font-black text-[#2B1D24]">
-                    دليل توليد صور الذكاء الاصطناعي (Cheat Sheet)
-                  </h2>
-                  <p className="text-xs sm:text-sm text-[#7B6A6E] font-medium">
-                    برومبتات جاهزة لتوليد عربيات السباق والشخصيات الكارتونية للعبة الزفاف (Section 6)
-                  </p>
-                </div>
-              </div>
-
-              <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#D4AF37]/15 border border-[#D4AF37]/30 text-xs font-bold text-[#B89335]">
-                <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
-                <span>3D Pixar Prompts</span>
-              </span>
-            </div>
-
-            <div className="p-6 sm:p-8 space-y-6">
-              {/* Introduction Note in Arabic */}
-              <div className="p-4 rounded-2xl bg-white border border-[#D4AF37]/30 text-[#2B1D24] text-sm leading-relaxed shadow-2xs">
-                <p className="font-bold text-base text-[#B89335]">
-                  يا عريس، خد البرومبتات دي زي ما هي كده، بس غير الكلام اللي بين الأقواس [ ] عشان يطلع شبهك إنت وعروستك.
-                </p>
-              </div>
-
-              {/* Prompt 1: Groom Kart */}
-              <div className="p-5 rounded-2xl bg-white border border-gray-200 hover:border-[#D4AF37]/60 shadow-xs transition-all space-y-3">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-100 pb-3">
-                  <div className="flex items-center gap-2">
-                    <div className="p-1.5 rounded-lg bg-red-100 text-red-700">
-                      <Car className="w-4 h-4" />
-                    </div>
-                    <h3 className="font-bold text-sm sm:text-base text-[#2B1D24]">
-                      1. صورة عربية العريس (العريس سايق عربية سباق بسقف مفتوح):
-                    </h3>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => handleCopyText(GROOM_CAR_PROMPT, "groom")}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-red-50 hover:bg-red-100 border border-red-200 text-red-700 text-xs font-bold transition-all cursor-pointer self-start sm:self-auto"
-                  >
-                    <Copy className="w-3.5 h-3.5" />
-                    <span>{copiedGroomPrompt ? "تم النسخ بنجاح! ✓" : "نسخ البرومبت (Copy)"}</span>
-                  </button>
-                </div>
-
-                <div className="relative p-4 rounded-xl bg-gray-900 text-gray-100 font-mono text-xs leading-relaxed select-all">
-                  {GROOM_CAR_PROMPT}
-                </div>
-              </div>
-
-              {/* Prompt 2: Bride Kart */}
-              <div className="p-5 rounded-2xl bg-white border border-gray-200 hover:border-[#D4AF37]/60 shadow-xs transition-all space-y-3">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-100 pb-3">
-                  <div className="flex items-center gap-2">
-                    <div className="p-1.5 rounded-lg bg-pink-100 text-pink-700">
-                      <Car className="w-4 h-4" />
-                    </div>
-                    <h3 className="font-bold text-sm sm:text-base text-[#2B1D24]">
-                      2. صورة عربية العروسة (العروسة سايقة عربية سباق بسقف مفتوح):
-                    </h3>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => handleCopyText(BRIDE_CAR_PROMPT, "bride")}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-pink-50 hover:bg-pink-100 border border-pink-200 text-pink-700 text-xs font-bold transition-all cursor-pointer self-start sm:self-auto"
-                  >
-                    <Copy className="w-3.5 h-3.5" />
-                    <span>{copiedBridePrompt ? "تم النسخ بنجاح! ✓" : "نسخ البرومبت (Copy)"}</span>
-                  </button>
-                </div>
-
-                <div className="relative p-4 rounded-xl bg-gray-900 text-gray-100 font-mono text-xs leading-relaxed select-all">
-                  {BRIDE_CAR_PROMPT}
-                </div>
-              </div>
-
-              {/* Cutout Note Footer */}
-              <div className="p-4 rounded-xl bg-amber-100/60 border border-amber-300 text-amber-900 text-xs sm:text-sm font-bold flex items-center gap-2.5">
-                <Scissors className="w-5 h-5 text-amber-700 shrink-0" />
-                <span>(تذكر تفريغ الخلفية البيضاء من الصور بعد توليدها لتصبح شفافة PNG)</span>
-              </div>
-            </div>
-          </section>
-        )}
-      </main>
+      </div>
     </div>
   );
 }
 
 /* -------------------------------------------------------------------------- */
-/* Subcomponent: HeroImageUploaderCard                                        */
+/* Reusable Cloudinary Image Uploader Card with Instant Preview               */
 /* -------------------------------------------------------------------------- */
 
-interface HeroImageUploaderCardProps {
+interface CloudinaryImageCardProps {
   title: string;
   subtitle: string;
   imageUrl: string;
-  presetName: string;
+  isGenerating?: boolean;
   onUrlChange: (url: string) => void;
 }
 
-function HeroImageUploaderCard({
+function CloudinaryImageCard({
   title,
   subtitle,
   imageUrl,
-  presetName,
+  isGenerating = false,
   onUrlChange,
-}: HeroImageUploaderCardProps) {
-  const [isEditingUrl, setIsEditingUrl] = useState<boolean>(false);
-  const [customUrl, setCustomUrl] = useState<string>(imageUrl);
+}: CloudinaryImageCardProps) {
+  const [isEditingUrl, setIsEditingUrl] = useState(false);
+  const [customUrl, setCustomUrl] = useState(imageUrl);
+  const [justUploaded, setJustUploaded] = useState(false);
 
   useEffect(() => {
     setCustomUrl(imageUrl);
   }, [imageUrl]);
 
   return (
-    <div className="flex flex-col justify-between p-4 rounded-xl border border-gray-200 bg-white hover:border-[#D4AF37]/50 hover:shadow-xs transition-all space-y-3">
-      {/* Header Info */}
+    <div className="flex flex-col justify-between p-4 rounded-xl border border-gray-200 bg-gray-50/40 hover:border-[#D4AF37]/60 transition-all space-y-2.5">
       <div>
         <h4 className="text-xs font-black text-gray-900 line-clamp-1">{title}</h4>
-        <p className="text-[11px] text-gray-400">{subtitle}</p>
+        <p className="text-[11px] text-gray-500">{subtitle}</p>
       </div>
 
-      {/* Visual Image Thumbnail Stage */}
-      <div className="relative w-full h-44 rounded-lg bg-gray-100 overflow-hidden border border-gray-200 flex items-center justify-center group">
-        {imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={imageUrl}
-            alt={title}
-            className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-300"
-            onError={(e) => {
-              (e.currentTarget as HTMLImageElement).src =
-                "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=300&q=80";
-            }}
-          />
-        ) : (
-          <div className="text-center p-4">
-            <ImageIcon className="w-8 h-8 text-gray-300 mx-auto mb-1" />
-            <span className="text-[10px] text-gray-400">No Image Set</span>
-          </div>
-        )}
-
-        {/* Floating status badge */}
-        <span className="absolute top-2 right-2 px-2 py-0.5 rounded text-[10px] font-bold bg-white/90 backdrop-blur-xs text-gray-700 shadow-2xs">
-          {imageUrl.startsWith("http") ? "Cloud/Web" : "Local Asset"}
-        </span>
-      </div>
-
-      {/* Cloudinary Upload Widget Button */}
       <div className="space-y-2">
         <CldUploadWidget
-          config={{ cloud: { cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "demo" } }}
-          uploadPreset={process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || presetName}
+          config={{
+            cloud: {
+              cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "demo",
+            },
+          }}
+          uploadPreset={CLOUDINARY_UPLOAD_PRESET}
           onSuccess={(result) => {
-            const info = result?.info as { secure_url?: string } | undefined;
-            if (info?.secure_url) {
-              onUrlChange(info.secure_url);
+            if (typeof result?.info === "object" && result.info?.secure_url) {
+              onUrlChange(result.info.secure_url);
+              setJustUploaded(true);
             }
           }}
           options={{
@@ -1169,45 +1419,80 @@ function HeroImageUploaderCard({
             <button
               type="button"
               onClick={() => open?.()}
-              className="w-full py-2.5 px-3 rounded-lg bg-[#2B1D24] hover:bg-[#3d2b34] text-white text-xs font-bold inline-flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-2xs"
+              className="w-full py-2 px-3 rounded-lg bg-[#2B1D24] hover:bg-[#3d2b34] text-white text-xs font-bold inline-flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-2xs"
             >
               <UploadCloud className="w-4 h-4 text-[#D4AF37]" />
-              <span>Upload via Cloudinary</span>
+              <span>Upload Image</span>
             </button>
           )}
         </CldUploadWidget>
 
-        {/* Toggle Manual URL override */}
-        <button
-          type="button"
-          onClick={() => setIsEditingUrl((prev) => !prev)}
-          className="w-full text-center text-[11px] font-semibold text-[#B89335] hover:underline cursor-pointer"
-        >
-          {isEditingUrl ? "Hide URL Input" : "Paste / Edit Direct URL"}
-        </button>
-
-        {isEditingUrl && (
-          <div className="flex gap-1.5 pt-1">
-            <input
-              type="text"
-              value={customUrl}
-              onChange={(e) => setCustomUrl(e.target.value)}
-              placeholder="https://... or /statues/..."
-              className="flex-1 px-2.5 py-1.5 text-xs rounded border border-gray-200 outline-none focus:border-[#D4AF37]"
-            />
-            <button
-              type="button"
-              onClick={() => {
-                onUrlChange(customUrl);
-                setIsEditingUrl(false);
-              }}
-              className="px-2.5 py-1.5 rounded bg-gray-200 hover:bg-gray-300 text-gray-800 text-xs font-bold cursor-pointer"
-            >
-              Set
-            </button>
+        {/* Instant Preview immediately below the upload button */}
+          {
+            isGenerating?(
+          <div className = "w-full rounded-lg bg-amber-50 p-4 border-2 border-[#D4AF37] flex flex-col items-center justify-center gap-2 h-40" >
+            <RefreshCw className="w-6 h-6 text-[#B89335] animate-spin" />
+            <span className="text-[11px] font-bold text-[#8A6A1F]">
+              Generating with InstantID...
+            </span>
           </div>
-        )}
+      ) : imageUrl ? (
+      <div className="w-full rounded-lg bg-white p-2 border border-gray-200 flex flex-col items-center">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={imageUrl}
+          alt={`${title} Preview`}
+          className={`h-32 w-auto mt-1 rounded-md object-contain ${justUploaded || imageUrl.startsWith("http")
+              ? "border-2 border-green-500"
+              : "border border-gray-200"
+            }`}
+        />
+        <span className="mt-1 text-[10px] font-semibold text-gray-500">
+          {justUploaded
+            ? "✓ Uploaded via Cloudinary"
+            : imageUrl.startsWith("http")
+              ? "Cloud URL"
+              : "Local Default"}
+        </span>
       </div>
+      ) : (
+      <div className="text-center p-4 rounded-lg bg-white border border-dashed border-gray-200">
+        <ImageIcon className="w-6 h-6 text-gray-300 mx-auto mb-1" />
+        <span className="text-[10px] text-gray-400">No Image Set</span>
+      </div>
+        )}
+
+      <button
+        type="button"
+        onClick={() => setIsEditingUrl((prev) => !prev)}
+        className="w-full text-center text-[11px] font-semibold text-[#B89335] hover:underline cursor-pointer"
+      >
+        {isEditingUrl ? "Hide Direct URL" : "Paste / Edit URL"}
+      </button>
+
+      {isEditingUrl && (
+        <div className="flex gap-1.5">
+          <input
+            type="text"
+            value={customUrl}
+            onChange={(e) => setCustomUrl(e.target.value)}
+            placeholder="https://... or /statues/..."
+            className="flex-1 px-2.5 py-1.5 text-xs rounded border border-gray-200 bg-white outline-none focus:border-[#D4AF37]"
+          />
+          <button
+            type="button"
+            onClick={() => {
+              onUrlChange(customUrl);
+              setJustUploaded(false);
+              setIsEditingUrl(false);
+            }}
+            className="px-2.5 py-1.5 rounded bg-gray-200 hover:bg-gray-300 text-gray-800 text-xs font-bold cursor-pointer"
+          >
+            Set
+          </button>
+        </div>
+      )}
     </div>
+    </div >
   );
 }

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import { useGlobalAudio } from "@/utils/globalAudioCoordinator";
+import { useWeddingConfig } from "@/context/WeddingConfigContext";
 
 /* -------------------------------------------------------------------------- */
 /* 1. MEDIA CONSTANTS (AT THE TOP FOR EASY REPLACEMENT)                       */
@@ -50,6 +51,7 @@ function describeArc(x: number, y: number, radius: number, startAngle: number, e
 /* Component: WeddingRaceSection (تحدي الأزواج)                                */
 /* -------------------------------------------------------------------------- */
 export default function WeddingRaceSection() {
+  const { config } = useWeddingConfig();
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [timeLeft, setTimeLeft] = useState<number>(GAME_DURATION);
   const [groomProgress, setGroomProgress] = useState<number>(0);
@@ -252,7 +254,11 @@ export default function WeddingRaceSection() {
     : { type: "spring" as const, stiffness: 140, damping: 16 };
 
   const loserTitle =
-    winner === "groom" ? "العروسة 👰" : winner === "bride" ? "العريس 🤵" : "الخاسرين الاثنين معاً 💞";
+    winner === "groom"
+      ? `${config.brideName} 👰`
+      : winner === "bride"
+      ? `${config.groomName} 🤵`
+      : "الخاسرين الاثنين معاً 💞";
 
   return (
     <section
@@ -289,15 +295,15 @@ export default function WeddingRaceSection() {
               <div className="relative h-[250px] sm:h-[300px] w-full flex items-end justify-center mb-4">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={GROOM_AVATAR_SRC}
-                  alt="Groom Racer Avatar"
+                  src={config.raceGroomAvatarUrl || GROOM_AVATAR_SRC}
+                  alt={`${config.groomName} Racer Avatar`}
                   className="h-full w-auto object-contain drop-shadow-xl select-none"
                 />
               </div>
 
               <div className="flex items-center gap-2 mb-2">
                 <span className="w-3 h-3 rounded-full bg-[#E3001B]" />
-                <h3 className="font-serif text-2xl font-black text-[#2B1D24]">العريس (Groom)</h3>
+                <h3 className="font-serif text-2xl font-black text-[#2B1D24]">{config.groomName}</h3>
               </div>
 
               <div className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#2B1D24] text-white font-mono font-bold text-sm shadow-md">
@@ -337,15 +343,15 @@ export default function WeddingRaceSection() {
               <div className="relative h-[250px] sm:h-[300px] w-full flex items-end justify-center mb-4">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={BRIDE_AVATAR_SRC}
-                  alt="Bride Racer Avatar"
+                  src={config.raceBrideAvatarUrl || BRIDE_AVATAR_SRC}
+                  alt={`${config.brideName} Racer Avatar`}
                   className="h-full w-auto object-contain drop-shadow-xl select-none"
                 />
               </div>
 
               <div className="flex items-center gap-2 mb-2">
                 <span className="w-3 h-3 rounded-full bg-[#F48FB1]" />
-                <h3 className="font-serif text-2xl font-black text-[#2B1D24]">العروسة (Bride)</h3>
+                <h3 className="font-serif text-2xl font-black text-[#2B1D24]">{config.brideName}</h3>
               </div>
 
               <div className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#2B1D24] text-white font-mono font-bold text-sm shadow-md">
@@ -475,8 +481,8 @@ export default function WeddingRaceSection() {
                       ) : (
                         /* eslint-disable-next-line @next/next/no-img-element */
                         <img
-                          src={GROOM_KART_SRC}
-                          alt="Groom Racing Kart"
+                          src={config.raceGroomKartUrl || GROOM_KART_SRC}
+                          alt={`${config.groomName} Racing Kart`}
                           onError={() => setGroomKartError(true)}
                           className="h-[100px] md:h-[150px] w-auto object-contain drop-shadow-2xl"
                         />
@@ -547,8 +553,8 @@ export default function WeddingRaceSection() {
                       ) : (
                         /* eslint-disable-next-line @next/next/no-img-element */
                         <img
-                          src={BRIDE_KART_SRC}
-                          alt="Bride Racing Kart"
+                          src={config.raceBrideKartUrl || BRIDE_KART_SRC}
+                          alt={`${config.brideName} Racing Kart`}
                           onError={() => setBrideKartError(true)}
                           className="h-[100px] md:h-[150px] w-auto object-contain drop-shadow-2xl"
                         />
@@ -591,7 +597,7 @@ export default function WeddingRaceSection() {
               }}
               className="w-full sm:w-1/2 py-4 px-6 rounded-2xl font-black text-lg md:text-xl text-[#2B1D24] bg-[#FCEBF0] border-3 border-[#C9A227] shadow-[0_6px_0_#C9A227,0_10px_20px_rgba(43,29,36,0.15)] active:translate-y-1 active:shadow-[0_2px_0_#C9A227] transition-all cursor-pointer select-none touch-manipulation"
             >
-              🏁 Groom Tap (K)
+              🏁 {config.groomName} Tap (K)
             </button>
             <button
               type="button"
@@ -601,7 +607,7 @@ export default function WeddingRaceSection() {
               }}
               className="w-full sm:w-1/2 py-4 px-6 rounded-2xl font-black text-lg md:text-xl text-[#2B1D24] bg-[#EAF2F6] border-3 border-[#C9A227] shadow-[0_6px_0_#C9A227,0_10px_20px_rgba(43,29,36,0.15)] active:translate-y-1 active:shadow-[0_2px_0_#C9A227] transition-all cursor-pointer select-none touch-manipulation"
             >
-              🏁 Bride Tap (H)
+              🏁 {config.brideName} Tap (H)
             </button>
           </div>
         </div>
@@ -630,8 +636,8 @@ export default function WeddingRaceSection() {
               {winner === "groom" && (
                 /* eslint-disable-next-line @next/next/no-img-element */
                 <img
-                  src={GROOM_AVATAR_SRC}
-                  alt="Groom Victorious Avatar"
+                  src={config.raceGroomAvatarUrl || GROOM_AVATAR_SRC}
+                  alt={`${config.groomName} Victorious Avatar`}
                   className="h-full w-auto object-contain drop-shadow-[0_20px_35px_rgba(0,0,0,0.5)] select-none animate-bounce"
                 />
               )}
@@ -639,8 +645,8 @@ export default function WeddingRaceSection() {
               {winner === "bride" && (
                 /* eslint-disable-next-line @next/next/no-img-element */
                 <img
-                  src={BRIDE_AVATAR_SRC}
-                  alt="Bride Victorious Avatar"
+                  src={config.raceBrideAvatarUrl || BRIDE_AVATAR_SRC}
+                  alt={`${config.brideName} Victorious Avatar`}
                   className="h-full w-auto object-contain drop-shadow-[0_20px_35px_rgba(0,0,0,0.5)] select-none animate-bounce"
                 />
               )}
@@ -649,14 +655,14 @@ export default function WeddingRaceSection() {
                 <div className="flex items-center gap-4 h-full">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={GROOM_AVATAR_SRC}
-                    alt="Groom Avatar"
+                    src={config.raceGroomAvatarUrl || GROOM_AVATAR_SRC}
+                    alt={`${config.groomName} Avatar`}
                     className="h-full w-auto object-contain drop-shadow-2xl"
                   />
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={BRIDE_AVATAR_SRC}
-                    alt="Bride Avatar"
+                    src={config.raceBrideAvatarUrl || BRIDE_AVATAR_SRC}
+                    alt={`${config.brideName} Avatar`}
                     className="h-full w-auto object-contain drop-shadow-2xl"
                   />
                 </div>
@@ -671,15 +677,15 @@ export default function WeddingRaceSection() {
               transition={{ type: "spring", stiffness: 200, damping: 15 }}
               className="font-serif font-black text-3xl sm:text-5xl md:text-6xl text-[#C9A227] tracking-tight drop-shadow-lg mb-2"
             >
-              {winner === "groom" && "GROOM WINS THE RACE! 🏆"}
-              {winner === "bride" && "BRIDE WINS THE RACE! 👑"}
+              {winner === "groom" && `${config.groomName} WINS THE RACE! 🏆`}
+              {winner === "bride" && `${config.brideName} WINS THE RACE! 👑`}
               {winner === "tie" && "IT'S A DEAD HEAT TIE! 💞"}
             </motion.h2>
 
             <p className="font-sans text-sm md:text-base text-white/95 mb-6 font-semibold">
-              {winner === "groom" && "سرعة خارقة من العريس! مبروك الانتصار المستحق!"}
-              {winner === "bride" && "فوز ساحق للعروسة! سرعة وأناقة لا مثيل لها!"}
-              {winner === "tie" && "تعادل ملحمي بين العروسين في سباق القلوب!"}
+              {winner === "groom" && `سرعة خارقة من ${config.groomName}! مبروك الانتصار المستحق!`}
+              {winner === "bride" && `فوز ساحق لـ ${config.brideName}! سرعة وأناقة لا مثيل لها!`}
+              {winner === "tie" && `تعادل ملحمي بين ${config.groomName} و ${config.brideName} في سباق القلوب!`}
             </p>
 
             {/* ACTION BUTTONS: CHOOSE LOSER PUNISHMENT & PLAY AGAIN */}

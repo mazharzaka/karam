@@ -17,6 +17,10 @@ import {
   useTransform,
 } from "framer-motion";
 import { useGlobalAudio } from "@/utils/globalAudioCoordinator";
+import {
+  useWeddingConfig,
+  mergeGalleryIntoCards,
+} from "@/context/WeddingConfigContext";
 
 /* -------------------------------------------------------------------------- */
 /* MEDIA PLACEHOLDERS (CRITICAL FOR USER REPLACEMENT)                         */
@@ -390,6 +394,12 @@ export default function ZamalekThemeSection({
   const trackRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
 
+  const { config } = useWeddingConfig();
+  const dynamicCards = React.useMemo(
+    () => mergeGalleryIntoCards(CARDS, config.gallery, 24),
+    [config.gallery]
+  );
+
   // Marquee controls & state
   const controls = useAnimation();
   const x = useMotionValue(0);
@@ -523,7 +533,7 @@ export default function ZamalekThemeSection({
     }
   }, [inView, isGlobalAudioEnabled, playTrack, stopTrack]);
 
-  const loopedCards = [...CARDS, ...CARDS];
+  const loopedCards = [...dynamicCards, ...dynamicCards];
 
   return (
     <section
@@ -534,7 +544,7 @@ export default function ZamalekThemeSection({
       {/* Zamalek SC Anthem Soundtrack (Track: ZAMALEK_AUDIO_SRC) */}
       <audio
         ref={audioRef}
-        src={ZAMALEK_AUDIO_SRC}
+        src={config.audioZamalek || ZAMALEK_AUDIO_SRC}
         loop
         preload="auto"
         className="hidden"
@@ -654,8 +664,8 @@ export default function ZamalekThemeSection({
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={ZAMALEK_GROOM_SRC}
-          alt="Groom wearing White Zamalek Jersey"
+          src={config.zamalekGroomUrl || ZAMALEK_GROOM_SRC}
+          alt={`${config.groomName} wearing White Zamalek Jersey`}
           aria-hidden="true"
           className="pointer-events-none absolute bottom-0 left-0 z-20 h-[95%] w-auto max-w-[42vw] min-w-[300px] object-contain object-bottom -scale-x-100 drop-shadow-2xl"
           style={{ transform: "scaleX(-1)" }}
@@ -669,8 +679,8 @@ export default function ZamalekThemeSection({
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={ZAMALEK_BRIDE_SRC}
-          alt="Bride wearing White Zamalek Jersey"
+          src={config.zamalekBrideUrl || ZAMALEK_BRIDE_SRC}
+          alt={`${config.brideName} wearing White Zamalek Jersey`}
           aria-hidden="true"
           className="pointer-events-none absolute bottom-0 right-0 z-20 h-[95%] w-auto max-w-[42vw] min-w-[300px] object-contain object-bottom drop-shadow-2xl"
         />

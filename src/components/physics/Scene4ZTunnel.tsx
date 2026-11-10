@@ -1,16 +1,24 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { Eye, Heart, ChevronLeft, ChevronRight, FastForward } from "lucide-react";
-import { SCENE4_TUNNEL_IMAGES } from "@/data/romanticImages";
 import { romanticAudio } from "@/utils/audioSynthesizer";
+import {
+  useWeddingConfig,
+  buildDynamicRomanceImages,
+} from "@/context/WeddingConfigContext";
 
 export const Scene4ZTunnel: React.FC = () => {
-  // Flight position along the tunnel (0 to 19)
+  const { config } = useWeddingConfig();
+  const tunnelImages = useMemo(
+    () => buildDynamicRomanceImages(config.gallery).slice(0, 20),
+    [config.gallery]
+  );
+  // Flight position along the tunnel
   const [tunnelProgress, setTunnelProgress] = useState<number>(0);
-  const total = SCENE4_TUNNEL_IMAGES.length;
+  const total = tunnelImages.length;
 
   // Keyboard navigation for tunnel flight (ArrowLeft / ArrowRight only)
   useEffect(() => {
@@ -28,8 +36,8 @@ export const Scene4ZTunnel: React.FC = () => {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [total]);
 
-  const activeIndex = Math.round(tunnelProgress);
-  const activeImage = SCENE4_TUNNEL_IMAGES[activeIndex] || SCENE4_TUNNEL_IMAGES[0];
+  const activeIndex = Math.min(Math.max(0, Math.round(tunnelProgress)), Math.max(0, total - 1));
+  const activeImage = tunnelImages[activeIndex] || tunnelImages[0];
 
   return (
     <div className="relative w-full min-h-[750px] flex flex-col justify-between py-8 px-6 lg:px-12 bg-gradient-to-b from-[#1C1518] via-[#24181B] to-[#171012] text-white select-none overflow-hidden">
@@ -41,7 +49,7 @@ export const Scene4ZTunnel: React.FC = () => {
         <div>
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/10 backdrop-blur-md border border-romantic-roseGold/40 text-xs font-semibold text-romantic-roseGoldLight mb-1">
             <Eye className="w-3.5 h-3.5 text-romantic-roseGold" />
-            <span>Scene 08 • Images 51 — 70 (20 Tunnel Frames)</span>
+            <span>Scene 09 • {total} Tunnel Frames</span>
           </div>
           <h2 className="font-serif text-3xl sm:text-4xl font-bold text-white">
             The Z-Axis Memory Tunnel
@@ -90,7 +98,7 @@ export const Scene4ZTunnel: React.FC = () => {
         className="relative flex-1 w-full max-w-4xl mx-auto flex items-center justify-center overflow-hidden"
         style={{ perspective: "1200px" }}
       >
-        {SCENE4_TUNNEL_IMAGES.map((img, index) => {
+        {tunnelImages.map((img, index) => {
           // Distance from the current flight camera
           const distance = index - tunnelProgress;
 
@@ -135,6 +143,7 @@ export const Scene4ZTunnel: React.FC = () => {
                   src={img.url}
                   alt={img.caption}
                   fill
+                  unoptimized
                   sizes="360px"
                   className="object-cover"
                 />

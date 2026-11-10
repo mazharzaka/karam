@@ -14,8 +14,12 @@ import {
   Calendar,
   ZoomIn,
 } from "lucide-react";
-import { SCENE3_DESK_IMAGES, RomanceImage } from "@/data/romanticImages";
+import { RomanceImage } from "@/data/romanticImages";
 import { romanticAudio } from "@/utils/audioSynthesizer";
+import {
+  useWeddingConfig,
+  buildDynamicRomanceImages,
+} from "@/context/WeddingConfigContext";
 
 interface Scene3PhysicsDeskProps {
   onNext?: () => void;
@@ -30,6 +34,11 @@ const WASHI_TAPES = [
 ];
 
 export const Scene3PhysicsDesk: React.FC<Scene3PhysicsDeskProps> = () => {
+  const { config } = useWeddingConfig();
+  const deskImages = useMemo(
+    () => buildDynamicRomanceImages(config.gallery).slice(0, 30),
+    [config.gallery]
+  );
   const deskRef = useRef<HTMLDivElement>(null);
   const [activeZ, setActiveZ] = useState<number>(100);
   const [layoutMode, setLayoutMode] = useState<"scatter" | "stack">("scatter");
@@ -123,14 +132,14 @@ export const Scene3PhysicsDesk: React.FC<Scene3PhysicsDeskProps> = () => {
       <div
         className="relative flex-1 w-full max-w-7xl mx-auto my-3 rounded-3xl bg-white/30 backdrop-blur-sm border-2 border-dashed border-romantic-roseGold/30 overflow-hidden flex items-center justify-center min-h-[460px]"
       >
-        {SCENE3_DESK_IMAGES.map((photo, index) => (
+        {deskImages.map((photo, index) => (
           <DraggableScrapbookPolaroid
             key={`${photo.id}-${scatterSeed}`}
             photo={photo}
             index={index}
             deskRef={deskRef}
             layoutMode={layoutMode}
-            totalCount={SCENE3_DESK_IMAGES.length}
+            totalCount={deskImages.length}
             onDragStart={() => {
               setActiveZ((prev) => prev + 1);
               romanticAudio?.playGlideSfx();
@@ -158,7 +167,7 @@ export const Scene3PhysicsDesk: React.FC<Scene3PhysicsDeskProps> = () => {
         <div className="flex items-center gap-3 font-semibold text-romantic-charcoal">
           <span>Mode: {layoutMode === "scatter" ? "Free Scatter" : "Tidy Stack"}</span>
           <span className="text-romantic-roseGold/40">•</span>
-          <span>30 Physics Polaroids</span>
+          <span>{deskImages.length} Physics Polaroids</span>
         </div>
       </div>
 
@@ -199,6 +208,7 @@ export const Scene3PhysicsDesk: React.FC<Scene3PhysicsDeskProps> = () => {
                   src={selectedPhoto.url}
                   alt={selectedPhoto.caption}
                   fill
+                  unoptimized
                   sizes="600px"
                   className="object-cover"
                 />
@@ -324,6 +334,7 @@ const DraggableScrapbookPolaroid: React.FC<DraggableScrapbookPolaroidProps> = ({
           src={photo.url}
           alt={photo.caption}
           fill
+          unoptimized
           sizes="210px"
           className="object-cover pointer-events-none select-none transition-transform duration-500 group-hover:scale-105"
         />

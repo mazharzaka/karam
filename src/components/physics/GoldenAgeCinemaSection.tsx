@@ -17,6 +17,10 @@ import {
   useTransform,
 } from "framer-motion";
 import { useGlobalAudio } from "@/utils/globalAudioCoordinator";
+import {
+  useWeddingConfig,
+  mergeGalleryIntoCards,
+} from "@/context/WeddingConfigContext";
 
 /* -------------------------------------------------------------------------- */
 /* MEDIA PLACEHOLDERS (Easily Replaceable)                                     */
@@ -392,6 +396,12 @@ export default function GoldenAgeCinemaSection({
   const trackRef = useRef<HTMLDivElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
 
+  const { config } = useWeddingConfig();
+  const dynamicCards = React.useMemo(
+    () => mergeGalleryIntoCards(CARDS, config.gallery, 12),
+    [config.gallery]
+  );
+
   // Marquee controls & state
   const controls = useAnimation();
   const x = useMotionValue(0);
@@ -525,7 +535,7 @@ export default function GoldenAgeCinemaSection({
     }
   }, [inView, isGlobalAudioEnabled, playTrack, stopTrack]);
 
-  const loopedCards = [...CARDS, ...CARDS];
+  const loopedCards = [...dynamicCards, ...dynamicCards];
 
   return (
     <section
@@ -536,7 +546,7 @@ export default function GoldenAgeCinemaSection({
       {/* Golden Age Cinema Soundtrack (Track D: Abdel Halim Hafez) */}
       <audio
         ref={audioRef}
-        src={CINEMA_SECTION_ASSETS.cinemaTrack}
+        src={config.audioCinema || CINEMA_SECTION_ASSETS.cinemaTrack}
         loop
         preload="auto"
         className="hidden"
@@ -679,8 +689,8 @@ export default function GoldenAgeCinemaSection({
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={CINEMA_SECTION_ASSETS.groomImage}
-          alt="1950s Groom in Tuxedo"
+          src={config.cinemaGroomUrl || CINEMA_SECTION_ASSETS.groomImage}
+          alt={`${config.groomName} 1950s Groom`}
           aria-hidden="true"
           className="-scale-x-100 h-full w-auto object-contain object-bottom drop-shadow-2xl"
           style={{ transform: "scaleX(-1)" }}
@@ -694,8 +704,8 @@ export default function GoldenAgeCinemaSection({
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={CINEMA_SECTION_ASSETS.brideImage}
-          alt="1950s Vintage Bride"
+          src={config.cinemaBrideUrl || CINEMA_SECTION_ASSETS.brideImage}
+          alt={`${config.brideName} 1950s Bride`}
           aria-hidden="true"
           className="h-full w-auto object-contain object-bottom drop-shadow-2xl"
         />

@@ -11,7 +11,6 @@ import {
 } from "lucide-react";
 import confetti from "canvas-confetti";
 import {
-  differenceInYears,
   differenceInDays,
   differenceInHours,
   differenceInMinutes,
@@ -27,21 +26,55 @@ interface Scene1HeroSpotlightProps {
   startDate?: string | Date;
 }
 
-const WEDDING_PHOTO_URL =
-  "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?q=80&w=2000&auto=format&fit=crop";
-
-const CHILDHOOD_PHOTO_1 =
-  "https://images.unsplash.com/photo-1519340333755-56e9c1d04079?q=80&w=400&auto=format&fit=crop";
-
-const CHILDHOOD_PHOTO_2 =
-  "https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?q=80&w=400&auto=format&fit=crop";
+function getSafeDuration(dateInput: string | Date, now: Date) {
+  const parsed = new Date(dateInput);
+  if (Number.isNaN(parsed.getTime())) {
+    return {
+      years: 0,
+      months: 0,
+      days: 0,
+      hours: 0,
+      minutes: 0,
+      seconds: 0,
+      totalDays: 0,
+      totalHours: 0,
+      totalMinutes: 0,
+      totalSeconds: 0,
+      decimalYears: "0.00",
+      isFuture: false,
+    };
+  }
+  const isFuture = parsed.getTime() > now.getTime();
+  const start = isFuture ? now : parsed;
+  const end = isFuture ? parsed : now;
+  const duration = intervalToDuration({ start, end });
+  const totalDays = Math.abs(differenceInDays(now, parsed));
+  const totalHours = Math.abs(differenceInHours(now, parsed));
+  const totalMinutes = Math.abs(differenceInMinutes(now, parsed));
+  const totalSeconds = Math.abs(differenceInSeconds(now, parsed));
+  return {
+    years: duration.years || 0,
+    months: duration.months || 0,
+    days: duration.days || 0,
+    hours: duration.hours || 0,
+    minutes: duration.minutes || 0,
+    seconds: duration.seconds || 0,
+    totalDays,
+    totalHours,
+    totalMinutes,
+    totalSeconds,
+    decimalYears: (totalDays / 365.2425).toFixed(2),
+    isFuture,
+  };
+}
 
 export const Scene1HeroSpotlight: React.FC<Scene1HeroSpotlightProps> = ({
   onNext,
-  startDate = "2021-06-12T00:00:00",
+  startDate = "2023-08-10T00:00:00",
 }) => {
   const { config } = useWeddingConfig();
-  const effectiveStartDate = config?.weddingDate || config?.engagementDate || startDate;
+  const effectiveStartDate =
+    config.engagementDate || config.weddingDate || startDate;
 
   const [mounted, setMounted] = useState<boolean>(false);
   const [currentTime, setCurrentTime] = useState<Date>(() => new Date());
@@ -132,36 +165,36 @@ export const Scene1HeroSpotlight: React.FC<Scene1HeroSpotlightProps> = ({
     });
   };
 
-  // Time calculations via date-fns
+  // Time calculations via date-fns (Engagement & Wedding)
+  const engagementStats = useMemo(
+    () => getSafeDuration(config.engagementDate || effectiveStartDate, currentTime),
+    [config.engagementDate, effectiveStartDate, currentTime]
+  );
+
+  const weddingStats = useMemo(
+    () => getSafeDuration(config.weddingDate || effectiveStartDate, currentTime),
+    [config.weddingDate, effectiveStartDate, currentTime]
+  );
+
   const timeStats = useMemo(() => {
-    const totalSecs = differenceInSeconds(currentTime, parsedStartDate);
-    const totalMins = differenceInMinutes(currentTime, parsedStartDate);
-    const totalHrs = differenceInHours(currentTime, parsedStartDate);
-    const totalD = differenceInDays(currentTime, parsedStartDate);
-    const totalY = differenceInYears(currentTime, parsedStartDate);
-
-    const duration = intervalToDuration({
-      start: parsedStartDate,
-      end: currentTime,
-    });
-
+    const base = getSafeDuration(effectiveStartDate, currentTime);
     return {
-      totalYears: totalY,
-      totalDays: totalD,
-      totalHours: totalHrs,
-      totalMinutes: totalMins,
-      totalSeconds: totalSecs,
-      durationYears: duration.years || 0,
-      durationMonths: duration.months || 0,
-      durationDays: duration.days || 0,
-      durationHours: duration.hours || 0,
-      durationMinutes: duration.minutes || 0,
-      durationSeconds: duration.seconds || 0,
-      subMinuteSecs: totalSecs % 60,
-      subHourMins: totalMins % 60,
-      decimalYears: (totalD / 365.2425).toFixed(2),
+      totalYears: base.years,
+      totalDays: base.totalDays,
+      totalHours: base.totalHours,
+      totalMinutes: base.totalMinutes,
+      totalSeconds: base.totalSeconds,
+      durationYears: base.years,
+      durationMonths: base.months,
+      durationDays: base.days,
+      durationHours: base.hours,
+      durationMinutes: base.minutes,
+      durationSeconds: base.seconds,
+      subMinuteSecs: base.totalSeconds % 60,
+      subHourMins: base.totalMinutes % 60,
+      decimalYears: base.decimalYears,
     };
-  }, [currentTime, parsedStartDate]);
+  }, [currentTime, effectiveStartDate]);
 
   return (
     <div
@@ -170,7 +203,7 @@ export const Scene1HeroSpotlight: React.FC<Scene1HeroSpotlightProps> = ({
     >
       {/* 
         ENHANCED MOUSE SPOTLIGHT (THE REVEAL): 
-        High-res wedding photo with enlarged, 100% inner-opacity radial gradient mask
+        Dynamic Main Hero Background Image from Admin Config
       */}
       <div
         className="absolute inset-0 pointer-events-none transition-opacity duration-300"
@@ -180,10 +213,11 @@ export const Scene1HeroSpotlight: React.FC<Scene1HeroSpotlightProps> = ({
         }}
       >
         <Image
-          src={WEDDING_PHOTO_URL}
-          alt="The Wedding Aisle - Forever Starts Here"
+          src={config.mainHeroBgUrl}
+          alt={`${config.groomName} & ${config.brideName} - Forever Starts Here`}
           fill
           priority
+          unoptimized
           className="object-cover filter brightness-115 contrast-105 scale-105 transition-transform duration-700"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#24181B]/85 via-transparent to-[#24181B]/40" />
@@ -198,7 +232,9 @@ export const Scene1HeroSpotlight: React.FC<Scene1HeroSpotlightProps> = ({
         >
           <div className="px-3.5 py-1.5 rounded-full bg-black/75 backdrop-blur-md border border-romantic-roseGold/70 text-[11px] text-romantic-roseGoldLight font-serif shadow-glow whitespace-nowrap flex items-center gap-2">
             <Eye className="w-3.5 h-3.5 text-romantic-roseGold animate-pulse" />
-            <span className="tracking-wide">Illuminated: The Wedding Walk</span>
+            <span className="tracking-wide">
+              {config.groomName} &amp; {config.brideName} • The Spotlight
+            </span>
           </div>
         </div>
       </div>
@@ -223,7 +259,9 @@ export const Scene1HeroSpotlight: React.FC<Scene1HeroSpotlightProps> = ({
           className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-romantic-roseGold/35 shadow-sm text-xs font-semibold text-romantic-roseGoldLight tracking-wider"
         >
           <Sparkles className="w-3.5 h-3.5 text-romantic-roseGold" />
-          <span>Scene 01 • The Hero Spotlight</span>
+          <span>
+            {config.groomName} &amp; {config.brideName} • Forever Story
+          </span>
         </motion.div>
 
         {/* Hourly Celebration Badge / Manual Trigger */}
@@ -238,7 +276,7 @@ export const Scene1HeroSpotlight: React.FC<Scene1HeroSpotlightProps> = ({
           className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-romantic-roseGold/40 hover:border-romantic-roseGold text-[11px] text-romantic-roseGoldLight hover:text-white transition-all shadow-glow cursor-pointer group"
         >
           <PartyPopper className="w-3.5 h-3.5 text-romantic-roseGold group-hover:rotate-12 transition-transform" />
-          <span>Hourly Milestone Active ({timeStats.totalHours.toLocaleString()}h)</span>
+          <span>Hourly Milestone Active ({mounted ? timeStats.totalHours.toLocaleString() : "..."}h)</span>
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
         </motion.button>
       </div>
@@ -246,12 +284,21 @@ export const Scene1HeroSpotlight: React.FC<Scene1HeroSpotlightProps> = ({
       {/* MAIN HERO CONTENT: Central Counter & Floating Childhood Photos */}
       <div className="relative z-20 flex flex-col items-center my-auto text-center w-full max-w-4xl px-2">
         
-        {/* Subtitle intro */}
+        {/* Dynamic Couple Title & Subtitle intro */}
+        <motion.h1
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7 }}
+          className="font-serif text-3xl sm:text-5xl font-bold text-white tracking-tight mb-1 drop-shadow-lg"
+        >
+          {config.groomName} &amp; {config.brideName}
+        </motion.h1>
+
         <motion.p
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="font-serif text-xl sm:text-2xl md:text-3xl text-romantic-blushLight font-light italic tracking-wide mb-3"
+          className="font-serif text-lg sm:text-xl md:text-2xl text-romantic-blushLight font-light italic tracking-wide mb-3"
         >
           In a world of billions, our time belongs together...
         </motion.p>
@@ -260,7 +307,7 @@ export const Scene1HeroSpotlight: React.FC<Scene1HeroSpotlightProps> = ({
         <div className="relative w-full flex items-center justify-center my-4 py-4">
 
           {/* 
-            CHILDHOOD PHOTO 1 (Top-Left Floating Polaroid Avatar) 
+            CHILDHOOD PHOTO 1: BRIDE (Top-Left Floating Polaroid Avatar) 
           */}
           <motion.div
             initial={{ opacity: 0, x: -40, y: -20, rotate: -8 }}
@@ -281,15 +328,16 @@ export const Scene1HeroSpotlight: React.FC<Scene1HeroSpotlightProps> = ({
             <div className="p-2 sm:p-2.5 rounded-2xl bg-white/10 backdrop-blur-md border border-romantic-roseGold/40 shadow-polaroid hover:border-romantic-roseGold transition-colors group cursor-default">
               <div className="relative w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-xl overflow-hidden border border-romantic-roseGold/50 shadow-inner">
                 <Image
-                  src={CHILDHOOD_PHOTO_1}
-                  alt="Her childhood memory"
+                  src={config.brideChildhoodUrl}
+                  alt={`${config.brideName} childhood memory`}
                   fill
+                  unoptimized
                   className="object-cover group-hover:scale-110 transition-transform duration-500"
                 />
               </div>
               <div className="mt-1 text-center">
                 <p className="font-serif text-[10px] sm:text-xs text-romantic-roseGoldLight font-semibold">
-                  Sophia • Age 6
+                  {config.brideName} • Childhood
                 </p>
                 <p className="text-[8px] sm:text-[9px] text-[#FDECEF]/60 italic">
                   Dreaming of forever
@@ -299,7 +347,7 @@ export const Scene1HeroSpotlight: React.FC<Scene1HeroSpotlightProps> = ({
           </motion.div>
 
           {/* 
-            CHILDHOOD PHOTO 2 (Bottom-Right Floating Polaroid Avatar) 
+            CHILDHOOD PHOTO 2: GROOM (Bottom-Right Floating Polaroid Avatar) 
           */}
           <motion.div
             initial={{ opacity: 0, x: 40, y: 20, rotate: 8 }}
@@ -320,18 +368,19 @@ export const Scene1HeroSpotlight: React.FC<Scene1HeroSpotlightProps> = ({
             <div className="p-2 sm:p-2.5 rounded-2xl bg-white/10 backdrop-blur-md border border-romantic-roseGold/40 shadow-polaroid hover:border-romantic-roseGold transition-colors group cursor-default">
               <div className="relative w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-xl overflow-hidden border border-romantic-roseGold/50 shadow-inner">
                 <Image
-                  src={CHILDHOOD_PHOTO_2}
-                  alt="His childhood memory"
+                  src={config.groomChildhoodUrl}
+                  alt={`${config.groomName} childhood memory`}
                   fill
+                  unoptimized
                   className="object-cover group-hover:scale-110 transition-transform duration-500"
                 />
               </div>
               <div className="mt-1 text-center">
                 <p className="font-serif text-[10px] sm:text-xs text-romantic-roseGoldLight font-semibold">
-                  Julian • Age 7
+                  {config.groomName} • Childhood
                 </p>
                 <p className="text-[8px] sm:text-[9px] text-[#FDECEF]/60 italic">
-                  destined to meet
+                  Destined to meet
                 </p>
               </div>
             </div>
@@ -547,17 +596,46 @@ export const Scene1HeroSpotlight: React.FC<Scene1HeroSpotlightProps> = ({
           </button>
         </motion.div>
 
+        {/* Dual Live Milestone Counter: Engagement & Wedding (Years, Months, Days, Hours) */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.7 }}
+          className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-2xl"
+        >
+          <div className="px-4 py-2.5 rounded-2xl bg-black/35 backdrop-blur-md border border-romantic-roseGold/30 text-center">
+            <p className="text-[10px] uppercase tracking-widest text-romantic-roseGoldLight/80 font-semibold">
+              Since Engagement ({config.engagementDate || "—"})
+            </p>
+            <p className="font-serif text-sm sm:text-base font-bold text-white mt-0.5">
+              {mounted
+                ? `${engagementStats.years}y • ${engagementStats.months}m • ${engagementStats.days}d • ${engagementStats.hours}h`
+                : "..."}
+            </p>
+          </div>
+          <div className="px-4 py-2.5 rounded-2xl bg-black/35 backdrop-blur-md border border-romantic-roseGold/30 text-center">
+            <p className="text-[10px] uppercase tracking-widest text-romantic-roseGoldLight/80 font-semibold">
+              {weddingStats.isFuture ? "Countdown to Wedding" : "Since Wedding"} ({config.weddingDate || "—"})
+            </p>
+            <p className="font-serif text-sm sm:text-base font-bold text-white mt-0.5">
+              {mounted
+                ? `${weddingStats.years}y • ${weddingStats.months}m • ${weddingStats.days}d • ${weddingStats.hours}h`
+                : "..."}
+            </p>
+          </div>
+        </motion.div>
+
         {/* Interactive Spotlight Prompt Mini-Banner */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.8 }}
-          className="flex items-center gap-3 mt-6 px-4 py-2 rounded-2xl bg-white/5 backdrop-blur-md border border-romantic-roseGold/20 text-left text-xs"
+          className="flex items-center gap-3 mt-4 px-4 py-2 rounded-2xl bg-white/5 backdrop-blur-md border border-romantic-roseGold/20 text-left text-xs"
         >
           <div className="w-2 h-2 rounded-full bg-romantic-roseGold animate-ping shrink-0" />
           <p className="text-[#FDECEF]/80">
             <span className="font-serif font-bold text-white mr-1.5">Interactive Spotlight:</span>
-            Move your cursor across the screen to reveal the crystal-clear wedding memory.
+            Move your cursor across the screen to reveal {config.groomName} &amp; {config.brideName}&apos;s wedding memory.
           </p>
         </motion.div>
       </div>
@@ -571,7 +649,7 @@ export const Scene1HeroSpotlight: React.FC<Scene1HeroSpotlightProps> = ({
         className="relative z-20 flex flex-col items-center gap-1 group text-romantic-blush hover:text-white transition-colors cursor-pointer pt-2"
       >
         <span className="text-xs font-medium tracking-widest uppercase">
-          Proceed to Scene 02: The Draggable Filmstrip
+          Proceed to Scene 02: Egyptian Heritage
         </span>
         <motion.div
           animate={{ y: [0, 5, 0] }}
