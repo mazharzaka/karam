@@ -13,8 +13,6 @@ import {
   useInView,
   useMotionValue,
   useMotionValueEvent,
-  useScroll,
-  useTransform,
 } from "framer-motion";
 import { useGlobalAudio } from "@/utils/globalAudioCoordinator";
 import {
@@ -420,7 +418,6 @@ const PhotoCard: React.FC<{ card: MomentCard; rotation: string }> = ({
 
 export default function SaidiHeritageSection({
   onNext,
-  scrollContainerRef,
 }: {
   onNext?: () => void;
   scrollContainerRef?: React.RefObject<HTMLElement | HTMLDivElement | null>;
@@ -456,31 +453,8 @@ export default function SaidiHeritageSection({
     posRef.current = latest;
   });
 
-  /* ---- Magical Reveal: Parallax Scroll Transformation for Heroes ---- */
-  // As the user scrolls deeply into Section 3 (after Section 2 has passed),
-  // the Saidi characters magically rise from 100% (hidden below floor) to 0% (resting position).
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    container: scrollContainerRef?.current ? scrollContainerRef : undefined,
-    offset: ["start end", "end start"],
-  });
-
-  const heroY = useTransform(
-    scrollYProgress,
-    [0, 0.22, 0.46, 0.72, 1],
-    ["100%", "100%", "0%", "0%", "100%"]
-  );
-
-  const heroOpacity = useTransform(
-    scrollYProgress,
-    [0, 0.2, 0.38, 0.74, 0.96],
-    [0, 0, 1, 1, 0]
-  );
-
-  const inView = useInView(sectionRef, {
-    root: scrollContainerRef?.current ? scrollContainerRef : undefined,
-    amount: 0.35,
-  });
+  const inView = useInView(sectionRef, { amount: 0.35 });
+  const charactersInView = useInView(sectionRef, { amount: 0.12 });
 
   /* ---- Measurement for Infinite Marquee ---- */
   useLayoutEffect(() => {
@@ -644,7 +618,7 @@ export default function SaidiHeritageSection({
       </div>
 
       {/* Top-Right Controls */}
-      <div className="absolute right-6 top-6 z-40 flex items-center gap-2.5">
+      <div className="absolute right-6 top-6 z-50 flex items-center gap-2.5">
         {/* Audio Mute/Unmute Control */}
         <button
           type="button"
@@ -704,7 +678,7 @@ export default function SaidiHeritageSection({
       </header>
 
       {/* Card row: 3-card visible focus Kotsheena marquee */}
-      <div className="relative z-10 my-auto h-[440px] min-h-[400px] overflow-hidden">
+      <div className="relative z-20 my-auto h-[440px] min-h-[400px] w-full overflow-hidden">
         <motion.div
           ref={trackRef}
           animate={controls}
@@ -721,32 +695,35 @@ export default function SaidiHeritageSection({
         </motion.div>
       </div>
 
-      {/* Hero character: Saidi Groom (Left - Explicitly Mirrored Inward via style & class) */}
+      {/* Hero character: Saidi Groom (Left - Standard Clean Bottom-Anchored Framing) */}
       <motion.div
-        style={{ y: heroY, opacity: heroOpacity }}
-        className="pointer-events-none absolute bottom-0 left-0 z-20 h-[95%] max-h-[800px] w-auto max-w-[42vw] min-w-[300px] flex items-end justify-start will-change-transform"
+        initial={{ opacity: 0, y: 40 }}
+        animate={charactersInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
+        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+        className="absolute bottom-0 left-0 z-50 w-44 md:w-64 lg:w-80 pointer-events-none"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={config.saidiGroomUrl || SAIDI_SECTION_ASSETS.groomImage}
           alt={`${config.groomName} Saidi Groom`}
           aria-hidden="true"
-          className="-scale-x-100 h-full w-auto object-contain object-bottom drop-shadow-2xl"
-          style={{ transform: "scaleX(-1)" }}
+          className="w-full h-auto object-contain object-bottom"
         />
       </motion.div>
 
-      {/* Hero character: Saidi Bride (Right - Facing Inward toward Groom) */}
+      {/* Hero character: Saidi Bride (Right - Standard Clean Bottom-Anchored Framing) */}
       <motion.div
-        style={{ y: heroY, opacity: heroOpacity }}
-        className="pointer-events-none absolute bottom-0 right-0 z-20 h-[95%] max-h-[800px] w-auto max-w-[42vw] min-w-[300px] flex items-end justify-end will-change-transform"
+        initial={{ opacity: 0, y: 40 }}
+        animate={charactersInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
+        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+        className="absolute bottom-0 right-0 z-50 w-44 md:w-64 lg:w-80 pointer-events-none"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={config.saidiBrideUrl || SAIDI_SECTION_ASSETS.brideImage}
           alt={`${config.brideName} Saidi Bride`}
           aria-hidden="true"
-          className="h-full w-auto object-contain object-bottom drop-shadow-2xl"
+          className="w-full h-auto object-contain object-bottom"
         />
       </motion.div>
 

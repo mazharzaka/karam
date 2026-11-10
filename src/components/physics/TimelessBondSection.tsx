@@ -12,8 +12,6 @@ import {
   useAnimation,
   useInView,
   useMotionValue,
-  useScroll,
-  useTransform,
 } from "framer-motion";
 import { useGlobalAudio } from "@/utils/globalAudioCoordinator";
 import {
@@ -209,7 +207,6 @@ const PhotoCard: React.FC<{ card: MomentCard; rotation: string }> = ({ card, rot
 
 export default function TimelessBondSection({
   onNext,
-  scrollContainerRef,
 }: {
   onNext?: () => void;
   scrollContainerRef?: React.RefObject<HTMLElement | HTMLDivElement | null>;
@@ -235,31 +232,8 @@ export default function TimelessBondSection({
   const pausedRef = useRef(false);
   const runIdRef = useRef(0);
 
-  /* ---- Scroll-Linked Parallax Elevator for Statues ---- */
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    container: scrollContainerRef?.current ? scrollContainerRef : undefined,
-    offset: ["start end", "end start"],
-  });
-
-  // As the user scrolls into Section 2, statues rise from y: "100%" (hidden beneath floor)
-  // to resting position "0%". When scrolling past, they sink smoothly back to "100%".
-  const statueY = useTransform(
-    scrollYProgress,
-    [0, 0.28, 0.72, 1],
-    ["100%", "0%", "0%", "100%"]
-  );
-
-  const statueOpacity = useTransform(
-    scrollYProgress,
-    [0, 0.2, 0.8, 1],
-    [0, 1, 1, 0]
-  );
-
-  const isInView = useInView(sectionRef, {
-    root: scrollContainerRef?.current ? scrollContainerRef : undefined,
-    amount: 0.3,
-  });
+  const isInView = useInView(sectionRef, { amount: 0.3 });
+  const charactersInView = useInView(sectionRef, { amount: 0.12 });
 
   /* ---- Measure the exact distance of one full set of cards ---- */
   useLayoutEffect(() => {
@@ -430,7 +404,7 @@ export default function TimelessBondSection({
       </header>
 
       {/* Card row */}
-      <div className="relative z-10 my-auto h-[440px] min-h-[400px] overflow-hidden">
+      <div className="relative z-20 my-auto h-[440px] min-h-[400px] w-full overflow-hidden">
         <motion.div
           ref={trackRef}
           animate={controls}
@@ -446,21 +420,35 @@ export default function TimelessBondSection({
         </motion.div>
       </div>
 
-      {/* Hero statues (Scroll-linked Elevator / Parallax Emergence) */}
-      <motion.img
-        src={config.pharaonicGroomUrl || STATUE_LEFT_SRC}
-        alt={`${config.groomName} Pharaonic Guardian`}
-        aria-hidden="true"
-        style={{ y: statueY, opacity: statueOpacity }}
-        className="pointer-events-none absolute bottom-0 left-0 z-20 h-[95%] w-auto max-w-[42vw] min-w-[300px] object-contain object-bottom will-change-transform"
-      />
-      <motion.img
-        src={config.pharaonicBrideUrl || STATUE_RIGHT_SRC}
-        alt={`${config.brideName} Pharaonic Guardian`}
-        aria-hidden="true"
-        style={{ y: statueY, opacity: statueOpacity }}
-        className="pointer-events-none absolute bottom-0 right-0 z-20 h-[95%] w-auto max-w-[42vw] min-w-[300px] object-contain object-bottom will-change-transform"
-      />
+      {/* Hero statues (Standard Clean Bottom-Anchored Framing) */}
+      <motion.div
+        initial={{ opacity: 0, y: 40 }}
+        animate={charactersInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
+        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+        className="absolute bottom-0 left-0 z-50 w-44 md:w-64 lg:w-80 pointer-events-none"
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={config.pharaonicGroomUrl || STATUE_LEFT_SRC}
+          alt={`${config.groomName} Pharaonic Guardian`}
+          aria-hidden="true"
+          className="w-full h-auto object-contain object-bottom"
+        />
+      </motion.div>
+      <motion.div
+        initial={{ opacity: 0, y: 40 }}
+        animate={charactersInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
+        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+        className="absolute bottom-0 right-0 z-50 w-44 md:w-64 lg:w-80 pointer-events-none"
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={config.pharaonicBrideUrl || STATUE_RIGHT_SRC}
+          alt={`${config.brideName} Pharaonic Guardian`}
+          aria-hidden="true"
+          className="w-full h-auto object-contain object-bottom"
+        />
+      </motion.div>
 
       {/* Footer */}
       <footer className="relative z-30 flex items-center justify-between px-6 pb-5 text-xs text-[#7A6A5A]">
