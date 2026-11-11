@@ -156,6 +156,7 @@ export default function FatimidThemeSection({
       audioSrc={config.audioFatimid}
       groomImageSrc={config.fatimidGroomUrl}
       brideImageSrc={config.fatimidBrideUrl}
+      flipGroom
       defaultCards={DEFAULT_FATIMID_CARDS}
       galleryOffset={48}
       onNext={onNext}

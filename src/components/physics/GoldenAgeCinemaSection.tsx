@@ -129,7 +129,7 @@ const FILMSTRIP_BORDER_BG = svgUri(
     <line x1="22" y1="0" x2="22" y2="40" stroke-width="1.2" opacity="0.5"/>
     <rect x="5.5" y="4" width="13" height="12" rx="2" fill="${VINTAGE_BRONZE}" fill-opacity="0.18" stroke-width="1.3"/>
     <rect x="5.5" y="24" width="13" height="12" rx="2" fill="${VINTAGE_BRONZE}" fill-opacity="0.18" stroke-width="1.3"/>
-  </svg>`
+  </svg>`,
 );
 
 /* -------------------------------------------------------------------------- */
@@ -137,7 +137,9 @@ const FILMSTRIP_BORDER_BG = svgUri(
 /* -------------------------------------------------------------------------- */
 
 // Classic 35mm Movie Film Reel (بكرة سينما كلاسيكية)
-const ProminentFilmReelSVG: React.FC<{ className?: string }> = ({ className }) => (
+const ProminentFilmReelSVG: React.FC<{ className?: string }> = ({
+  className,
+}) => (
   <svg
     viewBox="0 0 120 120"
     fill="none"
@@ -154,7 +156,14 @@ const ProminentFilmReelSVG: React.FC<{ className?: string }> = ({ className }) =
 
     {/* Center hub */}
     <circle cx="60" cy="60" r="16" strokeWidth="2.4" />
-    <circle cx="60" cy="60" r="6" fill="currentColor" fillOpacity="0.25" strokeWidth="2" />
+    <circle
+      cx="60"
+      cy="60"
+      r="6"
+      fill="currentColor"
+      fillOpacity="0.25"
+      strokeWidth="2"
+    />
 
     {/* 5 Classic Film Reel Cutouts / Spokes */}
     {[0, 72, 144, 216, 288].map((angle, i) => {
@@ -177,7 +186,9 @@ const ProminentFilmReelSVG: React.FC<{ className?: string }> = ({ className }) =
 );
 
 // Vintage Gramophone with Brass Horn (جرامافون كلاسيكي)
-const ProminentGramophoneSVG: React.FC<{ className?: string }> = ({ className }) => (
+const ProminentGramophoneSVG: React.FC<{ className?: string }> = ({
+  className,
+}) => (
   <svg
     viewBox="0 0 120 120"
     fill="none"
@@ -190,10 +201,24 @@ const ProminentGramophoneSVG: React.FC<{ className?: string }> = ({ className })
     {/* Wooden Cabinet Base */}
     <rect x="25" y="86" width="60" height="22" rx="3" strokeWidth="2.6" />
     <line x1="20" y1="108" x2="90" y2="108" strokeWidth="3" />
-    <line x1="30" y1="97" x2="80" y2="97" strokeWidth="1.5" strokeDasharray="2 3" />
+    <line
+      x1="30"
+      y1="97"
+      x2="80"
+      y2="97"
+      strokeWidth="1.5"
+      strokeDasharray="2 3"
+    />
     {/* Winding Crank */}
     <path d="M85 97 L96 97 L96 90" strokeWidth="2.2" />
-    <circle cx="96" cy="88" r="3" fill="currentColor" fillOpacity="0.3" strokeWidth="1.5" />
+    <circle
+      cx="96"
+      cy="88"
+      r="3"
+      fill="currentColor"
+      fillOpacity="0.3"
+      strokeWidth="1.5"
+    />
 
     {/* Vinyl Record & Turntable Platter */}
     <ellipse cx="55" cy="84" rx="28" ry="6" strokeWidth="2.4" />
@@ -212,12 +237,21 @@ const ProminentGramophoneSVG: React.FC<{ className?: string }> = ({ className })
       fill="currentColor"
       fillOpacity="0.12"
     />
-    <ellipse cx="98" cy="16" rx="14" ry="10" transform="rotate(-30 98 16)" strokeWidth="2.4" />
+    <ellipse
+      cx="98"
+      cy="16"
+      rx="14"
+      ry="10"
+      transform="rotate(-30 98 16)"
+      strokeWidth="2.4"
+    />
   </svg>
 );
 
 // Vintage 1950s Studio Ribbon Microphone (ميكروفون إذاعي عتيق)
-const ProminentMicrophoneSVG: React.FC<{ className?: string }> = ({ className }) => (
+const ProminentMicrophoneSVG: React.FC<{ className?: string }> = ({
+  className,
+}) => (
   <svg
     viewBox="0 0 100 120"
     fill="none"
@@ -281,7 +315,12 @@ const VolumeIcon: React.FC<{ muted?: boolean; className?: string }> = ({
 );
 
 const HeartIcon: React.FC<{ className?: string }> = ({ className }) => (
-  <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden="true">
+  <svg
+    viewBox="0 0 24 24"
+    className={className}
+    fill="currentColor"
+    aria-hidden="true"
+  >
     <path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.3 3 5 6.3 5c2 0 3.4 1.1 4.2 2.4h3C14.3 6.1 15.7 5 17.7 5 21 5 23.1 8.3 21.6 11.8 19.5 16.4 12 21 12 21z" />
   </svg>
 );
@@ -342,7 +381,9 @@ const PhotoCard: React.FC<{ card: MomentCard; rotation: string }> = ({
         {card.corner}
         <FilmIcon className="h-3 w-3 text-[#A38F78]" />
       </span>
-      <span className="text-[10px] tracking-widest text-[#A38F78]">SCENE #{card.num}</span>
+      <span className="text-[10px] tracking-widest text-[#A38F78]">
+        SCENE #{card.num}
+      </span>
       <HeartIcon className="h-3 w-3 text-[#B08968]" />
     </div>
 
@@ -356,7 +397,9 @@ const PhotoCard: React.FC<{ card: MomentCard; rotation: string }> = ({
         className="absolute inset-0 h-full w-full select-none object-cover brightness-[1.02] contrast-[1.08] sepia-[0.18]"
       />
       <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 via-black/35 to-transparent px-2.5 pb-2 pt-8 text-white">
-        <p className="font-serif text-lg leading-tight tracking-wide">{card.title}</p>
+        <p className="font-serif text-lg leading-tight tracking-wide">
+          {card.title}
+        </p>
         <div className="mt-1 flex items-center justify-between text-[10px] text-white/90">
           <span className="flex items-center gap-1">
             <PinIcon className="h-2.5 w-2.5 text-[#E6D5B8]" />
@@ -369,13 +412,17 @@ const PhotoCard: React.FC<{ card: MomentCard; rotation: string }> = ({
 
     {/* Footer strip */}
     <div className="flex h-7 shrink-0 items-center justify-between px-2 text-[#7A6E65]">
-      <span className="font-serif text-[10px] italic text-[#594F48]">زمن الفن الجميل</span>
+      <span className="font-serif text-[10px] italic text-[#594F48]">
+        زمن الفن الجميل
+      </span>
       <span className="flex items-center gap-1 text-[#A38F78]">
         <FilmIcon className="h-2.5 w-2.5" />
         <span className="text-[9px]">✦</span>
         <FilmIcon className="h-2.5 w-2.5" />
       </span>
-      <span className="font-serif text-[10px] font-bold text-[#2A2421]">{card.badge}</span>
+      <span className="font-serif text-[10px] font-bold text-[#2A2421]">
+        {card.badge}
+      </span>
     </div>
   </div>
 );
@@ -397,7 +444,7 @@ export default function GoldenAgeCinemaSection({
   const { config } = useWeddingConfig();
   const dynamicCards = React.useMemo(
     () => mergeGalleryIntoCards(CARDS, config.gallery, 12),
-    [config.gallery]
+    [config.gallery],
   );
 
   // Marquee controls & state
@@ -478,7 +525,7 @@ export default function GoldenAgeCinemaSection({
         posRef.current = 0;
         run();
       })
-      .catch(() => { });
+      .catch(() => {});
   }, [controls, x]);
 
   useEffect(() => {
@@ -583,7 +630,9 @@ export default function GoldenAgeCinemaSection({
           className="flex items-center gap-1.5 rounded-full border border-[#A38F78]/50 bg-white/85 px-3 py-2 text-xs font-medium text-[#2A2421] shadow-sm transition-all duration-200 hover:scale-105 hover:bg-white hover:shadow active:scale-95 cursor-pointer"
         >
           <VolumeIcon muted={isMuted} className="h-4 w-4 text-[#7A6E65]" />
-          <span className="hidden sm:inline font-sans">{isMuted ? "Muted" : "Mute All"}</span>
+          <span className="hidden sm:inline font-sans">
+            {isMuted ? "Muted" : "Mute All"}
+          </span>
         </button>
 
         {/* Marquee Play/Pause */}
@@ -610,7 +659,12 @@ export default function GoldenAgeCinemaSection({
       {/* Centered Header with generous bottom clearance */}
       <header className="relative z-30 px-6 pt-8 text-center md:pt-10 mb-20 md:mb-24 pb-10 md:pb-12">
         <span className="inline-flex items-center gap-2 rounded-full border border-[#A38F78]/40 bg-white/80 px-4 py-1 text-xs text-[#594F48] shadow-sm">
-          <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" aria-hidden="true">
+          <svg
+            viewBox="0 0 24 24"
+            className="h-3.5 w-3.5"
+            fill="none"
+            aria-hidden="true"
+          >
             <circle cx="12" cy="12" r="10" fill="#22A06B" />
             <path
               d="M7 12.5l3.2 3.2L17 9"
@@ -653,7 +707,9 @@ export default function GoldenAgeCinemaSection({
       {/* Left Character: 1950s Tuxedo Gentleman (Standard Clean Bottom-Anchored Framing) */}
       <motion.div
         initial={{ opacity: 0, y: 40 }}
-        animate={charactersInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
+        animate={
+          charactersInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }
+        }
         transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
         className="absolute bottom-0 left-0 z-50 w-44 md:w-64 lg:w-80 pointer-events-none"
       >
@@ -662,14 +718,16 @@ export default function GoldenAgeCinemaSection({
           src={config.cinemaGroomUrl || CINEMA_SECTION_ASSETS.groomImage}
           alt={`${config.groomName} 1950s Groom`}
           aria-hidden="true"
-          className="w-full h-auto object-contain object-bottom"
+          className="w-full h-auto object-contain object-bottom scale-x-[-1]"
         />
       </motion.div>
 
       {/* Right Character: Vintage Soad Hosny Style Glamorous Lady (Standard Clean Bottom-Anchored Framing) */}
       <motion.div
         initial={{ opacity: 0, y: 40 }}
-        animate={charactersInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
+        animate={
+          charactersInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }
+        }
         transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
         className="absolute bottom-0 right-0 z-50 w-44 md:w-64 lg:w-80 pointer-events-none"
       >
@@ -684,7 +742,10 @@ export default function GoldenAgeCinemaSection({
 
       {/* Footer + Bottom Centered Section Audio Controls */}
       <footer className="relative z-40 flex flex-col sm:flex-row items-center justify-between gap-2 px-6 pb-5 text-xs text-[#6A6058]">
-        <span className="hidden md:inline">✦ Hover over any photo card to softly glide and view cherished memories.</span>
+        <span className="hidden md:inline">
+          ✦ Hover over any photo card to softly glide and view cherished
+          memories.
+        </span>
         <div className="mx-auto sm:mx-0">
           <BottomAudioControls
             isPlaying={isTrackPlaying}
@@ -699,7 +760,9 @@ export default function GoldenAgeCinemaSection({
         <span className="hidden md:flex items-center gap-3">
           <span>24 Moments • Infinite Auto-Marquee</span>
           <span className="h-3 w-px bg-[#A38F78]/50" />
-          <span className="font-serif italic text-[#7A6E65]">زمن الفن الجميل</span>
+          <span className="font-serif italic text-[#7A6E65]">
+            زمن الفن الجميل
+          </span>
         </span>
       </footer>
     </section>

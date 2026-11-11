@@ -2,10 +2,7 @@
 
 import React from "react";
 import { useWeddingConfig } from "@/context/WeddingConfigContext";
-import {
-  HeritageMarqueeShell,
-  ThemeMomentCard,
-} from "./HeritageMarqueeShell";
+import { HeritageMarqueeShell, ThemeMomentCard } from "./HeritageMarqueeShell";
 
 const DEFAULT_AHLY_CARDS: ThemeMomentCard[] = [
   {
@@ -15,7 +12,8 @@ const DEFAULT_AHLY_CARDS: ThemeMomentCard[] = [
     place: "ستاد مختار التتش",
     time: "ليلة اللقب",
     badge: "★ 1907",
-    photo: "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80",
+    photo:
+      "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80",
   },
   {
     num: "02",
@@ -24,7 +22,8 @@ const DEFAULT_AHLY_CARDS: ThemeMomentCard[] = [
     place: "التالتة شمال",
     time: "لحظة انتصار",
     badge: "★ XI",
-    photo: "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=800&q=80",
+    photo:
+      "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=800&q=80",
   },
   {
     num: "03",
@@ -33,7 +32,8 @@ const DEFAULT_AHLY_CARDS: ThemeMomentCard[] = [
     place: "القاهرة",
     time: "ساعة الفرح",
     badge: "★ IX",
-    photo: "https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=800&q=80",
+    photo:
+      "https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=800&q=80",
   },
   {
     num: "04",
@@ -42,7 +42,8 @@ const DEFAULT_AHLY_CARDS: ThemeMomentCard[] = [
     place: "الجزيرة",
     time: "مساء المجد",
     badge: "★ C",
-    photo: "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?auto=format&fit=crop&w=800&q=80",
+    photo:
+      "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?auto=format&fit=crop&w=800&q=80",
   },
   {
     num: "05",
@@ -51,7 +52,8 @@ const DEFAULT_AHLY_CARDS: ThemeMomentCard[] = [
     place: "ستاد القاهرة",
     time: "اللحظة الذهبية",
     badge: "★ XII",
-    photo: "https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?auto=format&fit=crop&w=800&q=80",
+    photo:
+      "https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?auto=format&fit=crop&w=800&q=80",
   },
   {
     num: "06",
@@ -60,7 +62,8 @@ const DEFAULT_AHLY_CARDS: ThemeMomentCard[] = [
     place: "القلعة الحمراء",
     time: "أمسية ساحرة",
     badge: "★ 1",
-    photo: "https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&w=800&q=80",
+    photo:
+      "https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&w=800&q=80",
   },
 ];
 
@@ -89,6 +92,7 @@ export default function AlAhlyThemeSection({
       audioSrc={config.audioAhly}
       groomImageSrc={config.ahlyGroomUrl}
       brideImageSrc={config.ahlyBrideUrl}
+      flipGroom
       defaultCards={DEFAULT_AHLY_CARDS}
       galleryOffset={30}
       onNext={onNext}
@@ -117,4 +121,3 @@ export default function AlAhlyThemeSection({
     />
   );
 }
-

@@ -8,12 +8,7 @@ import React, {
   useRef,
   useState,
 } from "react";
-import {
-  motion,
-  useAnimation,
-  useInView,
-  useMotionValue,
-} from "framer-motion";
+import { motion, useAnimation, useInView, useMotionValue } from "framer-motion";
 import { useSectionAudio } from "@/utils/globalAudioCoordinator";
 import { BottomAudioControls } from "./BottomAudioControls";
 import {
@@ -54,6 +49,7 @@ export interface HeritageMarqueeShellProps {
   audioSrc: string;
   groomImageSrc: string;
   brideImageSrc: string;
+  flipGroom?: boolean;
   defaultCards: ThemeMomentCard[];
   galleryOffset?: number;
   backgroundDecorations?: React.ReactNode;
@@ -105,6 +101,7 @@ export const HeritageMarqueeShell: React.FC<HeritageMarqueeShellProps> = ({
   audioSrc,
   groomImageSrc,
   brideImageSrc,
+  flipGroom = false,
   defaultCards,
   galleryOffset = 0,
   backgroundDecorations,
@@ -113,7 +110,7 @@ export const HeritageMarqueeShell: React.FC<HeritageMarqueeShellProps> = ({
   const { config } = useWeddingConfig();
   const dynamicCards = useMemo(
     () => mergeGalleryIntoCards(defaultCards, config.gallery, galleryOffset),
-    [defaultCards, config.gallery, galleryOffset]
+    [defaultCards, config.gallery, galleryOffset],
   );
 
   const sectionRef = useRef<HTMLElement>(null);
@@ -218,7 +215,13 @@ export const HeritageMarqueeShell: React.FC<HeritageMarqueeShellProps> = ({
       id={id}
       className={`relative isolate w-full min-h-[90vh] overflow-hidden flex flex-col justify-center select-none ${backgroundClassName}`}
     >
-      <audio ref={audioRef} src={audioSrc} loop preload="auto" className="hidden" />
+      <audio
+        ref={audioRef}
+        src={audioSrc}
+        loop
+        preload="auto"
+        className="hidden"
+      />
 
       {backgroundDecorations}
 
@@ -288,8 +291,7 @@ export const HeritageMarqueeShell: React.FC<HeritageMarqueeShellProps> = ({
           className="flex w-max gap-6 will-change-transform"
         >
           {loopedCards.map((card, i) => {
-            const rot =
-              ROTATIONS[(i % dynamicCards.length) % ROTATIONS.length];
+            const rot = ROTATIONS[(i % dynamicCards.length) % ROTATIONS.length];
             return (
               <div
                 key={`${card.num}-${i}`}
@@ -348,7 +350,9 @@ export const HeritageMarqueeShell: React.FC<HeritageMarqueeShellProps> = ({
       {/* Left Character (Standard Clean Bottom-Anchored Framing) */}
       <motion.div
         initial={{ opacity: 0, y: 40 }}
-        animate={charactersInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
+        animate={
+          charactersInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }
+        }
         transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
         className="absolute bottom-0 left-0 z-50 w-44 md:w-64 lg:w-80 pointer-events-none"
       >
@@ -357,14 +361,16 @@ export const HeritageMarqueeShell: React.FC<HeritageMarqueeShellProps> = ({
           src={groomImageSrc}
           alt={`${config.groomName} ${title}`}
           aria-hidden="true"
-          className="w-full h-auto object-contain object-bottom"
+          className={`w-full h-auto object-contain object-bottom ${flipGroom ? "scale-x-[-1]" : ""}`}
         />
       </motion.div>
 
       {/* Right Character (Standard Clean Bottom-Anchored Framing) */}
       <motion.div
         initial={{ opacity: 0, y: 40 }}
-        animate={charactersInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
+        animate={
+          charactersInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }
+        }
         transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
         className="absolute bottom-0 right-0 z-50 w-44 md:w-64 lg:w-80 pointer-events-none"
       >
@@ -395,9 +401,10 @@ export const HeritageMarqueeShell: React.FC<HeritageMarqueeShellProps> = ({
             variant="dark"
           />
         </div>
-        <span className="hidden md:inline font-serif italic font-bold">{title}</span>
+        <span className="hidden md:inline font-serif italic font-bold">
+          {title}
+        </span>
       </footer>
     </section>
   );
 };
-
