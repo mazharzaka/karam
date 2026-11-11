@@ -17,6 +17,7 @@ export type ThemeId =
   | "zamalek"
   | "ahly"
   | "indian"
+  | "fatimid"
   | "mexican";
 
 export interface ThemeMeta {
@@ -34,6 +35,7 @@ export const AVAILABLE_THEMES: ThemeMeta[] = [
   { id: "zamalek", label: "Zamalek SC", arabicTitle: "مدرسة الفن والهندسة", hudTitle: "Zamalek SC" },
   { id: "ahly", label: "Al Ahly SC", arabicTitle: "نادي القرن", hudTitle: "نادي القرن" },
   { id: "indian", label: "Indian Bollywood", arabicTitle: "ليالي بوليوود", hudTitle: "ليالي بوليوود" },
+  { id: "fatimid", label: "Fatimid Islamic", arabicTitle: "ليالي القاهرة الفاطمية", hudTitle: "Fatimid Heritage" },
   { id: "mexican", label: "Mexican Fiesta", arabicTitle: "فييستا مكسيكية", hudTitle: "فييستا مكسيكية" },
 ];
 
@@ -43,7 +45,7 @@ const VALID_THEME_IDS = new Set<ThemeId>(AVAILABLE_THEMES.map((t) => t.id));
 
 export function sanitizeActiveThemes(raw: unknown): ThemeId[] {
   if (!Array.isArray(raw)) {
-    return ["ahly", "indian", "mexican"];
+    return ["ahly", "indian", "fatimid"];
   }
   const result: ThemeId[] = [];
   for (const item of raw) {
@@ -95,6 +97,7 @@ export interface SiteConfiguration {
   audioZamalek: string;
   audioAhly: string;
   audioIndian: string;
+  audioFatimid: string;
   audioMexican: string;
 
   // CARD 3: All AI Characters & Race Karts
@@ -112,6 +115,8 @@ export interface SiteConfiguration {
   ahlyBrideUrl: string;
   indianGroomUrl: string;
   indianBrideUrl: string;
+  fatimidGroomUrl: string;
+  fatimidBrideUrl: string;
   mexicanGroomUrl: string;
   mexicanBrideUrl: string;
   raceGroomAvatarUrl: string;
@@ -125,7 +130,7 @@ export interface SiteConfiguration {
 }
 
 export const DEFAULT_CONFIG: SiteConfiguration = {
-  activeThemes: ["ahly", "indian", "mexican"],
+  activeThemes: ["ahly", "indian", "fatimid"],
 
   // Card 1
   groomName: "كرم",
@@ -147,6 +152,7 @@ export const DEFAULT_CONFIG: SiteConfiguration = {
   audioZamalek: "/audio/zamalek-curva-sud.mp3",
   audioAhly: "/audio/pharaonic-track.mp3",
   audioIndian: "/audio/pharaonic-track.mp3",
+  audioFatimid: "/audio/pharaonic-track.mp3",
   audioMexican: "/audio/pharaonic-track.mp3",
 
   // Card 3: All AI Characters
@@ -164,6 +170,8 @@ export const DEFAULT_CONFIG: SiteConfiguration = {
   ahlyBrideUrl: "/statues/zamalek-bride.png",
   indianGroomUrl: "/statues/tutankhamun.png",
   indianBrideUrl: "/statues/nefertiti.png",
+  fatimidGroomUrl: "/statues/saidi-man.png",
+  fatimidBrideUrl: "/statues/saidi-woman.png",
   mexicanGroomUrl: "/statues/saidi-man.png",
   mexicanBrideUrl: "/statues/saidi-woman.png",
   raceGroomAvatarUrl: "/race/groom-avatar.png",

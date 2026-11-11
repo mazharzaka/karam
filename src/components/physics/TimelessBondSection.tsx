@@ -13,7 +13,8 @@ import {
   useInView,
   useMotionValue,
 } from "framer-motion";
-import { useGlobalAudio } from "@/utils/globalAudioCoordinator";
+import { useSectionAudio } from "@/utils/globalAudioCoordinator";
+import { BottomAudioControls } from "./BottomAudioControls";
 import {
   useWeddingConfig,
   mergeGalleryIntoCards,
@@ -226,14 +227,22 @@ export default function TimelessBondSection({
 
   const [loopDistance, setLoopDistance] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const { isEnabled: isGlobalAudioEnabled, toggleAudio: toggleGlobalAudio, playTrack, stopTrack } = useGlobalAudio();
-  const isAudioMuted = !isGlobalAudioEnabled;
 
   const pausedRef = useRef(false);
   const runIdRef = useRef(0);
 
   const isInView = useInView(sectionRef, { amount: 0.3 });
   const charactersInView = useInView(sectionRef, { amount: 0.12 });
+
+  const {
+    isMuted: isAudioMuted,
+    toggleGlobalMute: toggleAudio,
+    isTrackPlaying,
+    togglePlayStop,
+    volume,
+    increaseVolume,
+    decreaseVolume,
+  } = useSectionAudio(audioRef, isInView);
 
   /* ---- Measure the exact distance of one full set of cards ---- */
   useLayoutEffect(() => {
@@ -302,22 +311,6 @@ export default function TimelessBondSection({
     }
   };
 
-  const toggleAudio = () => {
-    toggleGlobalAudio();
-  };
-
-  /* ---- Audio: play while the section is in view with smooth crossfade ---- */
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    if (isInView && isGlobalAudioEnabled) {
-      playTrack(audio, 0.85);
-    } else {
-      stopTrack(audio, 800);
-    }
-  }, [isInView, isGlobalAudioEnabled, playTrack, stopTrack]);
-
   const loopedCards = [...dynamicCards, ...dynamicCards];
 
   return (
@@ -364,7 +357,7 @@ export default function TimelessBondSection({
           className="flex items-center gap-1.5 rounded-full border border-[#C9A227]/50 bg-white/85 px-3 py-2 text-xs font-medium text-[#2B1D24] shadow-sm transition-all duration-200 hover:scale-105 hover:bg-white hover:shadow active:scale-95 cursor-pointer"
         >
           <VolumeIcon muted={isAudioMuted} className="h-4 w-4 text-[#C9A227]" />
-          <span className="hidden sm:inline font-sans">{isAudioMuted ? "Unmute" : "Music"}</span>
+          <span className="hidden sm:inline font-sans">{isAudioMuted ? "Muted" : "Mute All"}</span>
         </button>
 
         <button
@@ -450,10 +443,21 @@ export default function TimelessBondSection({
         />
       </motion.div>
 
-      {/* Footer */}
-      <footer className="relative z-30 flex items-center justify-between px-6 pb-5 text-xs text-[#7A6A5A]">
-        <span>✦ Hover over any photo card to softly glide and view cherished memories.</span>
-        <span className="flex items-center gap-3">
+      {/* Footer + Bottom Centered Section Audio Controls */}
+      <footer className="relative z-40 flex flex-col sm:flex-row items-center justify-between gap-2 px-6 pb-5 text-xs text-[#7A6A5A]">
+        <span className="hidden md:inline">✦ Hover over any photo card to softly glide and view cherished memories.</span>
+        <div className="mx-auto sm:mx-0">
+          <BottomAudioControls
+            isPlaying={isTrackPlaying}
+            isMuted={isAudioMuted}
+            volume={volume}
+            onTogglePlayStop={togglePlayStop}
+            onIncreaseVolume={increaseVolume}
+            onDecreaseVolume={decreaseVolume}
+            variant="light"
+          />
+        </div>
+        <span className="hidden md:flex items-center gap-3">
           <span>24 Moments • Infinite Auto-Marquee</span>
           <span className="h-3 w-px bg-[#C9A227]/50" />
           <span className="font-serif italic text-[#C9A227]">A Timeless Bond</span>

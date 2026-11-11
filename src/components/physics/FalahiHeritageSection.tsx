@@ -14,7 +14,8 @@ import {
   useMotionValue,
   useMotionValueEvent,
 } from "framer-motion";
-import { useGlobalAudio } from "@/utils/globalAudioCoordinator";
+import { useSectionAudio } from "@/utils/globalAudioCoordinator";
+import { BottomAudioControls } from "./BottomAudioControls";
 import {
   useWeddingConfig,
   mergeGalleryIntoCards,
@@ -434,8 +435,6 @@ export default function FalahiHeritageSection({
   const pausedRef = useRef<boolean>(false);
 
   const [isPaused, setIsPaused] = useState<boolean>(false);
-  const { isEnabled: isGlobalAudioEnabled, toggleAudio, playTrack, stopTrack } = useGlobalAudio();
-  const isMuted = !isGlobalAudioEnabled;
 
   // Sync posRef with the latest motion value
   useMotionValueEvent(x, "change", (latest) => {
@@ -445,6 +444,16 @@ export default function FalahiHeritageSection({
   // Section in-view detectors for audio & bottom-corner character reveal
   const inView = useInView(sectionRef, { amount: 0.35 });
   const charactersInView = useInView(sectionRef, { amount: 0.05 });
+
+  const {
+    isMuted,
+    toggleGlobalMute: toggleMute,
+    isTrackPlaying,
+    togglePlayStop,
+    volume,
+    increaseVolume,
+    decreaseVolume,
+  } = useSectionAudio(audioRef, inView);
 
   // Doubled looped cards for seamless Saidi/Zamalek marquee
   const loopedCards = [...dynamicCards, ...dynamicCards];
@@ -507,24 +516,6 @@ export default function FalahiHeritageSection({
       controls.stop();
     };
   }, [run, controls]);
-
-  /* -------------------------------------------------------------------------- */
-  /* 3. AUDIO TRIGGER: Exclusively Play When Section 5 is In-View & Crossfade   */
-  /* -------------------------------------------------------------------------- */
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    if (inView && isGlobalAudioEnabled) {
-      playTrack(audio, 0.85);
-    } else {
-      stopTrack(audio, 800);
-    }
-  }, [inView, isGlobalAudioEnabled, playTrack, stopTrack]);
-
-  const toggleMute = () => {
-    toggleAudio();
-  };
 
   const togglePause = () => {
     if (pausedRef.current) {
@@ -638,7 +629,7 @@ export default function FalahiHeritageSection({
           className="flex items-center gap-1.5 rounded-full border border-[#2E7D32]/40 bg-white/90 px-3 py-2 text-xs font-bold text-[#1B5E20] shadow-xs transition-all duration-200 hover:scale-105 hover:bg-emerald-50 active:scale-95 cursor-pointer"
         >
           <VolumeIcon muted={isMuted} className="h-4 w-4 text-[#E65100]" />
-          <span className="hidden sm:inline font-sans">{isMuted ? "Unmute" : "Anthem 🍊"}</span>
+          <span className="hidden sm:inline font-sans">{isMuted ? "Muted" : "Mute All"}</span>
         </button>
 
         {/* Marquee Play/Pause */}
@@ -738,14 +729,25 @@ export default function FalahiHeritageSection({
       </motion.div>
 
       {/* -------------------------------------------------------------------- */}
-      {/* Footer                                                               */}
+      {/* Footer + Bottom Centered Section Audio Controls                      */}
       {/* -------------------------------------------------------------------- */}
-      <footer className="relative z-30 flex items-center justify-between px-6 pb-5 text-xs text-[#558B2F]">
-        <span className="flex items-center gap-1.5 font-medium">
+      <footer className="relative z-40 flex flex-col sm:flex-row items-center justify-between gap-2 px-6 pb-5 text-xs text-[#558B2F]">
+        <span className="hidden md:flex items-center gap-1.5 font-medium">
           <span className="text-[#E65100]">🍊</span>
           <span>يا بركة الريف وخير الأرض الطيبة.. مبروك لأحلى عرسان.</span>
         </span>
-        <span className="flex items-center gap-3">
+        <div className="mx-auto sm:mx-0">
+          <BottomAudioControls
+            isPlaying={isTrackPlaying}
+            isMuted={isMuted}
+            volume={volume}
+            onTogglePlayStop={togglePlayStop}
+            onIncreaseVolume={increaseVolume}
+            onDecreaseVolume={decreaseVolume}
+            variant="light"
+          />
+        </div>
+        <span className="hidden md:flex items-center gap-3">
           <span className="font-semibold">24 Moments • Delta Rural Marquee</span>
           <span className="h-3 w-px bg-[#2E7D32]/40" />
           <span className="font-serif italic font-bold text-[#E65100]">

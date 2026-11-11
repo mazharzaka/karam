@@ -14,7 +14,8 @@ import {
   useMotionValue,
   useMotionValueEvent,
 } from "framer-motion";
-import { useGlobalAudio } from "@/utils/globalAudioCoordinator";
+import { useSectionAudio } from "@/utils/globalAudioCoordinator";
+import { BottomAudioControls } from "./BottomAudioControls";
 import {
   useWeddingConfig,
   mergeGalleryIntoCards,
@@ -445,8 +446,6 @@ export default function SaidiHeritageSection({
   const pausedRef = useRef<boolean>(false);
 
   const [isPaused, setIsPaused] = useState(false);
-  const { isEnabled: isGlobalAudioEnabled, toggleAudio, playTrack, stopTrack } = useGlobalAudio();
-  const isMuted = !isGlobalAudioEnabled;
 
   // Sync posRef with the latest motion value
   useMotionValueEvent(x, "change", (latest) => {
@@ -455,6 +454,16 @@ export default function SaidiHeritageSection({
 
   const inView = useInView(sectionRef, { amount: 0.35 });
   const charactersInView = useInView(sectionRef, { amount: 0.12 });
+
+  const {
+    isMuted,
+    toggleGlobalMute: toggleMute,
+    isTrackPlaying,
+    togglePlayStop,
+    volume,
+    increaseVolume,
+    decreaseVolume,
+  } = useSectionAudio(audioRef, inView);
 
   /* ---- Measurement for Infinite Marquee ---- */
   useLayoutEffect(() => {
@@ -530,23 +539,6 @@ export default function SaidiHeritageSection({
       controls.stop();
     }
   };
-
-  /* ---- Audio Mute Handler ---- */
-  const toggleMute = () => {
-    toggleAudio();
-  };
-
-  /* ---- Strict Saidi Audio Crossfade & Playback Controller ---- */
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    if (inView && isGlobalAudioEnabled) {
-      playTrack(audio, 0.85);
-    } else {
-      stopTrack(audio, 800);
-    }
-  }, [inView, isGlobalAudioEnabled, playTrack, stopTrack]);
 
   const loopedCards = [...dynamicCards, ...dynamicCards];
 
@@ -628,7 +620,7 @@ export default function SaidiHeritageSection({
           className="flex items-center gap-1.5 rounded-full border border-[#D4AF37]/50 bg-white/85 px-3 py-2 text-xs font-medium text-[#2B1D24] shadow-sm transition-all duration-200 hover:scale-105 hover:bg-white hover:shadow active:scale-95 cursor-pointer"
         >
           <VolumeIcon muted={isMuted} className="h-4 w-4 text-[#D4AF37]" />
-          <span className="hidden sm:inline font-sans">{isMuted ? "Unmute" : "Music"}</span>
+          <span className="hidden sm:inline font-sans">{isMuted ? "Muted" : "Mute All"}</span>
         </button>
 
         {/* Marquee Play/Pause Control */}
@@ -727,10 +719,21 @@ export default function SaidiHeritageSection({
         />
       </motion.div>
 
-      {/* Footer */}
-      <footer className="relative z-30 flex items-center justify-between px-6 pb-5 text-xs text-[#7A6A5A]">
-        <span>✦ Hover over any photo card to softly glide and view cherished memories.</span>
-        <span className="flex items-center gap-3">
+      {/* Footer + Bottom Centered Section Audio Controls */}
+      <footer className="relative z-40 flex flex-col sm:flex-row items-center justify-between gap-2 px-6 pb-5 text-xs text-[#7A6A5A]">
+        <span className="hidden md:inline">✦ Hover over any photo card to softly glide and view cherished memories.</span>
+        <div className="mx-auto sm:mx-0">
+          <BottomAudioControls
+            isPlaying={isTrackPlaying}
+            isMuted={isMuted}
+            volume={volume}
+            onTogglePlayStop={togglePlayStop}
+            onIncreaseVolume={increaseVolume}
+            onDecreaseVolume={decreaseVolume}
+            variant="light"
+          />
+        </div>
+        <span className="hidden md:flex items-center gap-3">
           <span>24 Moments • Infinite Auto-Marquee</span>
           <span className="h-3 w-px bg-[#D4AF37]/50" />
           <span className="font-serif italic text-[#D4AF37]">أصالة وجذور</span>

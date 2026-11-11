@@ -14,7 +14,8 @@ import {
   useInView,
   useMotionValue,
 } from "framer-motion";
-import { useGlobalAudio } from "@/utils/globalAudioCoordinator";
+import { useSectionAudio } from "@/utils/globalAudioCoordinator";
+import { BottomAudioControls } from "./BottomAudioControls";
 import {
   useWeddingConfig,
   mergeGalleryIntoCards,
@@ -127,16 +128,19 @@ export const HeritageMarqueeShell: React.FC<HeritageMarqueeShellProps> = ({
   const pausedRef = useRef<boolean>(false);
 
   const [isPaused, setIsPaused] = useState(false);
-  const {
-    isEnabled: isGlobalAudioEnabled,
-    toggleAudio,
-    playTrack,
-    stopTrack,
-  } = useGlobalAudio();
-  const isMuted = !isGlobalAudioEnabled;
 
   const inView = useInView(sectionRef, { amount: 0.35 });
   const charactersInView = useInView(sectionRef, { amount: 0.12 });
+
+  const {
+    isMuted,
+    toggleGlobalMute,
+    isTrackPlaying,
+    togglePlayStop,
+    volume,
+    increaseVolume,
+    decreaseVolume,
+  } = useSectionAudio(audioRef, inView);
 
   useLayoutEffect(() => {
     const track = trackRef.current;
@@ -206,23 +210,13 @@ export const HeritageMarqueeShell: React.FC<HeritageMarqueeShellProps> = ({
     }
   };
 
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    if (inView && isGlobalAudioEnabled) {
-      playTrack(audio, 0.85);
-    } else {
-      stopTrack(audio, 800);
-    }
-  }, [inView, isGlobalAudioEnabled, playTrack, stopTrack]);
-
   const loopedCards = [...dynamicCards, ...dynamicCards];
 
   return (
     <section
       ref={sectionRef}
       id={id}
-      className={`relative isolate flex h-[82vh] min-h-[640px] max-h-[820px] w-full flex-col overflow-hidden select-none ${backgroundClassName}`}
+      className={`relative isolate w-full min-h-[90vh] overflow-hidden flex flex-col justify-center select-none ${backgroundClassName}`}
     >
       <audio ref={audioRef} src={audioSrc} loop preload="auto" className="hidden" />
 
@@ -232,13 +226,14 @@ export const HeritageMarqueeShell: React.FC<HeritageMarqueeShellProps> = ({
       <div className="absolute right-6 top-6 z-50 flex items-center gap-2.5">
         <button
           type="button"
-          onClick={toggleAudio}
-          aria-label={isMuted ? "Unmute music" : "Mute music"}
+          onClick={toggleGlobalMute}
+          aria-label={isMuted ? "Unmute all audio" : "Mute all audio"}
+          title={isMuted ? "Unmute All" : "Mute All"}
           className="flex items-center gap-1.5 rounded-full border border-white/40 bg-white/90 px-3 py-2 text-xs font-bold text-[#2B1D24] shadow-sm transition-all duration-200 hover:scale-105 cursor-pointer"
         >
           <VolumeIcon muted={isMuted} className="h-4 w-4" />
           <span className="hidden sm:inline font-sans">
-            {isMuted ? "Unmute" : "Music"}
+            {isMuted ? "Muted" : "Mute All"}
           </span>
         </button>
 
@@ -382,14 +377,25 @@ export const HeritageMarqueeShell: React.FC<HeritageMarqueeShellProps> = ({
         />
       </motion.div>
 
-      {/* Footer */}
+      {/* Footer + Bottom Centered Section Audio Controls */}
       <footer
-        className={`relative z-30 flex items-center justify-between px-6 pb-5 text-xs ${footerTextClassName}`}
+        className={`relative z-40 flex flex-col sm:flex-row items-center justify-between gap-2 px-6 pb-5 text-xs ${footerTextClassName}`}
       >
-        <span>
+        <span className="hidden md:inline">
           ✦ {config.groomName} &amp; {config.brideName} • {footerLabel}
         </span>
-        <span className="font-serif italic font-bold">{title}</span>
+        <div className="mx-auto sm:mx-0">
+          <BottomAudioControls
+            isPlaying={isTrackPlaying}
+            isMuted={isMuted}
+            volume={volume}
+            onTogglePlayStop={togglePlayStop}
+            onIncreaseVolume={increaseVolume}
+            onDecreaseVolume={decreaseVolume}
+            variant="dark"
+          />
+        </div>
+        <span className="hidden md:inline font-serif italic font-bold">{title}</span>
       </footer>
     </section>
   );

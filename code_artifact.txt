@@ -1,8 +1,8 @@
 {
-  "project": "Karim & Farah",
+  "project": "Karim & ",
   "standard_aspect_ratio": "2:3",
   "standard_framing": "Medium close-up shot, framing ONLY from the top of the head down to the mid-chest. Face must be large and prominent.",
-  "bride_prompts": [
+  "العروسه": [
     {
       "style": "Zamalek",
       "prompt": "Vertical portrait (2:3). STRICT CAMERA FRAMING: Medium close-up shot, framing only from the top of the head down to the mid-chest. Large prominent face. A beautiful Egyptian woman, dynamic 3/4 angled pose, charming smile. Outfit: Sporty elegant white Zamalek SC football jersey, translucent white bridal veil over her hair. Pure solid black background."
@@ -71,3 +71,4 @@
     }
   ]
 }
+Vertical portrait (2:3). STRICT FRAMING: Medium waist-up portrait, framing from slightly above the head down to the waist. DO NOT zoom in on the face. A beautiful Egyptian woman, dynamic 3/4 angled pose, charming smile. Outfit: Elegant traditional Islamic Fatimid royal dress in deep emerald green with intricate antique gold embroidery, wearing a delicate antique gold headpiece and a modest elegant chiffon veil draped beautifully. Pure solid black background.

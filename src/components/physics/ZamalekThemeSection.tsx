@@ -14,7 +14,8 @@ import {
   useMotionValue,
   useMotionValueEvent,
 } from "framer-motion";
-import { useGlobalAudio } from "@/utils/globalAudioCoordinator";
+import { useSectionAudio } from "@/utils/globalAudioCoordinator";
+import { BottomAudioControls } from "./BottomAudioControls";
 import {
   useWeddingConfig,
   mergeGalleryIntoCards,
@@ -408,8 +409,6 @@ export default function ZamalekThemeSection({
   const pausedRef = useRef<boolean>(false);
 
   const [isPaused, setIsPaused] = useState(false);
-  const { isEnabled: isGlobalAudioEnabled, toggleAudio, playTrack, stopTrack } = useGlobalAudio();
-  const isMuted = !isGlobalAudioEnabled;
 
   useMotionValueEvent(x, "change", (latest) => {
     posRef.current = latest;
@@ -417,6 +416,16 @@ export default function ZamalekThemeSection({
 
   const inView = useInView(sectionRef, { amount: 0.35 });
   const charactersInView = useInView(sectionRef, { amount: 0.12 });
+
+  const {
+    isMuted,
+    toggleGlobalMute: toggleMute,
+    isTrackPlaying,
+    togglePlayStop,
+    volume,
+    increaseVolume,
+    decreaseVolume,
+  } = useSectionAudio(audioRef, inView);
 
   /* ---- Measurement for Infinite Marquee ---- */
   useLayoutEffect(() => {
@@ -492,23 +501,6 @@ export default function ZamalekThemeSection({
     }
   };
 
-  /* ---- Audio Mute Handler ---- */
-  const toggleMute = () => {
-    toggleAudio();
-  };
-
-  /* ---- Audio Playback & Auto Crossfade Controller ---- */
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    if (inView && isGlobalAudioEnabled) {
-      playTrack(audio, 0.85);
-    } else {
-      stopTrack(audio, 800);
-    }
-  }, [inView, isGlobalAudioEnabled, playTrack, stopTrack]);
-
   const loopedCards = [...dynamicCards, ...dynamicCards];
 
   return (
@@ -571,7 +563,7 @@ export default function ZamalekThemeSection({
           className="flex items-center gap-1.5 rounded-full border border-[#E3001B]/40 bg-white/90 px-3 py-2 text-xs font-bold text-[#E3001B] shadow-sm transition-all duration-200 hover:scale-105 hover:bg-red-50 hover:shadow active:scale-95 cursor-pointer"
         >
           <VolumeIcon muted={isMuted} className="h-4 w-4 text-[#E3001B]" />
-          <span className="hidden sm:inline font-sans">{isMuted ? "Unmute" : "Anthem"}</span>
+          <span className="hidden sm:inline font-sans">{isMuted ? "Muted" : "Mute All"}</span>
         </button>
 
         {/* Marquee Play/Pause */}
@@ -665,13 +657,24 @@ export default function ZamalekThemeSection({
         />
       </motion.div>
 
-      {/* Footer */}
-      <footer className="relative z-30 flex items-center justify-between px-6 pb-5 text-xs text-[#55474A]">
-        <span className="flex items-center gap-1.5 font-medium">
+      {/* Footer + Bottom Centered Section Audio Controls */}
+      <footer className="relative z-40 flex flex-col sm:flex-row items-center justify-between gap-2 px-6 pb-5 text-xs text-[#55474A]">
+        <span className="hidden md:flex items-center gap-1.5 font-medium">
           <span className="text-[#E3001B]">🏹</span>
           <span>عشق الأبيض بخطين حُمر لا ينتهي أبدًا.</span>
         </span>
-        <span className="flex items-center gap-3">
+        <div className="mx-auto sm:mx-0">
+          <BottomAudioControls
+            isPlaying={isTrackPlaying}
+            isMuted={isMuted}
+            volume={volume}
+            onTogglePlayStop={togglePlayStop}
+            onIncreaseVolume={increaseVolume}
+            onDecreaseVolume={decreaseVolume}
+            variant="light"
+          />
+        </div>
+        <span className="hidden md:flex items-center gap-3">
           <span className="font-semibold">24 Moments • White Knights Marquee</span>
           <span className="h-3 w-px bg-[#E3001B]/40" />
           <span className="font-serif italic font-bold text-[#E3001B]">

@@ -146,6 +146,13 @@ const GROOM_GENERATION_TASKS: MagicGenerationTask[] = [
       "Hyper-realistic, cinematic full-body studio portrait of a handsome real Egyptian man dressed in an opulent embroidered royal Indian Sherwani in deep crimson and gold with traditional stole, warm festive smile, 10% empty padding margin, feet firmly at bottom, pure solid white background for easy cutout, 8k photorealistic photography",
   },
   {
+    key: "fatimidGroomUrl",
+    role: "groom",
+    label: "Fatimid Groom",
+    prompt:
+      "Hyper-realistic, cinematic waist-up portrait of a handsome real Egyptian man dressed in an authentic traditional Islamic Fatimid royal emerald green and antique gold embroidered kaftan and noble turban, confident warm smile, pure solid black background, 8k photorealistic photography",
+  },
+  {
     key: "mexicanGroomUrl",
     role: "groom",
     label: "Mexican Groom",
@@ -205,6 +212,13 @@ const BRIDE_GENERATION_TASKS: MagicGenerationTask[] = [
       "Hyper-realistic, cinematic full-body studio portrait of a beautiful real Egyptian woman dressed in a stunning richly embroidered crimson, magenta, and gold Indian bridal Lehenga with sheer dupatta and traditional jewelry, radiant smile, 10% empty padding margin, pure solid white background for easy cutout, 8k photorealistic photography",
   },
   {
+    key: "fatimidBrideUrl",
+    role: "bride",
+    label: "Fatimid Bride",
+    prompt:
+      "Vertical portrait (2:3). Medium waist-up portrait of a beautiful Egyptian woman dressed in an elegant traditional Islamic Fatimid royal dress in deep emerald green with intricate antique gold embroidery, delicate antique gold headpiece and modest chiffon veil, charming smile, pure solid black background, 8k photorealistic photography",
+  },
+  {
     key: "mexicanBrideUrl",
     role: "bride",
     label: "Mexican Bride",
@@ -232,6 +246,8 @@ type CharacterFieldKey =
   | "ahlyBrideUrl"
   | "indianGroomUrl"
   | "indianBrideUrl"
+  | "fatimidGroomUrl"
+  | "fatimidBrideUrl"
   | "mexicanGroomUrl"
   | "mexicanBrideUrl"
   | "raceGroomAvatarUrl"
@@ -259,6 +275,8 @@ const CHARACTER_FIELDS: {
     { key: "ahlyBrideUrl", title: "Al Ahly Bride (نادي القرن)", subtitle: "Theme: ahly", themeId: "ahly" },
     { key: "indianGroomUrl", title: "Indian Groom (ليالي بوليوود)", subtitle: "Theme: indian", themeId: "indian" },
     { key: "indianBrideUrl", title: "Indian Bride (ليالي بوليوود)", subtitle: "Theme: indian", themeId: "indian" },
+    { key: "fatimidGroomUrl", title: "Fatimid Groom (ليالي القاهرة الفاطمية)", subtitle: "Theme: fatimid", themeId: "fatimid" },
+    { key: "fatimidBrideUrl", title: "Fatimid Bride (ليالي القاهرة الفاطمية)", subtitle: "Theme: fatimid", themeId: "fatimid" },
     { key: "mexicanGroomUrl", title: "Mexican Groom (فييستا مكسيكية)", subtitle: "Theme: mexican", themeId: "mexican" },
     { key: "mexicanBrideUrl", title: "Mexican Bride (فييستا مكسيكية)", subtitle: "Theme: mexican", themeId: "mexican" },
     { key: "raceGroomAvatarUrl", title: "Race Groom Avatar", subtitle: "Couples Race Challenge" },
@@ -277,6 +295,7 @@ const AUDIO_FIELDS: {
     | "audioZamalek"
     | "audioAhly"
     | "audioIndian"
+    | "audioFatimid"
     | "audioMexican"
   >;
   label: string;
@@ -326,8 +345,14 @@ const AUDIO_FIELDS: {
       placeholder: "/audio/indian-theme.mp3",
     },
     {
+      key: "audioFatimid",
+      label: "8. Fatimid Islamic Theme Audio URL",
+      badge: "fatimid",
+      placeholder: "/audio/fatimid-theme.mp3",
+    },
+    {
       key: "audioMexican",
-      label: "8. Mexican Fiesta Theme Audio URL",
+      label: "9. Mexican Fiesta Theme Audio URL",
       badge: "mexican",
       placeholder: "/audio/mexican-theme.mp3",
     },

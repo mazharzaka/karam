@@ -14,7 +14,8 @@ import {
   useMotionValue,
   useMotionValueEvent,
 } from "framer-motion";
-import { useGlobalAudio } from "@/utils/globalAudioCoordinator";
+import { useSectionAudio } from "@/utils/globalAudioCoordinator";
+import { BottomAudioControls } from "./BottomAudioControls";
 import {
   useWeddingConfig,
   mergeGalleryIntoCards,
@@ -410,8 +411,6 @@ export default function GoldenAgeCinemaSection({
   const pausedRef = useRef<boolean>(false);
 
   const [isPaused, setIsPaused] = useState(false);
-  const { isEnabled: isGlobalAudioEnabled, toggleAudio, playTrack, stopTrack } = useGlobalAudio();
-  const isMuted = !isGlobalAudioEnabled;
 
   useMotionValueEvent(x, "change", (latest) => {
     posRef.current = latest;
@@ -419,6 +418,16 @@ export default function GoldenAgeCinemaSection({
 
   const inView = useInView(sectionRef, { amount: 0.35 });
   const charactersInView = useInView(sectionRef, { amount: 0.12 });
+
+  const {
+    isMuted,
+    toggleGlobalMute: toggleMute,
+    isTrackPlaying,
+    togglePlayStop,
+    volume,
+    increaseVolume,
+    decreaseVolume,
+  } = useSectionAudio(audioRef, inView);
 
   /* ---- Measurement for Infinite Marquee ---- */
   useLayoutEffect(() => {
@@ -493,23 +502,6 @@ export default function GoldenAgeCinemaSection({
       controls.stop();
     }
   };
-
-  /* ---- Audio Mute Handler ---- */
-  const toggleMute = () => {
-    toggleAudio();
-  };
-
-  /* ---- Audio Playback & Auto Crossfade Controller ---- */
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    if (inView && isGlobalAudioEnabled) {
-      playTrack(audio, 0.85);
-    } else {
-      stopTrack(audio, 800);
-    }
-  }, [inView, isGlobalAudioEnabled, playTrack, stopTrack]);
 
   const loopedCards = [...dynamicCards, ...dynamicCards];
 
@@ -591,7 +583,7 @@ export default function GoldenAgeCinemaSection({
           className="flex items-center gap-1.5 rounded-full border border-[#A38F78]/50 bg-white/85 px-3 py-2 text-xs font-medium text-[#2A2421] shadow-sm transition-all duration-200 hover:scale-105 hover:bg-white hover:shadow active:scale-95 cursor-pointer"
         >
           <VolumeIcon muted={isMuted} className="h-4 w-4 text-[#7A6E65]" />
-          <span className="hidden sm:inline font-sans">{isMuted ? "Unmute" : "Music"}</span>
+          <span className="hidden sm:inline font-sans">{isMuted ? "Muted" : "Mute All"}</span>
         </button>
 
         {/* Marquee Play/Pause */}
@@ -690,10 +682,21 @@ export default function GoldenAgeCinemaSection({
         />
       </motion.div>
 
-      {/* Footer */}
-      <footer className="relative z-30 flex items-center justify-between px-6 pb-5 text-xs text-[#6A6058]">
-        <span>✦ Hover over any photo card to softly glide and view cherished memories.</span>
-        <span className="flex items-center gap-3">
+      {/* Footer + Bottom Centered Section Audio Controls */}
+      <footer className="relative z-40 flex flex-col sm:flex-row items-center justify-between gap-2 px-6 pb-5 text-xs text-[#6A6058]">
+        <span className="hidden md:inline">✦ Hover over any photo card to softly glide and view cherished memories.</span>
+        <div className="mx-auto sm:mx-0">
+          <BottomAudioControls
+            isPlaying={isTrackPlaying}
+            isMuted={isMuted}
+            volume={volume}
+            onTogglePlayStop={togglePlayStop}
+            onIncreaseVolume={increaseVolume}
+            onDecreaseVolume={decreaseVolume}
+            variant="light"
+          />
+        </div>
+        <span className="hidden md:flex items-center gap-3">
           <span>24 Moments • Infinite Auto-Marquee</span>
           <span className="h-3 w-px bg-[#A38F78]/50" />
           <span className="font-serif italic text-[#7A6E65]">زمن الفن الجميل</span>

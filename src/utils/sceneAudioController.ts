@@ -6,6 +6,8 @@
 
 class SceneAudioController {
   private ctx: AudioContext | null = null;
+  private masterGain: GainNode | null = null;
+  private volume: number = 0.2;
   private isMuted: boolean = false;
   private currentSceneIndex: number = 0;
 
@@ -48,20 +50,20 @@ class SceneAudioController {
       if (AudioContextClass) {
         this.ctx = new AudioContextClass();
 
-        // Master Gain
-        const masterGain = this.ctx.createGain();
-        masterGain.gain.setValueAtTime(0.85, this.ctx.currentTime);
-        masterGain.connect(this.ctx.destination);
+        // Master Gain (defaults softly to 0.2)
+        this.masterGain = this.ctx.createGain();
+        this.masterGain.gain.setValueAtTime(this.volume, this.ctx.currentTime);
+        this.masterGain.connect(this.ctx.destination);
 
         // Track A Gain Node
         this.gainA = this.ctx.createGain();
         this.gainA.gain.setValueAtTime(1.0, this.ctx.currentTime);
-        this.gainA.connect(masterGain);
+        this.gainA.connect(this.masterGain);
 
         // Track B Gain Node (starts silent)
         this.gainB = this.ctx.createGain();
         this.gainB.gain.setValueAtTime(0.0001, this.ctx.currentTime);
-        this.gainB.connect(masterGain);
+        this.gainB.connect(this.masterGain);
 
         this.startTrackA();
         this.startTrackB();
@@ -224,6 +226,13 @@ class SceneAudioController {
       this.gainB.gain.cancelScheduledValues(now);
       this.gainA.gain.setValueAtTime(0.0001, now);
       this.gainB.gain.setValueAtTime(0.0001, now);
+    }
+  }
+
+  public setVolume(vol: number) {
+    this.volume = Math.max(0, Math.min(1, vol));
+    if (this.ctx && this.masterGain) {
+      this.masterGain.gain.setValueAtTime(this.volume, this.ctx.currentTime);
     }
   }
 
