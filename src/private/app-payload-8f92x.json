@@ -806,25 +806,11 @@
       "url": "https://res.cloudinary.com/dsls01rrg/image/upload/f_auto,q_auto,c_limit,w_1200/v1794441250/mbhpseydcmd8vb3zq9z2.jpg",
       "caption": "",
       "date": "2026-11-11"
-    },
-    {
-      "id": "mem-01",
-      "url": "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1000&q=80",
-      "caption": "أول خطوة في رحلتنا مع بعض 💍",
-      "date": "2023-08-10"
-    },
-    {
-      "id": "mem-02",
-      "url": "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1000&q=80",
-      "caption": "غروب النيل في ليلة لا تُنسى ✨",
-      "date": "2023-11-20"
-    },
-    {
-      "id": "mem-03",
-      "url": "https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=1000&q=80",
-      "caption": "ضحكة من القلب مع بداية تجهيزات الفرح 🤍",
-      "date": "2024-05-14"
     }
   ],
-  "lastUpdated": "2026-11-12T09:08:20.955Z"
+  "lastUpdated": "2026-11-12T13:53:08.928Z",
+  "imageFlips": {},
+  "heroAudioUrl": "/audio/piano.mp3",
+  "albumAudioUrl": "/audio/track-d-cinema.mp3",
+  "targetProfileId": "8f92x"
 }

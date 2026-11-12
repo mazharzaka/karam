@@ -117,6 +117,9 @@ export interface SiteConfiguration {
   brideChildhoodUrl: string;
 
   // CARD 2: Theme Audio URLs
+  // CARD 2: Theme Audio Tracks & Hero/Album Audio
+  heroAudioUrl: string;
+  albumAudioUrl: string;
   audioPharaonic: string;
   audioSaidi: string;
   audioCinema: string;
@@ -220,7 +223,9 @@ const BASE_FALLBACK_CONFIG: SiteConfiguration = {
   brideChildhoodUrl:
     "https://images.unsplash.com/photo-1519340333755-56e9c1d04079?q=80&w=400&auto=format&fit=crop",
 
-  // Card 2: Theme Audio
+  // Card 2: Theme Audio & Hero/Album Audio
+  heroAudioUrl: "/audio/piano.mp3",
+  albumAudioUrl: "/audio/track-d-cinema.mp3",
   audioPharaonic: "/audio/pharaonic-track.mp3",
   audioSaidi: "/audio/track-c-saidi.mp3",
   audioCinema: "/audio/track-d-cinema.mp3",
@@ -384,6 +389,10 @@ export function normalizeConfig(
       ...((raw.sections as SiteConfiguration["sections"]) || {}),
     },
     activeThemes: sanitizeActiveThemes(raw.activeThemes),
+    heroAudioUrl:
+      (raw.heroAudioUrl as string) || DEFAULT_CONFIG.heroAudioUrl,
+    albumAudioUrl:
+      (raw.albumAudioUrl as string) || DEFAULT_CONFIG.albumAudioUrl,
     audioPharaonic:
       (raw.audioPharaonic as string) ||
       (raw.audioTrackA as string) ||

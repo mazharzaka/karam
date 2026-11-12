@@ -26,6 +26,7 @@ import {
   UploadCloud,
   Users,
   ArrowLeft,
+  ArrowLeftRight,
   Wand2,
   AlertCircle,
 } from "lucide-react";
@@ -37,6 +38,7 @@ import {
   AVAILABLE_THEMES,
   MAX_ACTIVE_THEMES,
   isThemeCheckboxDisabled,
+  normalizeConfig,
 } from "@/context/WeddingConfigContext";
 
 // Replace "wedding_uploads" if you named your Cloudinary unsigned upload preset differently
@@ -383,6 +385,16 @@ export default function AdminPage() {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [activeProfileId, setActiveProfileId] = useState<string>(
+    process.env.NEXT_PUBLIC_ACTIVE_PROFILE_ID || "9c34v"
+  );
+  const [availableProfiles, setAvailableProfiles] = useState<
+    { id: string; label: string; filename?: string }[]
+  >([
+    { id: "8f92x", label: "محمد ومنال" },
+    { id: "9c34v", label: "كريم وفرح" },
+  ]);
+  const [isSwitchingProfile, setIsSwitchingProfile] = useState(false);
   const [manualAddUrl, setManualAddUrl] = useState("");
   const [newGroomPunishment, setNewGroomPunishment] = useState("");
   const [newBridePunishment, setNewBridePunishment] = useState("");
@@ -409,6 +421,80 @@ export default function AdminPage() {
       setDraft(config);
     }
   }, [config, isDirty]);
+
+  // Hydrate active profile & available profiles list from /api/config
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/config", { cache: "no-store" });
+        if (!res.ok) return;
+        const data = (await res.json()) as {
+          profile?: string;
+          availableProfiles?: { id: string; label: string; filename?: string }[];
+        };
+        if (cancelled) return;
+        if (data.profile) setActiveProfileId(data.profile);
+        if (Array.isArray(data.availableProfiles) && data.availableProfiles.length > 0) {
+          setAvailableProfiles(data.availableProfiles);
+        }
+      } catch {
+        // non-fatal
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleSwitchProfile = useCallback(
+    async (nextProfileId: string) => {
+      if (!nextProfileId || nextProfileId === activeProfileId || isSwitchingProfile) {
+        return;
+      }
+      setIsSwitchingProfile(true);
+      setSaveError(null);
+      try {
+        const res = await fetch("/api/config", {
+          method: "POST",
+          cache: "no-store",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "switchProfile",
+            profileId: nextProfileId,
+          }),
+        });
+        const data = (await res.json().catch(() => ({}))) as {
+          success?: boolean;
+          error?: string;
+          profileId?: string;
+          config?: Partial<SiteConfiguration> & Record<string, unknown>;
+          availableProfiles?: { id: string; label: string; filename?: string }[];
+        };
+        if (!res.ok || !data?.success || !data.config) {
+          throw new Error(data?.error || "Failed to switch profile.");
+        }
+
+        const nextConfig = normalizeConfig(data.config);
+        setActiveProfileId(data.profileId || nextProfileId);
+        if (Array.isArray(data.availableProfiles) && data.availableProfiles.length > 0) {
+          setAvailableProfiles(data.availableProfiles);
+        }
+        updateConfig(nextConfig);
+        setDraft(nextConfig);
+        setIsDirty(false);
+        setSaveSuccess(true);
+        setTimeout(() => setSaveSuccess(false), 3500);
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Could not switch wedding profile.";
+        setSaveError(message);
+      } finally {
+        setIsSwitchingProfile(false);
+      }
+    },
+    [activeProfileId, isSwitchingProfile, updateConfig]
+  );
 
   const setField = useCallback(
     <K extends keyof SiteConfiguration>(key: K, value: SiteConfiguration[K]) => {
@@ -616,7 +702,10 @@ export default function AdminPage() {
         method: "POST",
         cache: "no-store",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          ...payload,
+          targetProfileId: activeProfileId,
+        }),
       });
 
       const data = (await res.json().catch(() => ({}))) as {
@@ -675,7 +764,32 @@ export default function AdminPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex flex-wrap items-center gap-2.5">
+            {/* Dynamic Profile Switcher */}
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border border-[#D4AF37]/40 bg-amber-50/60">
+              {isSwitchingProfile ? (
+                <RefreshCw className="w-4 h-4 text-[#B89335] animate-spin shrink-0" />
+              ) : (
+                <ArrowLeftRight className="w-4 h-4 text-[#B89335] shrink-0" />
+              )}
+              <span className="text-[11px] font-bold text-[#2B1D24] whitespace-nowrap">
+                Switch Profile:
+              </span>
+              <select
+                aria-label="Switch active wedding profile"
+                value={activeProfileId}
+                disabled={isSwitchingProfile}
+                onChange={(e) => handleSwitchProfile(e.target.value)}
+                className="bg-white border border-gray-200 rounded-lg px-2.5 py-1 text-xs font-bold text-[#2B1D24] focus:border-[#D4AF37] outline-none cursor-pointer disabled:opacity-60"
+              >
+                {availableProfiles.map((prof) => (
+                  <option key={prof.id} value={prof.id}>
+                    {prof.label} ({prof.id})
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <Link
               href="/"
               target="_blank"
@@ -1081,6 +1195,74 @@ export default function AdminPage() {
                   }));
                 }}
               />
+            </div>
+          </div>
+        </section>
+
+        {/* ================================================================== */}
+        {/* BACKGROUND MUSIC & AUDIO SETTINGS (HERO & PHOTO ALBUM)             */}
+        {/* ================================================================== */}
+        <section className="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden">
+          <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-amber-50/50 via-rose-50/30 to-white flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-amber-100 text-amber-700">
+                <Music className="w-6 h-6" />
+              </div>
+              <div>
+                <h2 className="text-lg sm:text-xl font-serif font-black text-[#2B1D24]">
+                  Background Music &amp; Audio Settings
+                </h2>
+                <p className="text-xs sm:text-sm text-gray-500">
+                  Customize background audio tracks for the Hero/Intro and 3D Photo Album sections
+                </p>
+              </div>
+            </div>
+            <span className="text-xs font-bold px-3 py-1 rounded-full bg-amber-100 text-amber-800">
+              Hero &amp; Album
+            </span>
+          </div>
+
+          <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-4 rounded-xl border border-gray-200 bg-gray-50/50 space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-gray-800">
+                  Hero / Intro Section Audio URL
+                </label>
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-white border border-gray-200 text-gray-600">
+                  heroAudioUrl
+                </span>
+              </div>
+              <input
+                type="text"
+                value={draft.heroAudioUrl || ""}
+                onChange={(e) => setField("heroAudioUrl", e.target.value)}
+                placeholder="/audio/piano.mp3"
+                className="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 bg-white focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] outline-none font-mono"
+              />
+              <p className="text-[11px] text-gray-400">
+                Default: <code className="font-mono">/audio/piano.mp3</code> (soft relaxing piano)
+              </p>
+            </div>
+
+            <div className="p-4 rounded-xl border border-gray-200 bg-gray-50/50 space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-gray-800">
+                  Photo Album Section Audio URL
+                </label>
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-white border border-gray-200 text-gray-600">
+                  albumAudioUrl
+                </span>
+              </div>
+              <input
+                type="text"
+                value={draft.albumAudioUrl || ""}
+                onChange={(e) => setField("albumAudioUrl", e.target.value)}
+                placeholder="/audio/track-d-cinema.mp3"
+                className="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 bg-white focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37] outline-none font-mono"
+              />
+              <p className="text-[11px] text-gray-400">
+                Plays in the final 3D Photo Album section (MP3 / Cloudinary audio URL)
+              </p>
             </div>
           </div>
         </section>

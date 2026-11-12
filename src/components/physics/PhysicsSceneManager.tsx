@@ -13,6 +13,7 @@ import IndianThemeSection from "./IndianThemeSection";
 import FatimidThemeSection from "./FatimidThemeSection";
 import MexicanThemeSection from "./MexicanThemeSection";
 import WeddingRaceSection from "./WeddingRaceSection";
+import PhotoAlbumSection from "./PhotoAlbumSection";
 import { Scene3PhysicsDesk } from "./Scene3PhysicsDesk";
 import { Scene4ZTunnel } from "./Scene4ZTunnel";
 import { Scene5InfiniteCanvas } from "./Scene5InfiniteCanvas";
@@ -80,6 +81,7 @@ export const PhysicsSceneManager: React.FC = () => {
       `${String(baseOffset + 1).padStart(2, "0")} Physics Desk`,
       `${String(baseOffset + 2).padStart(2, "0")} 3D Tunnel`,
       `${String(baseOffset + 3).padStart(2, "0")} Infinite Canvas`,
+      `${String(baseOffset + 4).padStart(2, "0")} كتاب الذكريات`,
     ];
   }, [activeThemes]);
 
@@ -100,7 +102,7 @@ export const PhysicsSceneManager: React.FC = () => {
     const container = scrollContainerRef.current;
     if (!container) return;
 
-    const totalCount = 1 + activeThemes.length + 4;
+    const totalCount = 1 + activeThemes.length + 5;
 
     const handleScroll = () => {
       const scrollPos = container.scrollTop + container.clientHeight * 0.35;
@@ -120,9 +122,14 @@ export const PhysicsSceneManager: React.FC = () => {
   useEffect(() => {
     if (sceneAudio) {
       sceneAudio.setVolume(volume);
-      sceneAudio.transitionToScene(currentScene, isPlayingMusic);
+      // The synthesized ambient track must never play under the Hero piano (scene 0)
+      // or the Photo Album (final scene), which own dedicated audio tracks.
+      const albumSceneIndex = 1 + activeThemes.length + 4;
+      const synthAllowed =
+        isPlayingMusic && currentScene !== 0 && currentScene !== albumSceneIndex;
+      sceneAudio.transitionToScene(currentScene, synthAllowed);
     }
-  }, [currentScene, isPlayingMusic, volume]);
+  }, [currentScene, isPlayingMusic, volume, activeThemes.length]);
 
   const toggleFullscreen = () => {
     if (typeof document === "undefined") return;
@@ -195,6 +202,7 @@ export const PhysicsSceneManager: React.FC = () => {
   const deskIndex = raceIndex + 1;
   const tunnelIndex = raceIndex + 2;
   const canvasIndex = raceIndex + 3;
+  const albumIndex = raceIndex + 4;
 
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-[#24181B] text-[#FDECEF] flex flex-col justify-between select-none">
@@ -410,6 +418,17 @@ export const PhysicsSceneManager: React.FC = () => {
           >
             <Scene5InfiniteCanvas onRestart={() => scrollToSection(0)} />
           </motion.div>
+
+          {/* Final Section: Luxury 3D Interactive Photo Album (كتاب الذكريات) */}
+          <div
+            ref={(el) => {
+              sectionElsRef.current[albumIndex] = el;
+            }}
+            id="section-photo-album-wrapper"
+            className="w-full min-h-[calc(100vh-4rem)] flex flex-col justify-between overflow-x-hidden"
+          >
+            <PhotoAlbumSection />
+          </div>
         </div>
       </main>
 

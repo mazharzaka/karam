@@ -238,6 +238,23 @@ class GlobalAudioCoordinator {
   }
 
   /**
+   * Immediately pauses all other `<audio>` elements in the DOM except `activeEl`
+   * (and any `alsoKeep` elements, e.g. a track that is currently fading out),
+   * preventing any audio overlapping across sections (e.g. Hero piano vs Photo Album).
+   */
+  public pauseAllExcept(
+    activeEl: HTMLAudioElement | null,
+    ...alsoKeep: (HTMLAudioElement | null)[]
+  ): void {
+    if (typeof document === "undefined") return;
+    document.querySelectorAll("audio").forEach((el) => {
+      if (el !== activeEl && !alsoKeep.includes(el) && !el.paused) {
+        el.pause();
+      }
+    });
+  }
+
+  /**
    * Attempts to play `audioEl` smoothly at `this.volumeState` (default `0.2`),
    * gently fading out any other active audio track.
    */
@@ -261,10 +278,15 @@ class GlobalAudioCoordinator {
       return;
     }
 
-    // Crossfade: smoothly fade out any previously playing track
-    if (this.activeAudioEl && this.activeAudioEl !== audioEl) {
-      this.stopTrack(this.activeAudioEl, 600);
+    // Crossfade: smoothly fade out the previously active track, hard-pause every other one
+    const fadingEl =
+      this.activeAudioEl && this.activeAudioEl !== audioEl
+        ? this.activeAudioEl
+        : null;
+    if (fadingEl) {
+      this.stopTrack(fadingEl, 600);
     }
+    this.pauseAllExcept(audioEl, fadingEl);
 
     this.activeAudioEl = audioEl;
 

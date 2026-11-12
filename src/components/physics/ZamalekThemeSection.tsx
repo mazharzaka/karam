@@ -340,7 +340,7 @@ const PhotoCard: React.FC<{ card: MomentCard; rotation: string }> = ({
     </div>
 
     {/* Photo with high contrast and pure aesthetic */}
-    <div className="relative min-h-0 flex-1 overflow-hidden rounded-sm bg-stone-100">
+    <div className="relative min-h-0 flex-1 overflow-hidden rounded-sm bg-black">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={card.photo}

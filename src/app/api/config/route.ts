@@ -1,20 +1,107 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import fs from "fs";
 import path from "path";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-function getActiveConfigTarget() {
+const ACTIVE_PROFILE_COOKIE = "active_profile_id";
+let inMemoryActiveProfileId: string | null = null;
+
+const PROFILE_ARABIC_LABELS: Record<string, string> = {
+  "8f92x": "محمد ومنال",
+  "9c34v": "كريم وفرح",
+};
+
+function isValidProfileId(id: string | undefined | null): id is string {
+  return typeof id === "string" && /^[a-zA-Z0-9_-]+$/.test(id.trim());
+}
+
+function getProfileFilePath(profileId: string) {
+  const filename = `app-payload-${profileId}.json`;
+  const filePath = path.join(process.cwd(), "src/private", filename);
+  return { profileId, filename, filePath };
+}
+
+function listAvailableProfiles() {
+  const privateDir = path.join(process.cwd(), "src/private");
+  if (!fs.existsSync(privateDir)) return [];
+
+  const files = fs
+    .readdirSync(privateDir)
+    .filter((f) => /^app-payload-[a-zA-Z0-9_-]+\.json$/.test(f))
+    .sort();
+
+  return files.map((filename) => {
+    const id = filename.replace(/^app-payload-/, "").replace(/\.json$/, "");
+    let label = PROFILE_ARABIC_LABELS[id] || id;
+    let groomName = "";
+    let brideName = "";
+    try {
+      const parsed = JSON.parse(
+        fs.readFileSync(path.join(privateDir, filename), "utf8"),
+      ) as Record<string, unknown>;
+      groomName = typeof parsed.groomName === "string" ? parsed.groomName : "";
+      brideName = typeof parsed.brideName === "string" ? parsed.brideName : "";
+      if (!PROFILE_ARABIC_LABELS[id] && groomName && brideName) {
+        label = `${groomName} & ${brideName}`;
+      }
+    } catch {
+      // ignore malformed JSON
+    }
+    return { id, filename, label, groomName, brideName };
+  });
+}
+
+function persistEnvProfileId(profileId: string) {
+  try {
+    const envPath = path.join(process.cwd(), ".env");
+    if (!fs.existsSync(envPath)) return;
+    const raw = fs.readFileSync(envPath, "utf8");
+    const nextLine = `NEXT_PUBLIC_ACTIVE_PROFILE_ID=${profileId}`;
+    const updated = /^NEXT_PUBLIC_ACTIVE_PROFILE_ID=.*$/m.test(raw)
+      ? raw.replace(/^NEXT_PUBLIC_ACTIVE_PROFILE_ID=.*$/m, nextLine)
+      : `${raw.trimEnd()}\n${nextLine}\n`;
+    fs.writeFileSync(envPath, updated, "utf8");
+  } catch {
+    // Non-fatal on read-only filesystems (e.g. serverless)
+  }
+}
+
+function getActiveConfigTarget(explicitProfileId?: string) {
+  if (isValidProfileId(explicitProfileId)) {
+    return getProfileFilePath(explicitProfileId.trim());
+  }
+
+  let cookieProfileId: string | undefined;
+  try {
+    cookieProfileId = cookies().get(ACTIVE_PROFILE_COOKIE)?.value?.trim();
+  } catch {
+    // cookies() unavailable outside request context
+  }
+
+  if (isValidProfileId(cookieProfileId)) {
+    const target = getProfileFilePath(cookieProfileId);
+    if (fs.existsSync(target.filePath)) {
+      return target;
+    }
+  }
+
+  if (isValidProfileId(inMemoryActiveProfileId)) {
+    const target = getProfileFilePath(inMemoryActiveProfileId);
+    if (fs.existsSync(target.filePath)) {
+      return target;
+    }
+  }
+
   const profileId = process.env.NEXT_PUBLIC_ACTIVE_PROFILE_ID?.trim();
   if (!profileId) {
     throw new Error(
       "NEXT_PUBLIC_ACTIVE_PROFILE_ID environment variable is missing."
     );
   }
-  const filename = `app-payload-${profileId}.json`;
-  const filePath = path.join(process.cwd(), "src/private", filename);
-  return { profileId, filename, filePath };
+  return getProfileFilePath(profileId);
 }
 
 const SECTION_FIELD_MAP = {
@@ -103,6 +190,7 @@ export async function GET() {
         profile: profileId,
         filename,
         config: activeConfig,
+        availableProfiles: listAvailableProfiles(),
       },
       {
         status: 200,
@@ -133,7 +221,66 @@ export async function POST(request: Request) {
       );
     }
 
-    const { profileId, filename, filePath } = getActiveConfigTarget();
+    // Handle dynamic profile switching from Admin Panel
+    if (
+      incoming.action === "switchProfile" &&
+      typeof incoming.profileId === "string"
+    ) {
+      const requestedId = incoming.profileId.trim();
+      if (!isValidProfileId(requestedId)) {
+        return NextResponse.json(
+          { success: false, error: "Invalid profileId format." },
+          { status: 400 }
+        );
+      }
+      const target = getProfileFilePath(requestedId);
+      if (!fs.existsSync(target.filePath)) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: `Profile file src/private/${target.filename} was not found.`,
+          },
+          { status: 404 }
+        );
+      }
+
+      inMemoryActiveProfileId = target.profileId;
+      persistEnvProfileId(target.profileId);
+
+      const switchedConfig = JSON.parse(
+        fs.readFileSync(target.filePath, "utf8"),
+      ) as JsonRecord;
+
+      const response = NextResponse.json(
+        {
+          success: true,
+          profileId: target.profileId,
+          filename: target.filename,
+          config: switchedConfig,
+          availableProfiles: listAvailableProfiles(),
+        },
+        {
+          status: 200,
+          headers: {
+            "Cache-Control":
+              "no-store, no-cache, must-revalidate, proxy-revalidate",
+          },
+        }
+      );
+      response.cookies.set(ACTIVE_PROFILE_COOKIE, target.profileId, {
+        path: "/",
+        sameSite: "lax",
+        maxAge: 60 * 60 * 24 * 30,
+      });
+      return response;
+    }
+
+    const explicitProfileId =
+      typeof incoming.targetProfileId === "string"
+        ? incoming.targetProfileId
+        : undefined;
+    const { profileId, filename, filePath } =
+      getActiveConfigTarget(explicitProfileId);
 
     let existing: JsonRecord = {};
     if (fs.existsSync(filePath)) {

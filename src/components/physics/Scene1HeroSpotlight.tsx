@@ -8,6 +8,8 @@ import {
   ArrowDown,
   Eye,
   PartyPopper,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import confetti from "canvas-confetti";
 import {
@@ -18,6 +20,7 @@ import {
   intervalToDuration,
 } from "date-fns";
 import { useWeddingConfig } from "@/context/WeddingConfigContext";
+import { globalAudioCoordinator } from "@/utils/globalAudioCoordinator";
 
 type TimeFormatMode = "hms" | "days" | "years" | "detailed";
 
@@ -79,6 +82,40 @@ export const Scene1HeroSpotlight: React.FC<Scene1HeroSpotlightProps> = ({
   const [mounted, setMounted] = useState<boolean>(false);
   const [currentTime, setCurrentTime] = useState<Date>(() => new Date());
   const [formatMode, setFormatMode] = useState<TimeFormatMode>("hms");
+  const [isHeroPlaying, setIsHeroPlaying] = useState<boolean>(false);
+  const heroAudioRef = useRef<HTMLAudioElement>(null);
+
+  const heroAudioSrc = config.heroAudioUrl || "/audio/piano.mp3";
+
+  useEffect(() => {
+    const audio = heroAudioRef.current;
+    if (!audio) return;
+    const onPlay = () => setIsHeroPlaying(true);
+    const onPause = () => setIsHeroPlaying(false);
+    audio.addEventListener("play", onPlay);
+    audio.addEventListener("pause", onPause);
+    return () => {
+      audio.removeEventListener("play", onPlay);
+      audio.removeEventListener("pause", onPause);
+    };
+  }, []);
+
+  const toggleHeroAudio = useCallback(() => {
+    const audio = heroAudioRef.current;
+    if (!audio) return;
+
+    if (isHeroPlaying && !audio.paused) {
+      audio.pause();
+      audio.muted = true;
+      setIsHeroPlaying(false);
+    } else {
+      globalAudioCoordinator.setMuted(false);
+      globalAudioCoordinator.playTrack(audio, undefined, () => {
+        setIsHeroPlaying(false);
+      });
+      setIsHeroPlaying(true);
+    }
+  }, [isHeroPlaying]);
 
   const [mousePos, setMousePos] = useState<{ x: number; y: number }>({
     x: typeof window !== "undefined" ? window.innerWidth / 2 : 600,
@@ -201,6 +238,28 @@ export const Scene1HeroSpotlight: React.FC<Scene1HeroSpotlightProps> = ({
       onMouseMove={handleMouseMove}
       className="relative w-full h-full min-h-[92vh] flex flex-col justify-between items-center py-10 px-4 sm:px-8 bg-[#24181B] text-[#FDECEF] overflow-hidden select-none"
     >
+      {/* Hero Background Audio */}
+      <audio ref={heroAudioRef} src={heroAudioSrc} loop preload="none" />
+
+      {/* Top-Right Hero Audio Mute / Unmute Button */}
+      <button
+        type="button"
+        onClick={toggleHeroAudio}
+        aria-label={isHeroPlaying ? "Mute Hero Piano" : "Play Hero Piano"}
+        className="absolute top-5 right-5 z-30 flex items-center gap-2 rounded-full border border-romantic-roseGold/40 bg-black/55 backdrop-blur-md px-3.5 py-2 text-xs font-medium text-romantic-roseGoldLight shadow-lg transition-all hover:bg-black/80 hover:scale-105 cursor-pointer"
+      >
+        {isHeroPlaying ? (
+          <>
+            <Volume2 className="w-4 h-4 text-romantic-roseGold" />
+            <span className="hidden sm:inline">Mute Piano</span>
+          </>
+        ) : (
+          <>
+            <VolumeX className="w-4 h-4 text-stone-300" />
+            <span className="hidden sm:inline">Play Piano</span>
+          </>
+        )}
+      </button>
       {/* 
         ENHANCED MOUSE SPOTLIGHT (THE REVEAL): 
         Dynamic Main Hero Background Image from Admin Config

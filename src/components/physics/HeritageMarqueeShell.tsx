@@ -15,6 +15,7 @@ import {
   useWeddingConfig,
   mergeGalleryIntoCards,
 } from "@/context/WeddingConfigContext";
+import { getCardThemeBackground } from "@/utils/cardThemeBackground";
 
 export interface ThemeMomentCard {
   num: string;
@@ -24,6 +25,7 @@ export interface ThemeMomentCard {
   time: string;
   badge: string;
   photo: string;
+  style?: string;
 }
 
 const ROTATIONS = [
@@ -52,6 +54,7 @@ export interface HeritageMarqueeShellProps {
   flipGroom?: boolean;
   flipBride?: boolean;
   defaultCards: ThemeMomentCard[];
+  cardStyle?: string;
   galleryOffset?: number;
   backgroundDecorations?: React.ReactNode;
   onNext?: () => void;
@@ -105,10 +108,12 @@ export const HeritageMarqueeShell: React.FC<HeritageMarqueeShellProps> = ({
   flipGroom = false,
   flipBride = false,
   defaultCards,
+  cardStyle,
   galleryOffset = 0,
   backgroundDecorations,
   onNext,
 }) => {
+  const resolvedDefaultCardStyle = cardStyle || id.replace(/^section-/, "");
   const { config } = useWeddingConfig();
   const dynamicCards = useMemo(
     () => mergeGalleryIntoCards(defaultCards, config.gallery, galleryOffset),
@@ -294,6 +299,10 @@ export const HeritageMarqueeShell: React.FC<HeritageMarqueeShellProps> = ({
         >
           {loopedCards.map((card, i) => {
             const rot = ROTATIONS[(i % dynamicCards.length) % ROTATIONS.length];
+            const themeLayer = getCardThemeBackground(
+              card.style || resolvedDefaultCardStyle,
+              title,
+            );
             return (
               <div
                 key={`${card.num}-${i}`}
@@ -312,16 +321,21 @@ export const HeritageMarqueeShell: React.FC<HeritageMarqueeShellProps> = ({
                   </span>
                 </div>
 
-                <div className="relative flex-1 overflow-hidden rounded-lg bg-[#2B1D24]/5">
+                <div className="relative flex-1 overflow-hidden rounded-lg bg-black">
+                  {themeLayer.gradientClass && (
+                    <div
+                      className={`pointer-events-none select-none absolute inset-0 z-0 ${themeLayer.gradientClass}`}
+                    />
+                  )}
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={card.photo}
                     alt={card.title}
                     draggable={false}
-                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    className="relative z-10 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                   />
-                  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
-                  <div className="absolute inset-x-0 bottom-0 p-2.5 text-white">
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-20 bg-gradient-to-t from-black/80 via-black/40 to-transparent" />
+                  <div className="absolute inset-x-0 bottom-0 z-20 p-2.5 text-white">
                     <div className="font-serif text-sm font-semibold leading-tight line-clamp-1">
                       {card.title}
                     </div>
@@ -364,7 +378,7 @@ export const HeritageMarqueeShell: React.FC<HeritageMarqueeShellProps> = ({
           alt={`${config.groomName} ${title}`}
           aria-hidden="true"
           style={{ transform: flipGroom ? "scaleX(-1)" : "none" }}
-          className="w-full h-auto object-contain object-bottom"
+          className="relative z-10 w-full h-auto object-contain object-bottom"
         />
       </motion.div>
 
@@ -383,7 +397,7 @@ export const HeritageMarqueeShell: React.FC<HeritageMarqueeShellProps> = ({
           alt={`${config.brideName} ${title}`}
           aria-hidden="true"
           style={{ transform: flipBride ? "scaleX(-1)" : "none" }}
-          className="w-full h-auto object-contain object-bottom"
+          className="relative z-10 w-full h-auto object-contain object-bottom"
         />
       </motion.div>
 
