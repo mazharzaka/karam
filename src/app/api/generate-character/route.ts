@@ -1,24 +1,14 @@
 import { NextResponse } from "next/server";
-import Replicate from "replicate";
 
 export const maxDuration = 60;
 
-const INSTANT_ID_MODEL =
-  "zsxkib/instant-id:6423023020ceb24c1619623dcbd2049e2954a7428f73117dd64beebffed80524" as const;
+const INSTANT_ID_VERSION =
+  "6423023020ceb24c1619623dcbd2049e2954a7428f73117dd64beebffed80524";
 
 function extractOutputUrl(output: unknown): string | null {
   const first = Array.isArray(output) ? output[0] : output;
-  if (!first) return null;
-  if (typeof first === "string") return first;
-  if (
-    typeof first === "object" &&
-    "url" in first &&
-    typeof (first as { url: () => URL | string }).url === "function"
-  ) {
-    return String((first as { url: () => URL | string }).url());
-  }
-  const asString = String(first);
-  return asString.startsWith("http") ? asString : null;
+  if (!first || typeof first !== "string") return null;
+  return first.startsWith("http") ? first : null;
 }
 
 export async function POST(request: Request) {
@@ -53,20 +43,71 @@ export async function POST(request: Request) {
       );
     }
 
-    const replicate = new Replicate({
-      auth: token,
-      useFileOutput: false,
-    });
-
-    const output = await replicate.run(INSTANT_ID_MODEL, {
-      input: {
-        image: sourceImageUrl,
-        prompt,
-        negative_prompt: "ugly, deformed, blurry",
+    const createRes = await fetch("https://api.replicate.com/v1/predictions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        Prefer: "wait=55",
       },
+      body: JSON.stringify({
+        version: INSTANT_ID_VERSION,
+        input: {
+          image: sourceImageUrl,
+          prompt,
+          negative_prompt: "ugly, deformed, blurry",
+        },
+      }),
     });
 
-    const imageUrl = extractOutputUrl(output);
+    if (!createRes.ok) {
+      const errText = await createRes.text();
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Replicate API error (${createRes.status}): ${errText}`,
+        },
+        { status: 502 }
+      );
+    }
+
+    let prediction = (await createRes.json()) as {
+      status?: string;
+      output?: unknown;
+      error?: string;
+      urls?: { get?: string };
+    };
+
+    let attempts = 0;
+    while (
+      prediction.status !== "succeeded" &&
+      prediction.status !== "failed" &&
+      prediction.status !== "canceled" &&
+      prediction.urls?.get &&
+      attempts < 20
+    ) {
+      attempts += 1;
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const pollRes = await fetch(prediction.urls.get, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!pollRes.ok) break;
+      prediction = (await pollRes.json()) as typeof prediction;
+    }
+
+    if (prediction.status !== "succeeded") {
+      return NextResponse.json(
+        {
+          success: false,
+          error:
+            prediction.error ||
+            `Character generation ended with status: ${prediction.status || "unknown"}`,
+        },
+        { status: 502 }
+      );
+    }
+
+    const imageUrl = extractOutputUrl(prediction.output);
     if (!imageUrl) {
       return NextResponse.json(
         {
@@ -97,4 +138,3 @@ export async function POST(request: Request) {
     );
   }
 }
-

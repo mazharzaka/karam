@@ -134,7 +134,7 @@ const TALLI_BORDER_BG = svgUri(
     <polyline points="4,27 12,33 20,27"/>
     <polyline points="4,34 12,40 20,34"/>
     <polyline points="4,41 12,47 20,41"/>
-  </svg>`
+  </svg>`,
 );
 
 /* -------------------------------------------------------------------------- */
@@ -158,7 +158,14 @@ const ProminentOllaSVG: React.FC<{ className?: string }> = ({ className }) => (
       d="M34 15 C34 23 41 29 41 38 C31 46 20 59 20 78 C20 100 33 113 50 113 C67 113 80 100 80 78 C80 59 69 46 59 38 C59 29 66 23 66 15"
       strokeWidth="2.8"
     />
-    <line x1="39" y1="28" x2="61" y2="28" strokeWidth="2" strokeDasharray="3 3" />
+    <line
+      x1="39"
+      y1="28"
+      x2="61"
+      y2="28"
+      strokeWidth="2"
+      strokeDasharray="3 3"
+    />
     <ellipse cx="50" cy="38" rx="10" ry="3.5" strokeWidth="2.2" />
 
     {/* Decorated Belly Patterns (نقوش الفخار الصعيدي) */}
@@ -175,7 +182,9 @@ const ProminentOllaSVG: React.FC<{ className?: string }> = ({ className }) => (
 );
 
 // Arching Palm Fronds (سعف وجريد النخل)
-const ProminentPalmFrondSVG: React.FC<{ className?: string }> = ({ className }) => (
+const ProminentPalmFrondSVG: React.FC<{ className?: string }> = ({
+  className,
+}) => (
   <svg
     viewBox="0 0 120 120"
     fill="none"
@@ -218,9 +227,15 @@ const ProminentWheatSVG: React.FC<{ className?: string }> = ({ className }) => (
     <line x1="50" y1="116" x2="50" y2="10" strokeWidth="2.8" />
     {[22, 38, 54, 70, 86].map((y, i) => (
       <g key={i}>
-        <path d={`M50 ${y} C39 ${y - 6} 35 ${y + 2} 50 ${y + 8}`} strokeWidth="2.2" />
+        <path
+          d={`M50 ${y} C39 ${y - 6} 35 ${y + 2} 50 ${y + 8}`}
+          strokeWidth="2.2"
+        />
         <line x1="42" y1={y} x2="22" y2={y - 15} strokeWidth="1.8" />
-        <path d={`M50 ${y} C61 ${y - 6} 65 ${y + 2} 50 ${y + 8}`} strokeWidth="2.2" />
+        <path
+          d={`M50 ${y} C61 ${y - 6} 65 ${y + 2} 50 ${y + 8}`}
+          strokeWidth="2.2"
+        />
         <line x1="58" y1={y} x2="78" y2={y - 15} strokeWidth="1.8" />
       </g>
     ))}
@@ -264,7 +279,12 @@ const VolumeIcon: React.FC<{ muted?: boolean; className?: string }> = ({
 );
 
 const HeartIcon: React.FC<{ className?: string }> = ({ className }) => (
-  <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden="true">
+  <svg
+    viewBox="0 0 24 24"
+    className={className}
+    fill="currentColor"
+    aria-hidden="true"
+  >
     <path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.3 3 5 6.3 5c2 0 3.4 1.1 4.2 2.4h3C14.3 6.1 15.7 5 17.7 5 21 5 23.1 8.3 21.6 11.8 19.5 16.4 12 21 12 21z" />
   </svg>
 );
@@ -372,7 +392,9 @@ const PhotoCard: React.FC<{ card: MomentCard; rotation: string }> = ({
         {card.corner}
         <WheatMiniIcon className="h-3 w-3 text-[#D4AF37]" />
       </span>
-      <span className="text-[10px] tracking-widest text-[#D4AF37]">CARD #{card.num}</span>
+      <span className="text-[10px] tracking-widest text-[#D4AF37]">
+        CARD #{card.num}
+      </span>
       <HeartIcon className="h-3 w-3 text-amber-500" />
     </div>
 
@@ -402,13 +424,17 @@ const PhotoCard: React.FC<{ card: MomentCard; rotation: string }> = ({
 
     {/* Footer strip */}
     <div className="flex h-7 shrink-0 items-center justify-between px-2 text-[#D4AF37]">
-      <span className="font-serif text-[10px] italic text-[#5A4650]">أصالة وجذور</span>
+      <span className="font-serif text-[10px] italic text-[#5A4650]">
+        أصالة وجذور
+      </span>
       <span className="flex items-center gap-1">
         <OllaMiniIcon className="h-2.5 w-2.5" />
         <WheatMiniIcon className="h-2.5 w-2.5" />
         <PalmMiniIcon className="h-2.5 w-2.5" />
       </span>
-      <span className="font-serif text-[10px] font-bold text-[#2B1D24]">{card.badge}</span>
+      <span className="font-serif text-[10px] font-bold text-[#2B1D24]">
+        {card.badge}
+      </span>
     </div>
   </div>
 );
@@ -427,9 +453,15 @@ export default function SaidiHeritageSection({
   const trackRef = useRef<HTMLDivElement>(null);
 
   const { config } = useWeddingConfig();
+  const section = config.sections?.saidi;
   const dynamicCards = React.useMemo(
-    () => mergeGalleryIntoCards(CARDS, config.gallery, 6),
-    [config.gallery]
+    () =>
+      mergeGalleryIntoCards(
+        section?.cards?.length ? section.cards : CARDS,
+        config.gallery,
+        6,
+      ),
+    [section?.cards, config.gallery],
   );
 
   // Dedicated Audio reference for Section 3 Saidi track
@@ -551,7 +583,11 @@ export default function SaidiHeritageSection({
       {/* Saidi Audio Element */}
       <audio
         ref={audioRef}
-        src={config.audioSaidi || SAIDI_SECTION_ASSETS.saidiTrack}
+        src={
+          config.audioSaidi ||
+          section?.audioSrc ||
+          SAIDI_SECTION_ASSETS.saidiTrack
+        }
         loop
         preload="auto"
         className="hidden"
@@ -620,7 +656,9 @@ export default function SaidiHeritageSection({
           className="flex items-center gap-1.5 rounded-full border border-[#D4AF37]/50 bg-white/85 px-3 py-2 text-xs font-medium text-[#2B1D24] shadow-sm transition-all duration-200 hover:scale-105 hover:bg-white hover:shadow active:scale-95 cursor-pointer"
         >
           <VolumeIcon muted={isMuted} className="h-4 w-4 text-[#D4AF37]" />
-          <span className="hidden sm:inline font-sans">{isMuted ? "Muted" : "Mute All"}</span>
+          <span className="hidden sm:inline font-sans">
+            {isMuted ? "Muted" : "Mute All"}
+          </span>
         </button>
 
         {/* Marquee Play/Pause Control */}
@@ -647,7 +685,12 @@ export default function SaidiHeritageSection({
       {/* Centered Header with generous bottom spacing */}
       <header className="relative z-30 px-6 pt-8 text-center md:pt-10 mb-20 md:mb-24 pb-10 md:pb-12">
         <span className="inline-flex items-center gap-2 rounded-full border border-[#D4AF37]/40 bg-white/80 px-4 py-1 text-xs text-[#8A6A1F] shadow-sm">
-          <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" aria-hidden="true">
+          <svg
+            viewBox="0 0 24 24"
+            className="h-3.5 w-3.5"
+            fill="none"
+            aria-hidden="true"
+          >
             <circle cx="12" cy="12" r="10" fill="#22A06B" />
             <path
               d="M7 12.5l3.2 3.2L17 9"
@@ -657,15 +700,15 @@ export default function SaidiHeritageSection({
               strokeLinejoin="round"
             />
           </svg>
-          Chapter 03 • الصعيد الجواني
+          {section?.chapterBadge || "Chapter 03 • الصعيد الجواني"}
         </span>
 
         <h2 className="mt-3 font-serif text-3xl font-bold md:text-5xl text-[#2B1D24] tracking-tight">
-          أصالة وجذور
+          {section?.title || "أصالة وجذور"}
         </h2>
 
         <p className="mt-2 font-serif text-sm italic text-[#B08A2E] md:text-base">
-          Roots &amp; Authenticity
+          {section?.subtitle || "Roots & Authenticity"}
         </p>
       </header>
 
@@ -690,13 +733,19 @@ export default function SaidiHeritageSection({
       {/* Hero character: Saidi Groom (Left - Standard Clean Bottom-Anchored Framing) */}
       <motion.div
         initial={{ opacity: 0, y: 40 }}
-        animate={charactersInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
+        animate={
+          charactersInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }
+        }
         transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
         className="absolute bottom-0 left-0 z-50 w-44 md:w-64 lg:w-80 pointer-events-none"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={config.saidiGroomUrl || SAIDI_SECTION_ASSETS.groomImage}
+          src={
+            config.saidiGroomUrl ||
+            section?.groomImage ||
+            SAIDI_SECTION_ASSETS.groomImage
+          }
           alt={`${config.groomName} Saidi Groom`}
           aria-hidden="true"
           className="w-full h-auto object-contain object-bottom"
@@ -706,13 +755,19 @@ export default function SaidiHeritageSection({
       {/* Hero character: Saidi Bride (Right - Standard Clean Bottom-Anchored Framing) */}
       <motion.div
         initial={{ opacity: 0, y: 40 }}
-        animate={charactersInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
+        animate={
+          charactersInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }
+        }
         transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
         className="absolute bottom-0 right-0 z-50 w-44 md:w-64 lg:w-80 pointer-events-none"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={config.saidiBrideUrl || SAIDI_SECTION_ASSETS.brideImage}
+          src={
+            config.saidiBrideUrl ||
+            section?.brideImage ||
+            SAIDI_SECTION_ASSETS.brideImage
+          }
           alt={`${config.brideName} Saidi Bride`}
           aria-hidden="true"
           className="w-full h-auto object-contain object-bottom"
@@ -721,7 +776,10 @@ export default function SaidiHeritageSection({
 
       {/* Footer + Bottom Centered Section Audio Controls */}
       <footer className="relative z-40 flex flex-col sm:flex-row items-center justify-between gap-2 px-6 pb-5 text-xs text-[#7A6A5A]">
-        <span className="hidden md:inline">✦ Hover over any photo card to softly glide and view cherished memories.</span>
+        <span className="hidden md:inline">
+          ✦ Hover over any photo card to softly glide and view cherished
+          memories.
+        </span>
         <div className="mx-auto sm:mx-0">
           <BottomAudioControls
             isPlaying={isTrackPlaying}
@@ -736,7 +794,9 @@ export default function SaidiHeritageSection({
         <span className="hidden md:flex items-center gap-3">
           <span>24 Moments • Infinite Auto-Marquee</span>
           <span className="h-3 w-px bg-[#D4AF37]/50" />
-          <span className="font-serif italic text-[#D4AF37]">أصالة وجذور</span>
+          <span className="font-serif italic text-[#D4AF37]">
+            {section?.footerLabel || "أصالة وجذور"}
+          </span>
         </span>
       </footer>
     </section>

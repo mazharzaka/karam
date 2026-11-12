@@ -75,25 +75,26 @@ export default function AlAhlyThemeSection({
   scrollContainerRef?: React.RefObject<HTMLElement | HTMLDivElement | null>;
 }) {
   const { config } = useWeddingConfig();
+  const section = config.sections?.ahly;
 
   return (
     <HeritageMarqueeShell
       id="section-ahly"
-      chapterBadge="🦅 Al Ahly SC • 43 League Titles • 12 African Champions"
-      title="نادي القرن"
-      subtitle="The Red Devils • Club of the Century"
-      footerLabel="Al Ahly SC • 43 League Titles • 12 African Champions"
+      chapterBadge={section?.chapterBadge || "🦅 Al Ahly SC • 43 League Titles • 12 African Champions"}
+      title={section?.title || "نادي القرن"}
+      subtitle={section?.subtitle || "The Red Devils • Club of the Century"}
+      footerLabel={section?.footerLabel || "Al Ahly SC • 43 League Titles • 12 African Champions"}
       backgroundClassName="bg-gradient-to-br from-red-950 via-red-900 to-black"
       badgeClassName="border border-yellow-500/45 bg-black/50 text-yellow-400"
       titleClassName="text-yellow-400 drop-shadow-[0_4px_18px_rgba(0,0,0,0.7)]"
       subtitleClassName="text-yellow-500 font-semibold"
       accentColor="#EAB308"
       footerTextClassName="text-yellow-500/85"
-      audioSrc={config.audioAhly}
-      groomImageSrc={config.ahlyGroomUrl}
-      brideImageSrc={config.ahlyBrideUrl}
+      audioSrc={config.audioAhly || section?.audioSrc || "/audio/ahly.mp3"}
+      groomImageSrc={config.ahlyGroomUrl || section?.groomImage || "/statues/zamalek-groom.png"}
+      brideImageSrc={config.ahlyBrideUrl || section?.brideImage || "/statues/zamalek-bride.png"}
       flipGroom
-      defaultCards={DEFAULT_AHLY_CARDS}
+      defaultCards={section?.cards?.length ? section.cards : DEFAULT_AHLY_CARDS}
       galleryOffset={30}
       onNext={onNext}
       scrollContainerRef={scrollContainerRef}

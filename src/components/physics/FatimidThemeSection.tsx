@@ -139,25 +139,26 @@ export default function FatimidThemeSection({
   scrollContainerRef?: React.RefObject<HTMLElement | HTMLDivElement | null>;
 }) {
   const { config } = useWeddingConfig();
+  const section = config.sections?.fatimid;
 
   return (
     <HeritageMarqueeShell
       id="section-fatimid"
-      chapterBadge="☪️ التراث الفاطمي والمملوكي • ليالي المعز"
-      title="ليالي القاهرة الفاطمية"
-      subtitle="Fatimid & Mamluk Cairo • Antique Gold & Emerald Majesty"
-      footerLabel="Fatimid Islamic Heritage Celebration"
+      chapterBadge={section?.chapterBadge || "☪️ التراث الفاطمي والمملوكي • ليالي المعز"}
+      title={section?.title || "ليالي القاهرة الفاطمية"}
+      subtitle={section?.subtitle || "Fatimid & Mamluk Cairo • Antique Gold & Emerald Majesty"}
+      footerLabel={section?.footerLabel || "Fatimid Islamic Heritage Celebration"}
       backgroundClassName="bg-gradient-to-br from-emerald-950 via-green-900 to-emerald-950"
       badgeClassName="border border-amber-500/40 bg-emerald-950/80 text-amber-500"
       titleClassName="text-amber-500 drop-shadow-[0_0_25px_rgba(245,158,11,0.5)]"
       subtitleClassName="text-amber-500 font-semibold"
       accentColor="#D97706"
       footerTextClassName="text-amber-500/85"
-      audioSrc={config.audioFatimid}
-      groomImageSrc={config.fatimidGroomUrl}
-      brideImageSrc={config.fatimidBrideUrl}
+      audioSrc={config.audioFatimid || section?.audioSrc || "/audio/fatami.mp3"}
+      groomImageSrc={config.fatimidGroomUrl || section?.groomImage || "/statues/saidi-man.png"}
+      brideImageSrc={config.fatimidBrideUrl || section?.brideImage || "/statues/saidi-woman.png"}
       flipGroom
-      defaultCards={DEFAULT_FATIMID_CARDS}
+      defaultCards={section?.cards?.length ? section.cards : DEFAULT_FATIMID_CARDS}
       galleryOffset={48}
       onNext={onNext}
       scrollContainerRef={scrollContainerRef}

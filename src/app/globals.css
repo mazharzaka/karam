@@ -64,3 +64,15 @@
     0 8px 24px rgba(51, 39, 42, 0.12),
     0 16px 36px -4px rgba(212, 175, 55, 0.1);
 }
+
+/* Global Asset & Image Protection: Prevent dragging, touch-callout & direct pointer targeting on wedding portraits and car assets */
+img,
+.protected-asset {
+  pointer-events: none;
+  -webkit-user-drag: none;
+  user-drag: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}

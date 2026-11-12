@@ -146,24 +146,25 @@ export default function IndianThemeSection({
   scrollContainerRef?: React.RefObject<HTMLElement | HTMLDivElement | null>;
 }) {
   const { config } = useWeddingConfig();
+  const section = config.sections?.indian;
 
   return (
     <HeritageMarqueeShell
       id="section-indian"
-      chapterBadge="🪷 Maharaja Palace • ليالي بوليوود"
-      title="ليالي بوليوود"
-      subtitle="Maharaja Palace • Royal Teal, Magenta & Eternal Gold"
-      footerLabel="Maharaja Palace Royal Celebration"
+      chapterBadge={section?.chapterBadge || "🪷 Maharaja Palace • ليالي بوليوود"}
+      title={section?.title || "ليالي بوليوود"}
+      subtitle={section?.subtitle || "Maharaja Palace • Royal Teal, Magenta & Eternal Gold"}
+      footerLabel={section?.footerLabel || "Maharaja Palace Royal Celebration"}
       backgroundClassName="bg-gradient-to-br from-teal-900 via-sky-900 to-indigo-950"
       badgeClassName="border border-pink-400/50 bg-indigo-950/60 text-pink-300"
       titleClassName="text-amber-300 drop-shadow-[0_4px_18px_rgba(236,72,153,0.45)]"
       subtitleClassName="text-pink-300 font-semibold"
       accentColor="#EC4899"
       footerTextClassName="text-amber-200/85"
-      audioSrc={config.audioIndian}
-      groomImageSrc={config.indianGroomUrl}
-      brideImageSrc={config.indianBrideUrl}
-      defaultCards={DEFAULT_INDIAN_CARDS}
+      audioSrc={config.audioIndian || section?.audioSrc || "/audio/pharaonic-track.mp3"}
+      groomImageSrc={config.indianGroomUrl || section?.groomImage || "/statues/tutankhamun.png"}
+      brideImageSrc={config.indianBrideUrl || section?.brideImage || "/statues/nefertiti.png"}
+      defaultCards={section?.cards?.length ? section.cards : DEFAULT_INDIAN_CARDS}
       galleryOffset={36}
       onNext={onNext}
       scrollContainerRef={scrollContainerRef}

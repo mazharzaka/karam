@@ -108,24 +108,25 @@ export default function MexicanThemeSection({
   scrollContainerRef?: React.RefObject<HTMLElement | HTMLDivElement | null>;
 }) {
   const { config } = useWeddingConfig();
+  const section = config.sections?.mexican;
 
   return (
     <HeritageMarqueeShell
       id="section-mexican"
-      chapterBadge="🎉 Mexican Fiesta • احتفال الحياة والحب"
-      title="فييستا مكسيكية"
-      subtitle="Teal Skies, Fiesta Orange & Mariachi Joy"
-      footerLabel="Mexican Fiesta Celebration"
+      chapterBadge={section?.chapterBadge || "🎉 Mexican Fiesta • احتفال الحياة والحب"}
+      title={section?.title || "فييستا مكسيكية"}
+      subtitle={section?.subtitle || "Teal Skies, Fiesta Orange & Mariachi Joy"}
+      footerLabel={section?.footerLabel || "Mexican Fiesta Celebration"}
       backgroundClassName="bg-gradient-to-br from-[#0f766e] via-[#0d9488] to-[#f97316]"
       badgeClassName="border border-white/40 bg-black/25 text-white"
       titleClassName="text-white drop-shadow-[0_4px_14px_rgba(0,0,0,0.45)]"
       subtitleClassName="text-white/90 drop-shadow-xs"
       accentColor="#EA580C"
       footerTextClassName="text-white/90"
-      audioSrc={config.audioMexican}
-      groomImageSrc={config.mexicanGroomUrl}
-      brideImageSrc={config.mexicanBrideUrl}
-      defaultCards={DEFAULT_MEXICAN_CARDS}
+      audioSrc={config.audioMexican || section?.audioSrc || "/audio/pharaonic-track.mp3"}
+      groomImageSrc={config.mexicanGroomUrl || section?.groomImage || "/statues/saidi-man.png"}
+      brideImageSrc={config.mexicanBrideUrl || section?.brideImage || "/statues/saidi-woman.png"}
+      defaultCards={section?.cards?.length ? section.cards : DEFAULT_MEXICAN_CARDS}
       galleryOffset={42}
       onNext={onNext}
       scrollContainerRef={scrollContainerRef}

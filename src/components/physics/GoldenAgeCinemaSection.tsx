@@ -442,9 +442,15 @@ export default function GoldenAgeCinemaSection({
   const audioRef = useRef<HTMLAudioElement>(null);
 
   const { config } = useWeddingConfig();
+  const section = config.sections?.cinema;
   const dynamicCards = React.useMemo(
-    () => mergeGalleryIntoCards(CARDS, config.gallery, 12),
-    [config.gallery],
+    () =>
+      mergeGalleryIntoCards(
+        section?.cards?.length ? section.cards : CARDS,
+        config.gallery,
+        12
+      ),
+    [section?.cards, config.gallery],
   );
 
   // Marquee controls & state
@@ -561,7 +567,7 @@ export default function GoldenAgeCinemaSection({
       {/* Golden Age Cinema Soundtrack (Track D: Abdel Halim Hafez) */}
       <audio
         ref={audioRef}
-        src={config.audioCinema || CINEMA_SECTION_ASSETS.cinemaTrack}
+        src={config.audioCinema || section?.audioSrc || CINEMA_SECTION_ASSETS.cinemaTrack}
         loop
         preload="auto"
         className="hidden"
@@ -674,15 +680,15 @@ export default function GoldenAgeCinemaSection({
               strokeLinejoin="round"
             />
           </svg>
-          Chapter 04 • السينما المصرية القديمة
+          {section?.chapterBadge || "Chapter 04 • السينما المصرية القديمة"}
         </span>
 
         <h2 className="mt-3 font-serif text-3xl font-bold md:text-5xl text-[#241D1A] tracking-tight">
-          زمن الفن الجميل
+          {section?.title || "زمن الفن الجميل"}
         </h2>
 
         <p className="mt-2 font-serif text-sm italic text-[#7A6E65] md:text-base">
-          The Golden Age of Egyptian Cinema • 1950s Romance
+          {section?.subtitle || "The Golden Age of Egyptian Cinema • 1950s Romance"}
         </p>
       </header>
 
@@ -715,7 +721,7 @@ export default function GoldenAgeCinemaSection({
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={config.cinemaGroomUrl || CINEMA_SECTION_ASSETS.groomImage}
+          src={config.cinemaGroomUrl || section?.groomImage || CINEMA_SECTION_ASSETS.groomImage}
           alt={`${config.groomName} 1950s Groom`}
           aria-hidden="true"
           className="w-full h-auto object-contain object-bottom scale-x-[-1]"
@@ -733,7 +739,7 @@ export default function GoldenAgeCinemaSection({
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={config.cinemaBrideUrl || CINEMA_SECTION_ASSETS.brideImage}
+          src={config.cinemaBrideUrl || section?.brideImage || CINEMA_SECTION_ASSETS.brideImage}
           alt={`${config.brideName} 1950s Bride`}
           aria-hidden="true"
           className="w-full h-auto object-contain object-bottom"
@@ -761,7 +767,7 @@ export default function GoldenAgeCinemaSection({
           <span>24 Moments • Infinite Auto-Marquee</span>
           <span className="h-3 w-px bg-[#A38F78]/50" />
           <span className="font-serif italic text-[#7A6E65]">
-            زمن الفن الجميل
+            {section?.footerLabel || "زمن الفن الجميل"}
           </span>
         </span>
       </footer>
