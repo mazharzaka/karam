@@ -246,14 +246,14 @@ export default function TimelessBondSection({
   // to resting position "0%". When scrolling past, they sink smoothly back to "100%".
   const statueY = useTransform(
     scrollYProgress,
-    [0, 0.28, 0.72, 1],
-    ["100%", "0%", "0%", "100%"]
+    [0, 0.22, 0.46, 0.72, 1],
+    ["100%", "100%", "0%", "0%", "100%"]
   );
 
   const statueOpacity = useTransform(
     scrollYProgress,
-    [0, 0.2, 0.8, 1],
-    [0, 1, 1, 0]
+    [0, 0.2, 0.38, 0.74, 0.96],
+    [0, 0, 1, 1, 0]
   );
 
   const isInView = useInView(sectionRef, {
@@ -350,7 +350,7 @@ export default function TimelessBondSection({
     <section
       ref={sectionRef}
       id="section-2-timeless"
-      className="relative isolate flex min-h-[calc(100vh-4rem)] w-full flex-col justify-between overflow-hidden bg-[#FCEBF0]"
+      className="relative isolate flex h-[82vh] min-h-[640px] max-h-[820px] w-full flex-col overflow-hidden select-none bg-[#FCEBF0]"
     >
       <audio
         ref={audioRef}
@@ -446,21 +446,34 @@ export default function TimelessBondSection({
         </motion.div>
       </div>
 
-      {/* Hero statues (Scroll-linked Elevator / Parallax Emergence) */}
-      <motion.img
-        src={config.pharaonicGroomUrl || STATUE_LEFT_SRC}
-        alt={`${config.groomName} Pharaonic Guardian`}
-        aria-hidden="true"
+      {/* Hero character: Pharaonic Groom (Left - Mirrored Inward via style & class, matching Saidi section) */}
+      <motion.div
         style={{ y: statueY, opacity: statueOpacity }}
-        className="pointer-events-none absolute bottom-0 left-0 z-20 h-[95%] w-auto max-w-[42vw] min-w-[300px] object-contain object-bottom will-change-transform"
-      />
-      <motion.img
-        src={config.pharaonicBrideUrl || STATUE_RIGHT_SRC}
-        alt={`${config.brideName} Pharaonic Guardian`}
-        aria-hidden="true"
+        className="pointer-events-none absolute bottom-0 left-0 z-20 h-[95%] max-h-[800px] w-auto max-w-[42vw] min-w-[300px] flex items-end justify-start will-change-transform"
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={config.pharaonicGroomUrl || STATUE_LEFT_SRC}
+          alt={`${config.groomName} Pharaonic Guardian`}
+          aria-hidden="true"
+          className="-scale-x-100 h-full w-auto object-contain object-bottom drop-shadow-2xl"
+          style={{ transform: "scaleX(-1)" }}
+        />
+      </motion.div>
+
+      {/* Hero character: Pharaonic Bride (Right - Facing Inward toward Groom, matching Saidi section) */}
+      <motion.div
         style={{ y: statueY, opacity: statueOpacity }}
-        className="pointer-events-none absolute bottom-0 right-0 z-20 h-[95%] w-auto max-w-[42vw] min-w-[300px] object-contain object-bottom will-change-transform"
-      />
+        className="pointer-events-none absolute bottom-0 right-0 z-20 h-[95%] max-h-[800px] w-auto max-w-[42vw] min-w-[300px] flex items-end justify-end will-change-transform"
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={config.pharaonicBrideUrl || STATUE_RIGHT_SRC}
+          alt={`${config.brideName} Pharaonic Guardian`}
+          aria-hidden="true"
+          className="h-full w-auto object-contain object-bottom drop-shadow-2xl"
+        />
+      </motion.div>
 
       {/* Footer */}
       <footer className="relative z-30 flex items-center justify-between px-6 pb-5 text-xs text-[#7A6A5A]">
