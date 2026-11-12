@@ -1,10 +1,10 @@
 {
   "profileName": "Mohamed & Manal Wedding Profile",
   "activeThemes": [
-    "ahly",
     "saidi",
-    "fatimid",
-    "cinema"
+    "ahly",
+    "cinema",
+    "fatimid"
   ],
   "groomName": "Mohamed",
   "brideName": "Manal",
@@ -42,7 +42,7 @@
   "mexicanBrideUrl": "/statues/saidi-woman.png",
   "raceGroomAvatarUrl": "https://res.cloudinary.com/dsls01rrg/image/upload/f_auto,q_auto,c_limit,w_640/v1794441448/lwpzjcrn2whyhxgdavw7.png",
   "raceBrideAvatarUrl": "https://res.cloudinary.com/dsls01rrg/image/upload/f_auto,q_auto,c_limit,w_640/v1794441458/xbvpibe4rihxsj9m8sbn.png",
-  "raceGroomKartUrl": "https://res.cloudinary.com/dsls01rrg/image/upload/v1794441607/nly4zhz6hhh9nqpmmr5r.png",
+  "raceGroomKartUrl": "https://res.cloudinary.com/dsls01rrg/image/upload/f_auto,q_auto,c_limit,w_800/v1794441607/nly4zhz6hhh9nqpmmr5r.png",
   "raceBrideKartUrl": "/race/bride-kart.png",
   "sections": {
     "ahly": {
@@ -812,5 +812,5 @@
       "date": "2024-05-14"
     }
   ],
-  "lastUpdated": "2026-11-12T00:00:10.758Z"
+  "lastUpdated": "2026-11-12T00:01:10.118Z"
 }
