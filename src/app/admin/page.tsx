@@ -384,6 +384,8 @@ export default function AdminPage() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [manualAddUrl, setManualAddUrl] = useState("");
+  const [newGroomPunishment, setNewGroomPunishment] = useState("");
+  const [newBridePunishment, setNewBridePunishment] = useState("");
   const [lastUploadedGalleryUrl, setLastUploadedGalleryUrl] = useState("");
   const [copiedPromptId, setCopiedPromptId] = useState<string | null>(null);
 
@@ -778,7 +780,7 @@ export default function AdminPage() {
                     className="h-full bg-gradient-to-r from-[#D4AF37] via-[#F2D98D] to-[#B89335] transition-all duration-300"
                     style={{
                       width: `${(generationProgress.current /
-                          generationProgress.total) *
+                        generationProgress.total) *
                         100
                         }%`,
                     }}
@@ -793,12 +795,12 @@ export default function AdminPage() {
                       <div
                         key={task.key}
                         className={`px-2 py-1.5 rounded-lg border text-[10px] font-bold flex items-center justify-between gap-1 ${status === "generating"
-                            ? "border-[#D4AF37] bg-amber-100 text-[#2B1D24] animate-pulse"
-                            : status === "done"
-                              ? "border-emerald-300 bg-emerald-50 text-emerald-800"
-                              : status === "error"
-                                ? "border-rose-300 bg-rose-50 text-rose-800"
-                                : "border-gray-200 bg-white text-gray-500"
+                          ? "border-[#D4AF37] bg-amber-100 text-[#2B1D24] animate-pulse"
+                          : status === "done"
+                            ? "border-emerald-300 bg-emerald-50 text-emerald-800"
+                            : status === "error"
+                              ? "border-rose-300 bg-rose-50 text-rose-800"
+                              : "border-gray-200 bg-white text-gray-500"
                           }`}
                       >
                         <span className="truncate">{task.label}</span>
@@ -869,8 +871,8 @@ export default function AdminPage() {
             </div>
             <span
               className={`text-xs font-bold px-3 py-1 rounded-full self-start sm:self-auto ${draft.activeThemes.length >= MAX_ACTIVE_THEMES
-                  ? "bg-amber-100 text-amber-800"
-                  : "bg-emerald-100 text-emerald-800"
+                ? "bg-amber-100 text-amber-800"
+                : "bg-emerald-100 text-emerald-800"
                 }`}
             >
               {draft.activeThemes.length} / {MAX_ACTIVE_THEMES} Selected
@@ -890,10 +892,10 @@ export default function AdminPage() {
                 <label
                   key={theme.id}
                   className={`flex items-start gap-3 p-4 rounded-xl border transition-all ${checked
-                      ? "border-[#D4AF37] bg-amber-50/60 shadow-2xs cursor-pointer"
-                      : disabled
-                        ? "border-gray-200 bg-gray-100 opacity-55 cursor-not-allowed"
-                        : "border-gray-200 bg-white hover:border-gray-300 cursor-pointer"
+                    ? "border-[#D4AF37] bg-amber-50/60 shadow-2xs cursor-pointer"
+                    : disabled
+                      ? "border-gray-200 bg-gray-100 opacity-55 cursor-not-allowed"
+                      : "border-gray-200 bg-white hover:border-gray-300 cursor-pointer"
                     }`}
                 >
                   <input
@@ -1383,6 +1385,159 @@ export default function AdminPage() {
             )}
           </div>
         </section>
+
+        {/* ==================================================================== */}
+        {/* CARD 5: ROLE-SPECIFIC RACING PUNISHMENTS (GROOM & BRIDE)             */}
+        {/* ==================================================================== */}
+        <section className="rounded-3xl bg-white border border-gray-200 shadow-sm overflow-hidden">
+          <div className="px-6 py-5 border-b border-gray-100 bg-gradient-to-r from-[#2B1D24] to-[#3B2530] text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <span className="w-9 h-9 rounded-xl bg-[#C9A227] text-[#2B1D24] font-black flex items-center justify-center text-sm shadow">
+                5
+              </span>
+              <div>
+                <h2 className="font-serif text-lg font-bold">
+                  Card 5: Role-Specific Racing Punishments
+                </h2>
+                <p className="text-xs text-stone-300">
+                  Manage separate punishment pools for when the Groom loses vs. when the Bride loses. (The &quot;Reverse Uno&quot; slice is automatically injected!)
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {(
+              [
+                {
+                  key: "punishmentsGroom" as const,
+                  title: `🤵 ${draft.groomName || "Groom"} Punishments (If Groom Loses)`,
+                  accentBorder: "border-rose-200",
+                  accentBg: "bg-rose-50/50",
+                  badgeBg: "bg-rose-100 text-rose-700",
+                  inputValue: newGroomPunishment,
+                  setInputValue: setNewGroomPunishment,
+                  placeholder: "أضف عقاب خاص بالعريس...",
+                },
+                {
+                  key: "punishmentsBride" as const,
+                  title: `👰 ${draft.brideName || "Bride"} Punishments (If Bride Loses)`,
+                  accentBorder: "border-pink-200",
+                  accentBg: "bg-pink-50/50",
+                  badgeBg: "bg-pink-100 text-pink-700",
+                  inputValue: newBridePunishment,
+                  setInputValue: setNewBridePunishment,
+                  placeholder: "أضف عقاب خاص بالعروسة...",
+                },
+              ] as const
+            ).map((rolePool) => {
+              const items = draft[rolePool.key] || [];
+              const addItem = () => {
+                const trimmed = rolePool.inputValue.trim();
+                if (!trimmed) return;
+                setIsDirty(true);
+                setDraft((prev) => ({
+                  ...prev,
+                  [rolePool.key]: [...(prev[rolePool.key] || []), trimmed],
+                }));
+                rolePool.setInputValue("");
+              };
+
+              return (
+                <div
+                  key={rolePool.key}
+                  className={`rounded-2xl border ${rolePool.accentBorder} ${rolePool.accentBg} p-4 space-y-4`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <h3 className="font-bold text-sm text-[#2B1D24]">
+                      {rolePool.title}
+                    </h3>
+                    <span
+                      className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${rolePool.badgeBg}`}
+                    >
+                      {items.length} items
+                    </span>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      dir="auto"
+                      value={rolePool.inputValue}
+                      onChange={(e) => rolePool.setInputValue(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          addItem();
+                        }
+                      }}
+                      placeholder={rolePool.placeholder}
+                      className="flex-1 px-3 py-2 text-sm rounded-xl border border-gray-200 bg-white focus:border-[#D4AF37] outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={addItem}
+                      className="px-4 py-2 rounded-xl bg-[#2B1D24] hover:bg-[#3B2530] text-[#D4AF37] font-bold text-xs cursor-pointer transition-all shrink-0"
+                    >
+                      + Add
+                    </button>
+                  </div>
+
+                  {items.length === 0 ? (
+                    <div className="p-4 rounded-xl border border-dashed border-gray-300 bg-white/70 text-center text-xs text-gray-500">
+                      No punishments yet. Add one above.
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {items.map((punishment, idx) => (
+                        <div
+                          key={`${rolePool.key}-${idx}`}
+                          className="flex items-center gap-2 p-2 rounded-xl bg-white border border-gray-200"
+                        >
+                          <span className="w-6 h-6 rounded-md bg-[#D4AF37]/20 text-[#8A6A1F] font-mono text-[11px] font-black flex items-center justify-center shrink-0">
+                            {idx + 1}
+                          </span>
+                          <input
+                            type="text"
+                            dir="auto"
+                            value={punishment}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              setIsDirty(true);
+                              setDraft((prev) => ({
+                                ...prev,
+                                [rolePool.key]: (prev[rolePool.key] || []).map(
+                                  (item, i) => (i === idx ? value : item)
+                                ),
+                              }));
+                            }}
+                            className="flex-1 px-2.5 py-1.5 text-xs sm:text-sm rounded-lg border border-gray-200 focus:border-[#D4AF37] outline-none"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsDirty(true);
+                              setDraft((prev) => ({
+                                ...prev,
+                                [rolePool.key]: (prev[rolePool.key] || []).filter(
+                                  (_, i) => i !== idx
+                                ),
+                              }));
+                            }}
+                            className="px-2.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-bold border border-rose-200 cursor-pointer transition-colors shrink-0"
+                            title="Delete punishment"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </section>
       </div>
 
       {/* ==================================================================== */}
@@ -1414,8 +1569,8 @@ export default function AdminPage() {
             onClick={handleSaveAndPublish}
             disabled={isSaving}
             className={`w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-10 py-3.5 rounded-xl font-black text-sm sm:text-base tracking-wide shadow-lg transition-all cursor-pointer ${saveSuccess
-                ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                : "bg-gradient-to-r from-[#D4AF37] via-[#C9A227] to-[#B89335] hover:opacity-95 text-white"
+              ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+              : "bg-gradient-to-r from-[#D4AF37] via-[#C9A227] to-[#B89335] hover:opacity-95 text-white"
               } disabled:opacity-50`}
           >
             {isSaving ? (
@@ -1507,71 +1662,71 @@ function CloudinaryImageCard({
         </CldUploadWidget>
 
         {/* Instant Preview immediately below the upload button */}
-          {
-            isGenerating?(
-          <div className = "w-full rounded-lg bg-amber-50 p-4 border-2 border-[#D4AF37] flex flex-col items-center justify-center gap-2 h-40" >
-            <RefreshCw className="w-6 h-6 text-[#B89335] animate-spin" />
-            <span className="text-[11px] font-bold text-[#8A6A1F]">
-              Generating with InstantID...
-            </span>
+        {
+          isGenerating ? (
+            <div className="w-full rounded-lg bg-amber-50 p-4 border-2 border-[#D4AF37] flex flex-col items-center justify-center gap-2 h-40" >
+              <RefreshCw className="w-6 h-6 text-[#B89335] animate-spin" />
+              <span className="text-[11px] font-bold text-[#8A6A1F]">
+                Generating with InstantID...
+              </span>
+            </div>
+          ) : imageUrl ? (
+            <div className="w-full rounded-lg bg-white p-2 border border-gray-200 flex flex-col items-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={imageUrl}
+                alt={`${title} Preview`}
+                className={`h-32 w-auto mt-1 rounded-md object-contain ${justUploaded || imageUrl.startsWith("http")
+                  ? "border-2 border-green-500"
+                  : "border border-gray-200"
+                  }`}
+              />
+              <span className="mt-1 text-[10px] font-semibold text-gray-500">
+                {justUploaded
+                  ? "✓ Uploaded via Cloudinary"
+                  : imageUrl.startsWith("http")
+                    ? "Cloud URL"
+                    : "Local Default"}
+              </span>
+            </div>
+          ) : (
+            <div className="text-center p-4 rounded-lg bg-white border border-dashed border-gray-200">
+              <ImageIcon className="w-6 h-6 text-gray-300 mx-auto mb-1" />
+              <span className="text-[10px] text-gray-400">No Image Set</span>
+            </div>
+          )}
+
+        <button
+          type="button"
+          onClick={() => setIsEditingUrl((prev) => !prev)}
+          className="w-full text-center text-[11px] font-semibold text-[#B89335] hover:underline cursor-pointer"
+        >
+          {isEditingUrl ? "Hide Direct URL" : "Paste / Edit URL"}
+        </button>
+
+        {isEditingUrl && (
+          <div className="flex gap-1.5">
+            <input
+              type="text"
+              value={customUrl}
+              onChange={(e) => setCustomUrl(e.target.value)}
+              placeholder="https://... or /statues/..."
+              className="flex-1 px-2.5 py-1.5 text-xs rounded border border-gray-200 bg-white outline-none focus:border-[#D4AF37]"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                onUrlChange(customUrl);
+                setJustUploaded(false);
+                setIsEditingUrl(false);
+              }}
+              className="px-2.5 py-1.5 rounded bg-gray-200 hover:bg-gray-300 text-gray-800 text-xs font-bold cursor-pointer"
+            >
+              Set
+            </button>
           </div>
-      ) : imageUrl ? (
-      <div className="w-full rounded-lg bg-white p-2 border border-gray-200 flex flex-col items-center">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={imageUrl}
-          alt={`${title} Preview`}
-          className={`h-32 w-auto mt-1 rounded-md object-contain ${justUploaded || imageUrl.startsWith("http")
-              ? "border-2 border-green-500"
-              : "border border-gray-200"
-            }`}
-        />
-        <span className="mt-1 text-[10px] font-semibold text-gray-500">
-          {justUploaded
-            ? "✓ Uploaded via Cloudinary"
-            : imageUrl.startsWith("http")
-              ? "Cloud URL"
-              : "Local Default"}
-        </span>
-      </div>
-      ) : (
-      <div className="text-center p-4 rounded-lg bg-white border border-dashed border-gray-200">
-        <ImageIcon className="w-6 h-6 text-gray-300 mx-auto mb-1" />
-        <span className="text-[10px] text-gray-400">No Image Set</span>
-      </div>
         )}
-
-      <button
-        type="button"
-        onClick={() => setIsEditingUrl((prev) => !prev)}
-        className="w-full text-center text-[11px] font-semibold text-[#B89335] hover:underline cursor-pointer"
-      >
-        {isEditingUrl ? "Hide Direct URL" : "Paste / Edit URL"}
-      </button>
-
-      {isEditingUrl && (
-        <div className="flex gap-1.5">
-          <input
-            type="text"
-            value={customUrl}
-            onChange={(e) => setCustomUrl(e.target.value)}
-            placeholder="https://... or /statues/..."
-            className="flex-1 px-2.5 py-1.5 text-xs rounded border border-gray-200 bg-white outline-none focus:border-[#D4AF37]"
-          />
-          <button
-            type="button"
-            onClick={() => {
-              onUrlChange(customUrl);
-              setJustUploaded(false);
-              setIsEditingUrl(false);
-            }}
-            className="px-2.5 py-1.5 rounded bg-gray-200 hover:bg-gray-300 text-gray-800 text-xs font-bold cursor-pointer"
-          >
-            Set
-          </button>
-        </div>
-      )}
-    </div>
+      </div>
     </div >
   );
 }

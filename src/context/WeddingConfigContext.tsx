@@ -151,11 +151,41 @@ export interface SiteConfiguration {
   profileName?: string;
   sections?: Partial<Record<ThemeId, ThemeSectionConfig>>;
   gallery: GalleryItem[];
+  // CARD 5: Role-Specific Racing Game Punishments
+  punishmentsGroom: string[];
+  punishmentsBride: string[];
   lastUpdated?: string;
+}
+
+export const DEFAULT_PUNISHMENTS_GROOM: string[] = [
+  "غسيل المواعين النهاردة 🍽️",
+  "عزومة أكل من برة على حسابك 🍔",
+  "10 ضغط قدام الكل 💪",
+  "عمل كوباية شاي بالنعناع للعروسة ☕",
+  "ممنوع نطق حرف الميم ساعة 🤐",
+];
+
+export const DEFAULT_PUNISHMENTS_BRIDE: string[] = [
+  "عمل أحلى صينية مكرونة بشاميل 🍝",
+  "اختيار فيلم السهرة على ذوق العريس 🎬",
+  "غسيل فنجان القهوة أسبوع ☕",
+  "تحدي ضحكة من غير صوت دقيقة 🤭",
+  "قولي 3 حاجات بتحبيها في العريس بصوت عالي 💖",
+];
+
+function sanitizePunishments(raw: unknown, fallback: string[]): string[] {
+  if (!Array.isArray(raw)) return fallback;
+  const cleaned = raw
+    .filter((item): item is string => typeof item === "string")
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0);
+  return cleaned.length > 0 ? cleaned : fallback;
 }
 
 const BASE_FALLBACK_CONFIG: SiteConfiguration = {
   activeThemes: ["ahly", "saidi", "fatimid", "cinema"],
+  punishmentsGroom: DEFAULT_PUNISHMENTS_GROOM,
+  punishmentsBride: DEFAULT_PUNISHMENTS_BRIDE,
 
   // Card 1
   groomName: "Mohamed",
@@ -305,6 +335,14 @@ export const DEFAULT_CONFIG: SiteConfiguration = normalizeImageUrls({
   gallery: Array.isArray(ACTIVE_STATIC_JSON.gallery)
     ? (ACTIVE_STATIC_JSON.gallery as GalleryItem[])
     : BASE_FALLBACK_CONFIG.gallery,
+  punishmentsGroom: sanitizePunishments(
+    ACTIVE_STATIC_JSON.punishmentsGroom ?? ACTIVE_STATIC_JSON.punishments,
+    DEFAULT_PUNISHMENTS_GROOM
+  ),
+  punishmentsBride: sanitizePunishments(
+    ACTIVE_STATIC_JSON.punishmentsBride ?? ACTIVE_STATIC_JSON.punishments,
+    DEFAULT_PUNISHMENTS_BRIDE
+  ),
 });
 
 export const STORAGE_KEY = `WEDDING_ADMIN_CONFIG_V2_${getActiveProfileKey()}`;
@@ -355,6 +393,18 @@ export function normalizeConfig(
     gallery: Array.isArray(raw.gallery)
       ? raw.gallery
       : DEFAULT_CONFIG.gallery,
+    punishmentsGroom: Array.isArray(raw.punishmentsGroom)
+      ? raw.punishmentsGroom
+          .filter((item): item is string => typeof item === "string")
+          .map((item) => item.trim())
+          .filter((item) => item.length > 0)
+      : DEFAULT_CONFIG.punishmentsGroom,
+    punishmentsBride: Array.isArray(raw.punishmentsBride)
+      ? raw.punishmentsBride
+          .filter((item): item is string => typeof item === "string")
+          .map((item) => item.trim())
+          .filter((item) => item.length > 0)
+      : DEFAULT_CONFIG.punishmentsBride,
   });
 }
 

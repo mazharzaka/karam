@@ -8,8 +8,22 @@
   ],
   "groomName": "Mohamed",
   "brideName": "Manal",
-  "engagementDate": "2023-08-10",
-  "weddingDate": "2024-11-15",
+  "punishmentsGroom": [
+    "غسيل المواعين النهاردة 🍽️",
+    "عزومة أكل من برة على حسابك 🍔",
+    "10 ضغط قدام الكل 💪",
+    "عمل كوباية شاي بالنعناع للعروسة ☕",
+    "ممنوع نطق حرف الميم ساعة 🤐"
+  ],
+  "punishmentsBride": [
+    "عمل أحلى صينية مكرونة بشاميل 🍝",
+    "اختيار فيلم السهرة على ذوق العريس 🎬",
+    "غسيل فنجان القهوة أسبوع ☕",
+    "تحدي ضحكة من غير صوت دقيقة 🤭",
+    "قولي 3 حاجات بتحبيها في العريس بصوت عالي 💖"
+  ],
+  "engagementDate": "1999-10-22",
+  "weddingDate": "1999-10-22",
   "mainHeroBgUrl": "https://res.cloudinary.com/dsls01rrg/image/upload/f_auto,q_auto,c_limit,w_2000/v1794440810/bcuip5vya72gkccb8mcm.jpg",
   "groomChildhoodUrl": "https://res.cloudinary.com/dsls01rrg/image/upload/f_auto,q_auto,c_limit,w_600/v1794440824/blys9ix6vyeb22hmcqni.jpg",
   "brideChildhoodUrl": "https://res.cloudinary.com/dsls01rrg/image/upload/f_auto,q_auto,c_limit,w_600/v1794440836/dlhrvdexiw1o2etgdy3y.jpg",
@@ -812,5 +826,5 @@
       "date": "2024-05-14"
     }
   ],
-  "lastUpdated": "2026-11-12T00:01:10.118Z"
+  "lastUpdated": "2026-11-12T09:08:20.955Z"
 }

@@ -1,14 +1,17 @@
 import { NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
-import { getActiveProfileKey } from "@/data/configLoader";
+import {
+  getActiveProfileId,
+  getActiveProfileFilename,
+} from "@/data/configLoader";
 
-const PRIMARY_CONFIG_PATH = path.join(
-  process.cwd(),
-  "src",
-  "private",
-  "app-payload-8f92x.json"
-);
+function getActiveConfigTarget() {
+  const profileId = getActiveProfileId();
+  const filename = getActiveProfileFilename(profileId);
+  const filePath = path.join(process.cwd(), "src", "private", filename);
+  return { profileId, filename, filePath };
+}
 
 const SECTION_FIELD_MAP = {
   pharaonic: {
@@ -67,14 +70,16 @@ function nonEmptyString(val: unknown, fallback: string): string {
 /**
  * Static Bundled Configuration Endpoint
  * GET keeps payload details private; POST persists Admin edits directly into
- * `src/private/app-payload-8f92x.json` without losing structure or names.
+ * `src/private/app-payload-${NEXT_PUBLIC_ACTIVE_PROFILE_ID}.json` without losing structure or names.
  */
 export async function GET() {
+  const { profileId, filename } = getActiveConfigTarget();
   return NextResponse.json(
     {
       status: "ok",
       mode: "static-bundled",
-      profile: getActiveProfileKey(),
+      profile: profileId,
+      filename,
     },
     { status: 200 }
   );
@@ -90,9 +95,11 @@ export async function POST(request: Request) {
       );
     }
 
+    const { profileId, filename, filePath } = getActiveConfigTarget();
+
     let existing: JsonRecord = {};
-    if (fs.existsSync(PRIMARY_CONFIG_PATH)) {
-      const rawFile = fs.readFileSync(PRIMARY_CONFIG_PATH, "utf8");
+    if (fs.existsSync(filePath)) {
+      const rawFile = fs.readFileSync(filePath, "utf8");
       existing = JSON.parse(rawFile) as JsonRecord;
     }
 
@@ -123,6 +130,22 @@ export async function POST(request: Request) {
       gallery: Array.isArray(incoming.gallery)
         ? incoming.gallery
         : existing.gallery,
+      punishmentsGroom: Array.isArray(incoming.punishmentsGroom)
+        ? incoming.punishmentsGroom
+            .filter((item): item is string => typeof item === "string")
+            .map((item) => item.trim())
+            .filter((item) => item.length > 0)
+        : Array.isArray(existing.punishmentsGroom)
+        ? existing.punishmentsGroom
+        : [],
+      punishmentsBride: Array.isArray(incoming.punishmentsBride)
+        ? incoming.punishmentsBride
+            .filter((item): item is string => typeof item === "string")
+            .map((item) => item.trim())
+            .filter((item) => item.length > 0)
+        : Array.isArray(existing.punishmentsBride)
+        ? existing.punishmentsBride
+        : [],
       lastUpdated:
         typeof incoming.lastUpdated === "string" && incoming.lastUpdated
           ? incoming.lastUpdated
@@ -166,7 +189,7 @@ export async function POST(request: Request) {
     merged.sections = nextSections;
 
     fs.writeFileSync(
-      PRIMARY_CONFIG_PATH,
+      filePath,
       `${JSON.stringify(merged, null, 2)}\n`,
       "utf8"
     );
@@ -174,7 +197,9 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         success: true,
-        message: "Configuration saved directly to src/private/app-payload-8f92x.json.",
+        profileId,
+        filename,
+        message: `Configuration saved directly to src/private/${filename}.`,
         timestamp: merged.lastUpdated,
         config: merged,
       },
