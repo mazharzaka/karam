@@ -16,6 +16,7 @@ import {
   mergeGalleryIntoCards,
 } from "@/context/WeddingConfigContext";
 import { getCardThemeBackground } from "@/utils/cardThemeBackground";
+import { SmoothImage } from "@/components/SmoothImage";
 
 export interface ThemeMomentCard {
   num: string;
@@ -327,8 +328,7 @@ export const HeritageMarqueeShell: React.FC<HeritageMarqueeShellProps> = ({
                       className={`pointer-events-none select-none absolute inset-0 z-0 ${themeLayer.gradientClass}`}
                     />
                   )}
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                  <SmoothImage
                     src={card.photo}
                     alt={card.title}
                     draggable={false}

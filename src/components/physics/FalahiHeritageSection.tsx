@@ -1,5 +1,6 @@
 "use client";
 
+import { SmoothImage } from "@/components/SmoothImage";
 import React, {
   useCallback,
   useEffect,
@@ -366,9 +367,8 @@ function PhotoCard({ card, rotation }: PhotoCardProps) {
       </span>
 
       {/* Main Image Container */}
-      <div className="relative mt-5 h-[230px] sm:h-[250px] w-full overflow-hidden rounded-xl bg-[#F1F8E9]">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+      <div className="relative mt-5 h-[230px] sm:h-[250px] w-full overflow-hidden rounded-xl bg-zinc-900">
+        <SmoothImage
           src={card.photo}
           alt={card.title}
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-108"

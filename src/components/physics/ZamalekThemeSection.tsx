@@ -21,6 +21,7 @@ import {
   mergeGalleryIntoCards,
   isImageFlipped,
 } from "@/context/WeddingConfigContext";
+import { SmoothImage } from "@/components/SmoothImage";
 
 /* -------------------------------------------------------------------------- */
 /* MEDIA PLACEHOLDERS (CRITICAL FOR USER REPLACEMENT)                         */
@@ -341,8 +342,7 @@ const PhotoCard: React.FC<{ card: MomentCard; rotation: string }> = ({
 
     {/* Photo with high contrast and pure aesthetic */}
     <div className="relative min-h-0 flex-1 overflow-hidden rounded-sm bg-black">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
+      <SmoothImage
         src={card.photo}
         alt={card.title}
         draggable={false}

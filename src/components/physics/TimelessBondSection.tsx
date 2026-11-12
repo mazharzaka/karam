@@ -1,5 +1,6 @@
 "use client";
 
+import { SmoothImage } from "@/components/SmoothImage";
 import React, {
   useCallback,
   useEffect,
@@ -166,9 +167,8 @@ const PhotoCard: React.FC<{ card: MomentCard; rotation: string }> = ({ card, rot
     </div>
 
     {/* Photo */}
-    <div className="relative min-h-0 flex-1 overflow-hidden rounded-sm bg-stone-300">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
+    <div className="relative min-h-0 flex-1 overflow-hidden rounded-sm bg-zinc-900">
+      <SmoothImage
         src={card.photo}
         alt={card.title}
         draggable={false}

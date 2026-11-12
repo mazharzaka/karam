@@ -76,3 +76,9 @@ img,
   user-select: none;
   -webkit-touch-callout: none;
 }
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}

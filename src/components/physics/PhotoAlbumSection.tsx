@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useWeddingConfig } from "@/context/WeddingConfigContext";
 import { globalAudioCoordinator } from "@/utils/globalAudioCoordinator";
+import { SmoothImage } from "@/components/SmoothImage";
 
 interface AlbumPhoto {
   id: string;
@@ -541,9 +542,8 @@ export default function PhotoAlbumSection() {
                       title="Double-click to enlarge"
                       className="group relative h-full min-h-0 w-full bg-white p-2 pb-2 rounded-xs shadow-md border border-stone-200/90 cursor-zoom-in transition-transform duration-300 hover:scale-[1.015] flex flex-col overflow-hidden"
                     >
-                      <div className="relative flex-1 min-h-0 w-full overflow-hidden bg-stone-100 flex items-center justify-center">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
+                      <div className="relative flex-1 min-h-0 w-full overflow-hidden rounded-xs bg-zinc-900 flex items-center justify-center">
+                        <SmoothImage
                           src={photo.url}
                           alt={
                             photo.caption ||
