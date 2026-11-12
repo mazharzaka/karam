@@ -50,6 +50,7 @@ export interface HeritageMarqueeShellProps {
   groomImageSrc: string;
   brideImageSrc: string;
   flipGroom?: boolean;
+  flipBride?: boolean;
   defaultCards: ThemeMomentCard[];
   galleryOffset?: number;
   backgroundDecorations?: React.ReactNode;
@@ -102,6 +103,7 @@ export const HeritageMarqueeShell: React.FC<HeritageMarqueeShellProps> = ({
   groomImageSrc,
   brideImageSrc,
   flipGroom = false,
+  flipBride = false,
   defaultCards,
   galleryOffset = 0,
   backgroundDecorations,
@@ -361,7 +363,8 @@ export const HeritageMarqueeShell: React.FC<HeritageMarqueeShellProps> = ({
           src={groomImageSrc}
           alt={`${config.groomName} ${title}`}
           aria-hidden="true"
-          className={`w-full h-auto object-contain object-bottom ${flipGroom ? "scale-x-[-1]" : ""}`}
+          style={{ transform: flipGroom ? "scaleX(-1)" : "none" }}
+          className="w-full h-auto object-contain object-bottom"
         />
       </motion.div>
 
@@ -379,6 +382,7 @@ export const HeritageMarqueeShell: React.FC<HeritageMarqueeShellProps> = ({
           src={brideImageSrc}
           alt={`${config.brideName} ${title}`}
           aria-hidden="true"
+          style={{ transform: flipBride ? "scaleX(-1)" : "none" }}
           className="w-full h-auto object-contain object-bottom"
         />
       </motion.div>

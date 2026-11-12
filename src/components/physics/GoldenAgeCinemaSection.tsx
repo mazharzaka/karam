@@ -19,6 +19,7 @@ import { BottomAudioControls } from "./BottomAudioControls";
 import {
   useWeddingConfig,
   mergeGalleryIntoCards,
+  isImageFlipped,
 } from "@/context/WeddingConfigContext";
 
 /* -------------------------------------------------------------------------- */
@@ -724,7 +725,12 @@ export default function GoldenAgeCinemaSection({
           src={config.cinemaGroomUrl || section?.groomImage || CINEMA_SECTION_ASSETS.groomImage}
           alt={`${config.groomName} 1950s Groom`}
           aria-hidden="true"
-          className="w-full h-auto object-contain object-bottom scale-x-[-1]"
+          style={{
+            transform: isImageFlipped(config, "cinemaGroomUrl", true)
+              ? "scaleX(-1)"
+              : "none",
+          }}
+          className="w-full h-auto object-contain object-bottom"
         />
       </motion.div>
 
@@ -742,6 +748,11 @@ export default function GoldenAgeCinemaSection({
           src={config.cinemaBrideUrl || section?.brideImage || CINEMA_SECTION_ASSETS.brideImage}
           alt={`${config.brideName} 1950s Bride`}
           aria-hidden="true"
+          style={{
+            transform: isImageFlipped(config, "cinemaBrideUrl", false)
+              ? "scaleX(-1)"
+              : "none",
+          }}
           className="w-full h-auto object-contain object-bottom"
         />
       </motion.div>

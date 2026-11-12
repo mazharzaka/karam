@@ -19,6 +19,7 @@ import { useGlobalAudio } from "@/utils/globalAudioCoordinator";
 import {
   useWeddingConfig,
   mergeGalleryIntoCards,
+  isImageFlipped,
 } from "@/context/WeddingConfigContext";
 
 /* -------------------------------------------------------------------------- */
@@ -454,8 +455,12 @@ export default function TimelessBondSection({
           src={config.pharaonicGroomUrl || STATUE_LEFT_SRC}
           alt={`${config.groomName} Pharaonic Guardian`}
           aria-hidden="true"
-          className="-scale-x-100 h-full w-auto object-contain object-bottom drop-shadow-2xl"
-          style={{ transform: "scaleX(-1)" }}
+          className="h-full w-auto object-contain object-bottom drop-shadow-2xl"
+          style={{
+            transform: isImageFlipped(config, "pharaonicGroomUrl", true)
+              ? "scaleX(-1)"
+              : "none",
+          }}
         />
       </motion.div>
 
@@ -469,6 +474,11 @@ export default function TimelessBondSection({
           src={config.pharaonicBrideUrl || STATUE_RIGHT_SRC}
           alt={`${config.brideName} Pharaonic Guardian`}
           aria-hidden="true"
+          style={{
+            transform: isImageFlipped(config, "pharaonicBrideUrl", false)
+              ? "scaleX(-1)"
+              : "none",
+          }}
           className="h-full w-auto object-contain object-bottom drop-shadow-2xl"
         />
       </motion.div>

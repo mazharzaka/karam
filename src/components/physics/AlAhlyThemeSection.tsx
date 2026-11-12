@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useWeddingConfig } from "@/context/WeddingConfigContext";
+import { useWeddingConfig, isImageFlipped } from "@/context/WeddingConfigContext";
 import { HeritageMarqueeShell, ThemeMomentCard } from "./HeritageMarqueeShell";
 
 const DEFAULT_AHLY_CARDS: ThemeMomentCard[] = [
@@ -93,7 +93,8 @@ export default function AlAhlyThemeSection({
       audioSrc={config.audioAhly || section?.audioSrc || "/audio/ahly.mp3"}
       groomImageSrc={config.ahlyGroomUrl || section?.groomImage || "/statues/zamalek-groom.png"}
       brideImageSrc={config.ahlyBrideUrl || section?.brideImage || "/statues/zamalek-bride.png"}
-      flipGroom
+      flipGroom={isImageFlipped(config, "ahlyGroomUrl", true)}
+      flipBride={isImageFlipped(config, "ahlyBrideUrl", false)}
       defaultCards={section?.cards?.length ? section.cards : DEFAULT_AHLY_CARDS}
       galleryOffset={30}
       onNext={onNext}

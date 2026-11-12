@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useWeddingConfig } from "@/context/WeddingConfigContext";
+import { useWeddingConfig, isImageFlipped } from "@/context/WeddingConfigContext";
 import {
   HeritageMarqueeShell,
   ThemeMomentCard,
@@ -157,7 +157,8 @@ export default function FatimidThemeSection({
       audioSrc={config.audioFatimid || section?.audioSrc || "/audio/fatami.mp3"}
       groomImageSrc={config.fatimidGroomUrl || section?.groomImage || "/statues/saidi-man.png"}
       brideImageSrc={config.fatimidBrideUrl || section?.brideImage || "/statues/saidi-woman.png"}
-      flipGroom
+      flipGroom={isImageFlipped(config, "fatimidGroomUrl", true)}
+      flipBride={isImageFlipped(config, "fatimidBrideUrl", false)}
       defaultCards={section?.cards?.length ? section.cards : DEFAULT_FATIMID_CARDS}
       galleryOffset={48}
       onNext={onNext}

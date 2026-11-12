@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useWeddingConfig } from "@/context/WeddingConfigContext";
+import { useWeddingConfig, isImageFlipped } from "@/context/WeddingConfigContext";
 import {
   HeritageMarqueeShell,
   ThemeMomentCard,
@@ -126,6 +126,8 @@ export default function MexicanThemeSection({
       audioSrc={config.audioMexican || section?.audioSrc || "/audio/pharaonic-track.mp3"}
       groomImageSrc={config.mexicanGroomUrl || section?.groomImage || "/statues/saidi-man.png"}
       brideImageSrc={config.mexicanBrideUrl || section?.brideImage || "/statues/saidi-woman.png"}
+      flipGroom={isImageFlipped(config, "mexicanGroomUrl", false)}
+      flipBride={isImageFlipped(config, "mexicanBrideUrl", false)}
       defaultCards={section?.cards?.length ? section.cards : DEFAULT_MEXICAN_CARDS}
       galleryOffset={42}
       onNext={onNext}

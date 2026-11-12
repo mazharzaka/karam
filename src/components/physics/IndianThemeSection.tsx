@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useWeddingConfig } from "@/context/WeddingConfigContext";
+import { useWeddingConfig, isImageFlipped } from "@/context/WeddingConfigContext";
 import {
   HeritageMarqueeShell,
   ThemeMomentCard,
@@ -164,6 +164,8 @@ export default function IndianThemeSection({
       audioSrc={config.audioIndian || section?.audioSrc || "/audio/pharaonic-track.mp3"}
       groomImageSrc={config.indianGroomUrl || section?.groomImage || "/statues/tutankhamun.png"}
       brideImageSrc={config.indianBrideUrl || section?.brideImage || "/statues/nefertiti.png"}
+      flipGroom={isImageFlipped(config, "indianGroomUrl", false)}
+      flipBride={isImageFlipped(config, "indianBrideUrl", false)}
       defaultCards={section?.cards?.length ? section.cards : DEFAULT_INDIAN_CARDS}
       galleryOffset={36}
       onNext={onNext}

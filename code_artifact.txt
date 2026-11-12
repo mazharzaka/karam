@@ -5,70 +5,73 @@
   "العروسه": [
     {
       "style": "Zamalek",
-      "prompt": "Vertical portrait (2:3). STRICT CAMERA FRAMING: Medium close-up shot, framing only from the top of the head down to the mid-chest. Large prominent face. A beautiful Egyptian woman, dynamic 3/4 angled pose, charming smile. Outfit: Sporty elegant white Zamalek SC football jersey, translucent white bridal veil over her hair. Pure solid black background."
+      "prompt": "Vertical portrait (2:3). STRICT FRAMING: Medium waist-up portrait. Beautiful Egyptian woman, slightly playful elegant posture, looking towards the right, charming smile. Outfit: White Zamalek SC football jersey, wearing a modest elegant white hijab/veil. Pure solid black background."
     },
     {
       "style": "Ahly",
-      "prompt": "Vertical portrait (2:3). STRICT CAMERA FRAMING: Medium close-up shot, framing only from the top of the head down to the mid-chest. Large prominent face. A beautiful Egyptian woman, dynamic 3/4 angled pose, charming smile. Outfit: Sporty vibrant red Al Ahly SC football jersey, translucent white bridal veil over her hair. Pure solid black background."
+      "prompt": "Vertical portrait (2:3). STRICT FRAMING: Medium waist-up portrait. Beautiful Egyptian woman, slightly playful elegant posture, looking towards the right, charming smile. Outfit: Red Al Ahly SC football jersey, wearing a modest elegant red or white hijab. Pure solid black background."
     },
     {
       "style": "Saidi",
-      "prompt": "Vertical portrait (2:3). STRICT CAMERA FRAMING: Medium close-up shot, framing only from the top of the head down to the mid-chest. Large prominent face. A beautiful Egyptian woman, dynamic 3/4 angled pose, charming smile. Outfit: Authentic traditional Egyptian Saidi black Abaya with intricate shiny silver Assiut embroidery, heavy authentic gold Kerdan necklace, black headscarf. Pure solid black background."
+      "prompt": "Vertical portrait (2:3). STRICT FRAMING: Medium waist-up portrait. Beautiful Egyptian woman, slightly playful elegant posture, looking towards the right, charming smile. Outfit: Traditional Saidi black Abaya with silver Assiut embroidery, heavy gold Kerdan, black headscarf. Pure solid black background."
     },
     {
       "style": "Falahi",
-      "prompt": "Vertical portrait (2:3). STRICT CAMERA FRAMING: Medium close-up shot, framing only from the top of the head down to the mid-chest. Large prominent face. A beautiful Egyptian woman, dynamic 3/4 angled pose, charming smile. Outfit: Vibrant traditional Egyptian Falahi colorful floral dress, traditional 'Mandil Abu Oya' colorful headscarf with pom-poms. Pure solid black background."
+      "prompt": "Vertical portrait (2:3). STRICT FRAMING: Medium waist-up portrait. Beautiful Egyptian woman, slightly playful elegant posture, looking towards the right, charming smile. Outfit: Vibrant Falahi floral dress, traditional 'Mandil Abu Oya' headscarf. Pure solid black background."
     },
     {
       "style": "Pharaonic",
-      "prompt": "Vertical portrait (2:3). STRICT CAMERA FRAMING: Medium close-up shot, framing only from the top of the head down to the mid-chest. Large prominent face. A beautiful Egyptian woman, dynamic 3/4 angled pose, charming smile. Outfit: Ancient Egyptian Queen Cleopatra fitted white and gold royal gown, elegant golden Pharaonic crown and Usekh collar necklace. Pure solid black background."
+      "prompt": "Vertical portrait (2:3). STRICT FRAMING: Medium waist-up portrait. Beautiful Egyptian woman, slightly playful elegant posture, looking towards the right, charming smile. Outfit: Ancient Egyptian white and gold gown, golden Pharaonic crown over a modest head-covering. Pure solid black background."
     },
     {
       "style": "Indian",
-      "prompt": "Vertical portrait (2:3). STRICT CAMERA FRAMING: Medium close-up shot, framing only from the top of the head down to the mid-chest. Large prominent face. A beautiful Egyptian woman, dynamic 3/4 angled pose, charming smile. Outfit: Heavily embroidered rich red and gold Indian bridal Lehenga Sari, authentic heavy Indian gold jewelry and Dupatta over her head. Pure solid black background."
+      "prompt": "Vertical portrait (2:3). STRICT FRAMING: Medium waist-up portrait. Beautiful Egyptian woman, slightly playful elegant posture, looking towards the right, charming smile. Outfit: Red and gold Indian Lehenga, heavy jewelry, Dupatta covering her hair modestly. Pure solid black background."
     },
     {
       "style": "Mexican",
-      "prompt": "Vertical portrait (2:3). STRICT CAMERA FRAMING: Medium close-up shot, framing only from the top of the head down to the mid-chest. Large prominent face. A beautiful Egyptian woman, dynamic 3/4 angled pose, charming smile. Outfit: Traditional Mexican Folklorico dress decorated with vibrant colorful ribbons, head adorned with a large vibrant floral crown. Pure solid black background."
+      "prompt": "Vertical portrait (2:3). STRICT FRAMING: Medium waist-up portrait. Beautiful Egyptian woman, slightly playful elegant posture, looking towards the right, charming smile. Outfit: Traditional Mexican Folklorico dress, hair covered modestly with a floral-adorned scarf. Pure solid black background."
     },
     {
       "style": "1960s_Vintage",
-      "prompt": "Vertical portrait (2:3). STRICT CAMERA FRAMING: Medium close-up shot, framing only from the top of the head down to the mid-chest. Large prominent face. A beautiful Egyptian woman, dynamic 3/4 angled pose, charming smile. Outfit: 1960s vintage classic black and white polka-dot pencil dress, retro silk headscarf tied elegantly. Pure solid black background."
+      "prompt": "Vertical portrait (2:3). STRICT FRAMING: Medium waist-up portrait. Beautiful Egyptian woman, slightly playful elegant posture, looking towards the right, charming smile. Outfit: 1960s vintage black and white polka-dot dress, retro silk headscarf covering hair. Pure solid black background."
+    },
+    {
+      "style": "Fatimid",
+      "prompt": "Vertical portrait (2:3). STRICT FRAMING: Medium waist-up portrait. Beautiful Egyptian woman, slightly playful elegant posture, looking towards the right, charming smile. Outfit: Traditional Islamic Fatimid emerald green dress with antique gold embroidery, elegant chiffon veil draped modestly. Pure solid black background."
     }
   ],
-  "groom_prompts": [
+"groom_prompts": [
     {
       "style": "Zamalek",
-      "prompt": "Vertical portrait (2:3). STRICT CAMERA FRAMING: Medium close-up shot, framing only from the top of the head down to the mid-chest. Large prominent face. A handsome Egyptian man, dynamic 3/4 angled pose, charismatic smile. Outfit: Sporty elegant white Zamalek SC football jersey. Pure solid black background."
+      "prompt": "Vertical portrait (2:3). STRICT FRAMING: Medium waist-up portrait. A handsome, strongly built Egyptian man with a fair warm Egyptian complexion, dynamic 3/4 angled pose, looking towards the left, expressing a big, joyful, and radiant smile. Outfit: Sporty white football jersey with two horizontal red stripes. Pure solid black background."
     },
     {
       "style": "Ahly",
-      "prompt": "Vertical portrait (2:3). STRICT CAMERA FRAMING: Medium close-up shot, framing only from the top of the head down to the mid-chest. Large prominent face. A handsome Egyptian man, dynamic 3/4 angled pose, charismatic smile. Outfit: Sporty vibrant red Al Ahly SC football jersey. Pure solid black background."
+      "prompt": "Vertical portrait (2:3). STRICT FRAMING: Medium waist-up portrait. A handsome, strongly built Egyptian man with a fair warm Egyptian complexion, dynamic 3/4 angled pose, looking towards the left, expressing a big, joyful, and radiant smile. Outfit: Sporty solid red football jersey with white accents. Pure solid black background."
     },
     {
       "style": "Saidi",
-      "prompt": "Vertical portrait (2:3). STRICT CAMERA FRAMING: Medium close-up shot, framing only from the top of the head down to the mid-chest. Large prominent face. A handsome Egyptian man, dynamic 3/4 angled pose, charismatic smile. Outfit: Authentic traditional Egyptian Saidi brown Galabeya and wrapped turban, with a traditional scarf draped over the shoulder. Pure solid black background."
+      "prompt": "Vertical portrait (2:3). STRICT FRAMING: Medium waist-up portrait. A handsome, strongly built Egyptian man with a fair warm Egyptian complexion, dynamic 3/4 angled pose, looking towards the left, expressing a big, joyful, and radiant smile. Outfit: Traditional Saidi brown Galabeya, wrapped turban, scarf over shoulder. Pure solid black background."
     },
     {
       "style": "Falahi",
-      "prompt": "Vertical portrait (2:3). STRICT CAMERA FRAMING: Medium close-up shot, framing only from the top of the head down to the mid-chest. Large prominent face. A handsome Egyptian man, dynamic 3/4 angled pose, charismatic smile. Outfit: Traditional Egyptian Falahi farmer attire, simple rural Galabeya. Pure solid black background."
+      "prompt": "Vertical portrait (2:3). STRICT FRAMING: Medium waist-up portrait. A handsome, strongly built Egyptian man with a fair warm Egyptian complexion, dynamic 3/4 angled pose, looking towards the left, expressing a big, joyful, and radiant smile. Outfit: Traditional Falahi farmer attire, simple rural Galabeya. Pure solid black background."
     },
     {
       "style": "Pharaonic",
-      "prompt": "Vertical portrait (2:3). STRICT CAMERA FRAMING: Medium close-up shot, framing only from the top of the head down to the mid-chest. Large prominent face. A handsome Egyptian man, dynamic 3/4 angled pose, charismatic smile. Outfit: Ancient Egyptian Pharaoh attire, wearing a detailed golden Nemes headdress and royal collar. Pure solid black background."
+      "prompt": "Vertical portrait (2:3). STRICT FRAMING: Medium waist-up portrait. A handsome, strongly built Egyptian man with a fair warm Egyptian complexion, dynamic 3/4 angled pose, looking towards the left, expressing a big, joyful, and radiant smile. Outfit: Ancient Egyptian Pharaoh attire, golden Nemes headdress, royal collar. Pure solid black background."
     },
     {
       "style": "Indian",
-      "prompt": "Vertical portrait (2:3). STRICT CAMERA FRAMING: Medium close-up shot, framing only from the top of the head down to the mid-chest. Large prominent face. A handsome Egyptian man, dynamic 3/4 angled pose, charismatic smile. Outfit: Traditional Indian Maharaja heavy decorated Sherwani and a jeweled turban. Pure solid black background."
+      "prompt": "Vertical portrait (2:3). STRICT FRAMING: Medium waist-up portrait. A handsome, strongly built Egyptian man with a fair warm Egyptian complexion, dynamic 3/4 angled pose, looking towards the left, expressing a big, joyful, and radiant smile. Outfit: Traditional Indian Maharaja heavy decorated Sherwani, jeweled turban. Pure solid black background."
     },
     {
       "style": "Mexican",
-      "prompt": "Vertical portrait (2:3). STRICT CAMERA FRAMING: Medium close-up shot, framing only from the top of the head down to the mid-chest. Large prominent face. A handsome Egyptian man, dynamic 3/4 angled pose, charismatic smile. Outfit: Traditional Mexican Mariachi festive Charro suit, wearing a massive oversized colorful Sombrero hat. Pure solid black background."
+      "prompt": "Vertical portrait (2:3). STRICT FRAMING: Medium waist-up portrait. A handsome, strongly built Egyptian man with a fair warm Egyptian complexion, dynamic 3/4 angled pose, looking towards the left, expressing a big, joyful, and radiant smile. Outfit: Traditional Mexican Mariachi Charro suit, oversized colorful Sombrero. Pure solid black background."
     },
     {
       "style": "1950s_Vintage",
-      "prompt": "Vertical portrait (2:3). STRICT CAMERA FRAMING: Medium close-up shot, framing only from the top of the head down to the mid-chest. Large prominent face. A handsome Egyptian man, dynamic 3/4 angled pose, charismatic smile. Outfit: Elegant 1950s vintage black tuxedo with a crisp white shirt and a bowtie. Pure solid black background."
+      "prompt": "Vertical portrait (2:3). STRICT FRAMING: Medium waist-up portrait. A handsome, strongly built Egyptian man with a fair warm Egyptian complexion, dynamic 3/4 angled pose, looking towards the left, expressing a big, joyful, and radiant smile. Outfit: Elegant 1950s vintage black tuxedo, white shirt, bowtie. Pure solid black background."
     }
   ]
 }
-Vertical portrait (2:3). STRICT FRAMING: Medium waist-up portrait, framing from slightly above the head down to the waist. DO NOT zoom in on the face. A beautiful Egyptian woman, dynamic 3/4 angled pose, charming smile. Outfit: Elegant traditional Islamic Fatimid royal dress in deep emerald green with intricate antique gold embroidery, wearing a delicate antique gold headpiece and a modest elegant chiffon veil draped beautifully. Pure solid black background.

@@ -76,6 +76,7 @@ export interface GalleryItem {
   url: string;
   caption: string;
   date: string;
+  flipHorizontal?: boolean;
 }
 
 export interface ThemeSectionCardJson {
@@ -86,6 +87,7 @@ export interface ThemeSectionCardJson {
   time: string;
   badge: string;
   photo: string;
+  flipHorizontal?: boolean;
 }
 
 export interface ThemeSectionConfig {
@@ -96,6 +98,8 @@ export interface ThemeSectionConfig {
   audioSrc?: string;
   groomImage?: string;
   brideImage?: string;
+  flipGroomHorizontal?: boolean;
+  flipBrideHorizontal?: boolean;
   cards?: ThemeSectionCardJson[];
 }
 
@@ -154,7 +158,23 @@ export interface SiteConfiguration {
   // CARD 5: Role-Specific Racing Game Punishments
   punishmentsGroom: string[];
   punishmentsBride: string[];
+  // Per-image horizontal flip flags (keyed by SiteConfiguration image field key)
+  imageFlips?: Record<string, boolean>;
   lastUpdated?: string;
+}
+
+export function isImageFlipped(
+  config: SiteConfiguration,
+  fieldKey: string,
+  defaultFlip = false
+): boolean {
+  if (
+    config.imageFlips &&
+    typeof config.imageFlips[fieldKey] === "boolean"
+  ) {
+    return config.imageFlips[fieldKey];
+  }
+  return defaultFlip;
 }
 
 export const DEFAULT_PUNISHMENTS_GROOM: string[] = [
@@ -186,6 +206,7 @@ const BASE_FALLBACK_CONFIG: SiteConfiguration = {
   activeThemes: ["ahly", "saidi", "fatimid", "cinema"],
   punishmentsGroom: DEFAULT_PUNISHMENTS_GROOM,
   punishmentsBride: DEFAULT_PUNISHMENTS_BRIDE,
+  imageFlips: {},
 
   // Card 1
   groomName: "Mohamed",
@@ -343,6 +364,11 @@ export const DEFAULT_CONFIG: SiteConfiguration = normalizeImageUrls({
     ACTIVE_STATIC_JSON.punishmentsBride ?? ACTIVE_STATIC_JSON.punishments,
     DEFAULT_PUNISHMENTS_BRIDE
   ),
+  imageFlips:
+    ACTIVE_STATIC_JSON.imageFlips &&
+    typeof ACTIVE_STATIC_JSON.imageFlips === "object"
+      ? (ACTIVE_STATIC_JSON.imageFlips as Record<string, boolean>)
+      : {},
 });
 
 export const STORAGE_KEY = `WEDDING_ADMIN_CONFIG_V2_${getActiveProfileKey()}`;
@@ -405,6 +431,13 @@ export function normalizeConfig(
           .map((item) => item.trim())
           .filter((item) => item.length > 0)
       : DEFAULT_CONFIG.punishmentsBride,
+    imageFlips:
+      raw.imageFlips && typeof raw.imageFlips === "object"
+        ? {
+            ...(DEFAULT_CONFIG.imageFlips || {}),
+            ...(raw.imageFlips as Record<string, boolean>),
+          }
+        : DEFAULT_CONFIG.imageFlips || {},
   });
 }
 
@@ -480,6 +513,8 @@ export const WeddingConfigProvider: React.FC<{ children: React.ReactNode }> = ({
   const [config, setConfig] = useState<SiteConfiguration>(DEFAULT_CONFIG);
 
   useEffect(() => {
+    let cancelled = false;
+
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
@@ -490,6 +525,29 @@ export const WeddingConfigProvider: React.FC<{ children: React.ReactNode }> = ({
     } catch (e) {
       console.warn("Could not load stored config from localStorage:", e);
     }
+
+    // Fetch live profile JSON from /api/config bypassing Next.js App Router cache
+    fetch("/api/config", { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then(
+        (
+          data: {
+            config?: Partial<SiteConfiguration> & Record<string, unknown>;
+          } | null
+        ) => {
+          if (cancelled || !data?.config) return;
+          const fresh = normalizeConfig(data.config);
+          setConfig(fresh);
+          try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(fresh));
+          } catch {
+            // Ignore storage quota errors
+          }
+        }
+      )
+      .catch(() => {
+        // Fallback to static/localStorage config if offline
+      });
 
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === STORAGE_KEY && e.newValue) {
@@ -503,7 +561,10 @@ export const WeddingConfigProvider: React.FC<{ children: React.ReactNode }> = ({
     };
 
     window.addEventListener("storage", handleStorageChange);
-    return () => window.removeEventListener("storage", handleStorageChange);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("storage", handleStorageChange);
+    };
   }, []);
 
   const updateConfig = useCallback((newConfig: Partial<SiteConfiguration>) => {

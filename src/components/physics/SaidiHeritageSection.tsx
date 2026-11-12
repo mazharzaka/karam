@@ -19,6 +19,7 @@ import { BottomAudioControls } from "./BottomAudioControls";
 import {
   useWeddingConfig,
   mergeGalleryIntoCards,
+  isImageFlipped,
 } from "@/context/WeddingConfigContext";
 
 /* -------------------------------------------------------------------------- */
@@ -547,7 +548,7 @@ export default function SaidiHeritageSection({
         posRef.current = 0;
         run();
       })
-      .catch(() => {});
+      .catch(() => { });
   }, [controls, x]);
 
   useEffect(() => {
@@ -748,6 +749,11 @@ export default function SaidiHeritageSection({
           }
           alt={`${config.groomName} Saidi Groom`}
           aria-hidden="true"
+          style={{
+            transform: isImageFlipped(config, "saidiGroomUrl", false)
+              ? "scaleX(-1)"
+              : "none",
+          }}
           className="w-full h-auto object-contain object-bottom"
         />
       </motion.div>
@@ -770,6 +776,11 @@ export default function SaidiHeritageSection({
           }
           alt={`${config.brideName} Saidi Bride`}
           aria-hidden="true"
+          style={{
+            transform: isImageFlipped(config, "saidiBrideUrl", false)
+              ? "scaleX(-1)"
+              : "none",
+          }}
           className="w-full h-auto object-contain object-bottom"
         />
       </motion.div>

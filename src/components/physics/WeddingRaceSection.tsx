@@ -7,6 +7,7 @@ import {
   useWeddingConfig,
   DEFAULT_PUNISHMENTS_GROOM,
   DEFAULT_PUNISHMENTS_BRIDE,
+  isImageFlipped,
 } from "@/context/WeddingConfigContext";
 
 /* -------------------------------------------------------------------------- */
@@ -780,6 +781,11 @@ export default function WeddingRaceSection() {
                 <img
                   src={config.raceGroomAvatarUrl || GROOM_AVATAR_SRC}
                   alt={`${config.groomName} Racer Avatar`}
+                  style={{
+                    transform: isImageFlipped(config, "raceGroomAvatarUrl", false)
+                      ? "scaleX(-1)"
+                      : "none",
+                  }}
                   className="h-full w-auto object-contain drop-shadow-xl select-none"
                 />
               </div>
@@ -830,6 +836,11 @@ export default function WeddingRaceSection() {
                 <img
                   src={config.raceBrideAvatarUrl || BRIDE_AVATAR_SRC}
                   alt={`${config.brideName} Racer Avatar`}
+                  style={{
+                    transform: isImageFlipped(config, "raceBrideAvatarUrl", false)
+                      ? "scaleX(-1)"
+                      : "none",
+                  }}
                   className="h-full w-auto object-contain drop-shadow-xl select-none"
                 />
               </div>
@@ -991,6 +1002,11 @@ export default function WeddingRaceSection() {
                           src={config.raceGroomKartUrl || GROOM_KART_SRC}
                           alt={`${config.groomName} Racing Kart`}
                           onError={() => setGroomKartError(true)}
+                          style={{
+                            transform: isImageFlipped(config, "raceGroomKartUrl", false)
+                              ? "scaleX(-1)"
+                              : "none",
+                          }}
                           className="h-[100px] md:h-[150px] w-auto object-contain drop-shadow-2xl"
                         />
                       )}
@@ -1076,6 +1092,11 @@ export default function WeddingRaceSection() {
                           src={config.raceBrideKartUrl || BRIDE_KART_SRC}
                           alt={`${config.brideName} Racing Kart`}
                           onError={() => setBrideKartError(true)}
+                          style={{
+                            transform: isImageFlipped(config, "raceBrideKartUrl", false)
+                              ? "scaleX(-1)"
+                              : "none",
+                          }}
                           className="h-[100px] md:h-[150px] w-auto object-contain drop-shadow-2xl"
                         />
                       )}

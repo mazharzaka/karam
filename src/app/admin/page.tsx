@@ -614,6 +614,7 @@ export default function AdminPage() {
     try {
       const res = await fetch("/api/config", {
         method: "POST",
+        cache: "no-store",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
@@ -1043,18 +1044,42 @@ export default function AdminPage() {
                 subtitle="Section 1 Spotlight Backdrop"
                 imageUrl={draft.mainHeroBgUrl}
                 onUrlChange={(url) => setField("mainHeroBgUrl", url)}
+                flipHorizontal={Boolean(draft.imageFlips?.mainHeroBgUrl)}
+                onFlipChange={(flipped) => {
+                  setIsDirty(true);
+                  setDraft((prev) => ({
+                    ...prev,
+                    imageFlips: { ...(prev.imageFlips || {}), mainHeroBgUrl: flipped },
+                  }));
+                }}
               />
               <CloudinaryImageCard
                 title="Groom Childhood Image"
                 subtitle={`Young ${draft.groomName || "Groom"} Portrait`}
                 imageUrl={draft.groomChildhoodUrl}
                 onUrlChange={(url) => setField("groomChildhoodUrl", url)}
+                flipHorizontal={Boolean(draft.imageFlips?.groomChildhoodUrl)}
+                onFlipChange={(flipped) => {
+                  setIsDirty(true);
+                  setDraft((prev) => ({
+                    ...prev,
+                    imageFlips: { ...(prev.imageFlips || {}), groomChildhoodUrl: flipped },
+                  }));
+                }}
               />
               <CloudinaryImageCard
                 title="Bride Childhood Image"
                 subtitle={`Young ${draft.brideName || "Bride"} Portrait`}
                 imageUrl={draft.brideChildhoodUrl}
                 onUrlChange={(url) => setField("brideChildhoodUrl", url)}
+                flipHorizontal={Boolean(draft.imageFlips?.brideChildhoodUrl)}
+                onFlipChange={(flipped) => {
+                  setIsDirty(true);
+                  setDraft((prev) => ({
+                    ...prev,
+                    imageFlips: { ...(prev.imageFlips || {}), brideChildhoodUrl: flipped },
+                  }));
+                }}
               />
             </div>
           </div>
@@ -1147,6 +1172,17 @@ export default function AdminPage() {
                   imageUrl={draft[item.key]}
                   isGenerating={generationStatuses[item.key] === "generating"}
                   onUrlChange={(url) => setField(item.key, url)}
+                  flipHorizontal={Boolean(draft.imageFlips?.[item.key])}
+                  onFlipChange={(flipped) => {
+                    setIsDirty(true);
+                    setDraft((prev) => ({
+                      ...prev,
+                      imageFlips: {
+                        ...(prev.imageFlips || {}),
+                        [item.key]: flipped,
+                      },
+                    }));
+                  }}
                 />
               ))}
             </div>
@@ -1606,6 +1642,8 @@ interface CloudinaryImageCardProps {
   imageUrl: string;
   isGenerating?: boolean;
   onUrlChange: (url: string) => void;
+  flipHorizontal?: boolean;
+  onFlipChange?: (flipped: boolean) => void;
 }
 
 function CloudinaryImageCard({
@@ -1614,6 +1652,8 @@ function CloudinaryImageCard({
   imageUrl,
   isGenerating = false,
   onUrlChange,
+  flipHorizontal = false,
+  onFlipChange,
 }: CloudinaryImageCardProps) {
   const [isEditingUrl, setIsEditingUrl] = useState(false);
   const [customUrl, setCustomUrl] = useState(imageUrl);
@@ -1676,7 +1716,8 @@ function CloudinaryImageCard({
               <img
                 src={imageUrl}
                 alt={`${title} Preview`}
-                className={`h-32 w-auto mt-1 rounded-md object-contain ${justUploaded || imageUrl.startsWith("http")
+                style={{ transform: flipHorizontal ? "scaleX(-1)" : "none" }}
+                className={`h-32 w-auto mt-1 rounded-md object-contain transition-transform ${justUploaded || imageUrl.startsWith("http")
                   ? "border-2 border-green-500"
                   : "border border-gray-200"
                   }`}
@@ -1725,6 +1766,20 @@ function CloudinaryImageCard({
               Set
             </button>
           </div>
+        )}
+
+        {onFlipChange && (
+          <label className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg bg-white border border-gray-200 hover:border-[#D4AF37]/60 cursor-pointer select-none">
+            <span className="text-[11px] font-bold text-gray-700">
+              Flip Image (عكس الصورة)
+            </span>
+            <input
+              type="checkbox"
+              checked={Boolean(flipHorizontal)}
+              onChange={(e) => onFlipChange(e.target.checked)}
+              className="w-4 h-4 accent-[#2B1D24] cursor-pointer"
+            />
+          </label>
         )}
       </div>
     </div >

@@ -1,15 +1,19 @@
 import { NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
-import {
-  getActiveProfileId,
-  getActiveProfileFilename,
-} from "@/data/configLoader";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 function getActiveConfigTarget() {
-  const profileId = getActiveProfileId();
-  const filename = getActiveProfileFilename(profileId);
-  const filePath = path.join(process.cwd(), "src", "private", filename);
+  const profileId = process.env.NEXT_PUBLIC_ACTIVE_PROFILE_ID?.trim();
+  if (!profileId) {
+    throw new Error(
+      "NEXT_PUBLIC_ACTIVE_PROFILE_ID environment variable is missing."
+    );
+  }
+  const filename = `app-payload-${profileId}.json`;
+  const filePath = path.join(process.cwd(), "src/private", filename);
   return { profileId, filename, filePath };
 }
 
@@ -63,6 +67,17 @@ const SECTION_FIELD_MAP = {
 
 type JsonRecord = Record<string, unknown>;
 
+export interface CardItemPayload {
+  id?: string;
+  num?: string;
+  url?: string;
+  photo?: string;
+  title?: string;
+  caption?: string;
+  date?: string;
+  flipHorizontal?: boolean;
+}
+
 function nonEmptyString(val: unknown, fallback: string): string {
   return typeof val === "string" && val.trim().length > 0 ? val.trim() : fallback;
 }
@@ -73,16 +88,39 @@ function nonEmptyString(val: unknown, fallback: string): string {
  * `src/private/app-payload-${NEXT_PUBLIC_ACTIVE_PROFILE_ID}.json` without losing structure or names.
  */
 export async function GET() {
-  const { profileId, filename } = getActiveConfigTarget();
-  return NextResponse.json(
-    {
-      status: "ok",
-      mode: "static-bundled",
-      profile: profileId,
-      filename,
-    },
-    { status: 200 }
-  );
+  try {
+    const { profileId, filename, filePath } = getActiveConfigTarget();
+    let activeConfig: JsonRecord | null = null;
+    if (fs.existsSync(filePath)) {
+      const rawFile = fs.readFileSync(filePath, "utf8");
+      activeConfig = JSON.parse(rawFile) as JsonRecord;
+    }
+
+    return NextResponse.json(
+      {
+        status: "ok",
+        mode: "dynamic-env-json",
+        profile: profileId,
+        filename,
+        config: activeConfig,
+      },
+      {
+        status: 200,
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+        },
+      }
+    );
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Missing NEXT_PUBLIC_ACTIVE_PROFILE_ID environment variable.";
+    return NextResponse.json(
+      { status: "error", error: message },
+      { status: 500 }
+    );
+  }
 }
 
 export async function POST(request: Request) {
@@ -146,6 +184,19 @@ export async function POST(request: Request) {
         : Array.isArray(existing.punishmentsBride)
         ? existing.punishmentsBride
         : [],
+      imageFlips: (() => {
+        const rawFlips =
+          incoming.imageFlips && typeof incoming.imageFlips === "object"
+            ? (incoming.imageFlips as Record<string, unknown>)
+            : existing.imageFlips && typeof existing.imageFlips === "object"
+            ? (existing.imageFlips as Record<string, unknown>)
+            : {};
+        const sanitized: Record<string, boolean> = {};
+        for (const [k, v] of Object.entries(rawFlips)) {
+          if (typeof v === "boolean") sanitized[k] = v;
+        }
+        return sanitized;
+      })(),
       lastUpdated:
         typeof incoming.lastUpdated === "string" && incoming.lastUpdated
           ? incoming.lastUpdated
