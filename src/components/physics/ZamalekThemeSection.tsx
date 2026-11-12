@@ -13,10 +13,9 @@ import {
   useInView,
   useMotionValue,
   useMotionValueEvent,
-  useScroll,
-  useTransform,
 } from "framer-motion";
-import { useGlobalAudio } from "@/utils/globalAudioCoordinator";
+import { useSectionAudio } from "@/utils/globalAudioCoordinator";
+import { BottomAudioControls } from "./BottomAudioControls";
 import {
   useWeddingConfig,
   mergeGalleryIntoCards,
@@ -385,7 +384,6 @@ const PhotoCard: React.FC<{ card: MomentCard; rotation: string }> = ({
 
 export default function ZamalekThemeSection({
   onNext,
-  scrollContainerRef,
 }: {
   onNext?: () => void;
   scrollContainerRef?: React.RefObject<HTMLElement | HTMLDivElement | null>;
@@ -411,36 +409,23 @@ export default function ZamalekThemeSection({
   const pausedRef = useRef<boolean>(false);
 
   const [isPaused, setIsPaused] = useState(false);
-  const { isEnabled: isGlobalAudioEnabled, toggleAudio, playTrack, stopTrack } = useGlobalAudio();
-  const isMuted = !isGlobalAudioEnabled;
 
   useMotionValueEvent(x, "change", (latest) => {
     posRef.current = latest;
   });
 
-  /* ---- Parallax Scroll Transformation for Heroes ---- */
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    container: scrollContainerRef?.current ? scrollContainerRef : undefined,
-    offset: ["start end", "end start"],
-  });
+  const inView = useInView(sectionRef, { amount: 0.35 });
+  const charactersInView = useInView(sectionRef, { amount: 0.12 });
 
-  const heroY = useTransform(
-    scrollYProgress,
-    [0, 0.22, 0.46, 0.72, 1],
-    ["100%", "100%", "0%", "0%", "100%"]
-  );
-
-  const heroOpacity = useTransform(
-    scrollYProgress,
-    [0, 0.2, 0.38, 0.74, 0.96],
-    [0, 0, 1, 1, 0]
-  );
-
-  const inView = useInView(sectionRef, {
-    root: scrollContainerRef?.current ? scrollContainerRef : undefined,
-    amount: 0.35,
-  });
+  const {
+    isMuted,
+    toggleGlobalMute: toggleMute,
+    isTrackPlaying,
+    togglePlayStop,
+    volume,
+    increaseVolume,
+    decreaseVolume,
+  } = useSectionAudio(audioRef, inView);
 
   /* ---- Measurement for Infinite Marquee ---- */
   useLayoutEffect(() => {
@@ -516,23 +501,6 @@ export default function ZamalekThemeSection({
     }
   };
 
-  /* ---- Audio Mute Handler ---- */
-  const toggleMute = () => {
-    toggleAudio();
-  };
-
-  /* ---- Audio Playback & Auto Crossfade Controller ---- */
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    if (inView && isGlobalAudioEnabled) {
-      playTrack(audio, 0.85);
-    } else {
-      stopTrack(audio, 800);
-    }
-  }, [inView, isGlobalAudioEnabled, playTrack, stopTrack]);
-
   const loopedCards = [...dynamicCards, ...dynamicCards];
 
   return (
@@ -585,7 +553,7 @@ export default function ZamalekThemeSection({
       </div>
 
       {/* Top-Right Floating Controls */}
-      <div className="absolute right-6 top-6 z-40 flex items-center gap-2.5">
+      <div className="absolute right-6 top-6 z-50 flex items-center gap-2.5">
         {/* Audio Mute/Unmute */}
         <button
           type="button"
@@ -595,7 +563,7 @@ export default function ZamalekThemeSection({
           className="flex items-center gap-1.5 rounded-full border border-[#E3001B]/40 bg-white/90 px-3 py-2 text-xs font-bold text-[#E3001B] shadow-sm transition-all duration-200 hover:scale-105 hover:bg-red-50 hover:shadow active:scale-95 cursor-pointer"
         >
           <VolumeIcon muted={isMuted} className="h-4 w-4 text-[#E3001B]" />
-          <span className="hidden sm:inline font-sans">{isMuted ? "Unmute" : "Anthem"}</span>
+          <span className="hidden sm:inline font-sans">{isMuted ? "Muted" : "Mute All"}</span>
         </button>
 
         {/* Marquee Play/Pause */}
@@ -640,7 +608,7 @@ export default function ZamalekThemeSection({
       </header>
 
       {/* Card row: 3-card visible focus Kotsheena marquee */}
-      <div className="relative z-10 my-auto h-[440px] min-h-[400px] overflow-hidden">
+      <div className="relative z-20 my-auto h-[440px] min-h-[400px] w-full overflow-hidden">
         <motion.div
           ref={trackRef}
           animate={controls}
@@ -657,42 +625,56 @@ export default function ZamalekThemeSection({
         </motion.div>
       </div>
 
-      {/* Left Character: Groom in White Zamalek Jersey (Mirrored Inward -scale-x-100) */}
+      {/* Left Character: Groom in White Zamalek Jersey (Standard Clean Bottom-Anchored Framing) */}
       <motion.div
-        style={{ y: heroY, opacity: heroOpacity }}
-        className="pointer-events-none absolute inset-0 z-20 will-change-transform"
+        initial={{ opacity: 0, y: 40 }}
+        animate={charactersInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
+        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+        className="absolute bottom-0 left-0 z-50 w-44 md:w-64 lg:w-80 pointer-events-none"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={config.zamalekGroomUrl || ZAMALEK_GROOM_SRC}
           alt={`${config.groomName} wearing White Zamalek Jersey`}
           aria-hidden="true"
-          className="pointer-events-none absolute bottom-0 left-0 z-20 h-[95%] w-auto max-w-[42vw] min-w-[300px] object-contain object-bottom -scale-x-100 drop-shadow-2xl"
-          style={{ transform: "scaleX(-1)" }}
+          className="w-full h-auto object-contain object-bottom"
         />
       </motion.div>
 
-      {/* Right Character: Bride in White Zamalek Jersey (Facing Inward toward Groom) */}
+      {/* Right Character: Bride in White Zamalek Jersey (Standard Clean Bottom-Anchored Framing) */}
       <motion.div
-        style={{ y: heroY, opacity: heroOpacity }}
-        className="pointer-events-none absolute inset-0 z-20 will-change-transform"
+        initial={{ opacity: 0, y: 40 }}
+        animate={charactersInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
+        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+        className="absolute bottom-0 right-0 z-50 w-44 md:w-64 lg:w-80 pointer-events-none"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={config.zamalekBrideUrl || ZAMALEK_BRIDE_SRC}
           alt={`${config.brideName} wearing White Zamalek Jersey`}
           aria-hidden="true"
-          className="pointer-events-none absolute bottom-0 right-0 z-20 h-[95%] w-auto max-w-[42vw] min-w-[300px] object-contain object-bottom drop-shadow-2xl"
+          className="w-full h-auto object-contain object-bottom"
         />
       </motion.div>
 
-      {/* Footer */}
-      <footer className="relative z-30 flex items-center justify-between px-6 pb-5 text-xs text-[#55474A]">
-        <span className="flex items-center gap-1.5 font-medium">
+      {/* Footer + Bottom Centered Section Audio Controls */}
+      <footer className="relative z-40 flex flex-col sm:flex-row items-center justify-between gap-2 px-6 pb-5 text-xs text-[#55474A]">
+        <span className="hidden md:flex items-center gap-1.5 font-medium">
           <span className="text-[#E3001B]">🏹</span>
           <span>عشق الأبيض بخطين حُمر لا ينتهي أبدًا.</span>
         </span>
-        <span className="flex items-center gap-3">
+        <div className="mx-auto sm:mx-0">
+          <BottomAudioControls
+            isPlaying={isTrackPlaying}
+            isMuted={isMuted}
+            volume={volume}
+            onTogglePlayStop={togglePlayStop}
+            onIncreaseVolume={increaseVolume}
+            onDecreaseVolume={decreaseVolume}
+            variant="light"
+          />
+        </div>
+        <span className="hidden md:flex items-center gap-3">
           <span className="font-semibold">24 Moments • White Knights Marquee</span>
           <span className="h-3 w-px bg-[#E3001B]/40" />
           <span className="font-serif italic font-bold text-[#E3001B]">

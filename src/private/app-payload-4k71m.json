@@ -1,0 +1,101 @@
+{
+  "profileName": "Mohamed & Manal Wedding Profile",
+  "activeThemes": ["ahly", "saidi", "fatimid", "cinema", "falahi"],
+  "groomName": "Mohamed",
+  "brideName": "Manal",
+  "engagementDate": "2024-02-14",
+  "weddingDate": "2025-09-20",
+  "mainHeroBgUrl": "https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=2000&auto=format&fit=crop",
+  "groomChildhoodUrl": "https://images.unsplash.com/photo-1503454537195-1dcabb73ffb9?q=80&w=400&auto=format&fit=crop",
+  "brideChildhoodUrl": "https://images.unsplash.com/photo-1519340333755-56e9c1d04079?q=80&w=400&auto=format&fit=crop",
+  "audioPharaonic": "/audio/pharaonic-track.mp3",
+  "audioSaidi": "/audio/track-c-saidi.mp3",
+  "audioCinema": "/audio/track-d-cinema.mp3",
+  "audioFalahi": "/audio/hadret-el-omda.mp3",
+  "audioZamalek": "/audio/zamalek-curva-sud.mp3",
+  "audioAhly": "/audio/ahly.mp3",
+  "audioIndian": "/audio/pharaonic-track.mp3",
+  "audioFatimid": "/audio/fatami.mp3",
+  "audioMexican": "/audio/pharaonic-track.mp3",
+  "pharaonicGroomUrl": "/statues/tutankhamun.png",
+  "pharaonicBrideUrl": "/statues/nefertiti.png",
+  "saidiGroomUrl": "/statues/saidi-man.png",
+  "saidiBrideUrl": "/statues/saidi-woman.png",
+  "cinemaGroomUrl": "/statues/vintage-groom.png",
+  "cinemaBrideUrl": "/statues/vintage-bride.png",
+  "falahiGroomUrl": "/statues/falahi-groom.png",
+  "falahiBrideUrl": "/statues/falahi-bride.png",
+  "zamalekGroomUrl": "/statues/zamalek-groom.png",
+  "zamalekBrideUrl": "/statues/zamalek-bride.png",
+  "ahlyGroomUrl": "/statues/zamalek-groom.png",
+  "ahlyBrideUrl": "/statues/zamalek-bride.png",
+  "indianGroomUrl": "/statues/tutankhamun.png",
+  "indianBrideUrl": "/statues/nefertiti.png",
+  "fatimidGroomUrl": "/statues/saidi-man.png",
+  "fatimidBrideUrl": "/statues/saidi-woman.png",
+  "mexicanGroomUrl": "/statues/saidi-man.png",
+  "mexicanBrideUrl": "/statues/saidi-woman.png",
+  "raceGroomAvatarUrl": "/race/groom-avatar.png",
+  "raceBrideAvatarUrl": "/race/bride-avatar.png",
+  "raceGroomKartUrl": "/race/groom-kart.png",
+  "raceBrideKartUrl": "/race/bride-kart.png",
+  "sections": {
+    "ahly": {
+      "chapterBadge": "🦅 Al Ahly SC • 43 League Titles • 12 African Champions",
+      "title": "نادي القرن",
+      "subtitle": "Mohamed & Manal • Red Devils Forever",
+      "footerLabel": "Al Ahly SC • Club of the Century",
+      "audioSrc": "/audio/ahly.mp3",
+      "groomImage": "/statues/zamalek-groom.png",
+      "brideImage": "/statues/zamalek-bride.png"
+    },
+    "saidi": {
+      "chapterBadge": "Chapter 03 • الصعيد الجواني",
+      "title": "أصالة وجذور",
+      "subtitle": "Mohamed & Manal • Roots & Hospitality",
+      "footerLabel": "Saidi Celebration Marquee",
+      "audioSrc": "/audio/track-c-saidi.mp3",
+      "groomImage": "/statues/saidi-man.png",
+      "brideImage": "/statues/saidi-woman.png"
+    },
+    "fatimid": {
+      "chapterBadge": "☪️ التراث الفاطمي والمملوكي • ليالي المعز",
+      "title": "ليالي القاهرة الفاطمية",
+      "subtitle": "Mohamed & Manal • Antique Gold & Emerald Nights",
+      "footerLabel": "Fatimid Cairo Royal Celebration",
+      "audioSrc": "/audio/fatami.mp3",
+      "groomImage": "/statues/saidi-man.png",
+      "brideImage": "/statues/saidi-woman.png"
+    },
+    "cinema": {
+      "chapterBadge": "Chapter 04 • السينما المصرية القديمة",
+      "title": "زمن الفن الجميل",
+      "subtitle": "Mohamed & Manal • 1960s Cairo Classics",
+      "footerLabel": "Golden Age 1960s Cinema",
+      "audioSrc": "/audio/track-d-cinema.mp3",
+      "groomImage": "/statues/vintage-groom.png",
+      "brideImage": "/statues/vintage-bride.png"
+    }
+  },
+  "gallery": [
+    {
+      "id": "m-01",
+      "url": "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1000&q=80",
+      "caption": "بداية حكاية Mohamed & Manal 💍",
+      "date": "2024-02-14"
+    },
+    {
+      "id": "m-02",
+      "url": "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1000&q=80",
+      "caption": "ليلة ساحرة على النيل ✨",
+      "date": "2024-06-18"
+    },
+    {
+      "id": "m-03",
+      "url": "https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=1000&q=80",
+      "caption": "فرحة العمر كلّه 🤍",
+      "date": "2025-09-20"
+    }
+  ]
+}
+

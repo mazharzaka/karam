@@ -109,14 +109,14 @@ export default function WeddingRaceSection() {
     return () => mediaQuery.removeEventListener("change", handler);
   }, []);
 
-  // Audio playback during race with global coordinator
+  // Audio playback during race with global coordinator (respects default 0.2 volume & mute)
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
 
     if (isPlaying && isGlobalAudioEnabled) {
       audio.currentTime = 0;
-      playTrack(audio, 0.55);
+      playTrack(audio);
     } else {
       stopTrack(audio, 500);
     }

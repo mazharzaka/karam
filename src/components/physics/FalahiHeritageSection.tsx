@@ -1,6 +1,7 @@
 "use client";
 
 import React, {
+  useCallback,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -11,10 +12,10 @@ import {
   useAnimation,
   useInView,
   useMotionValue,
-  useScroll,
-  useTransform,
+  useMotionValueEvent,
 } from "framer-motion";
-import { useGlobalAudio } from "@/utils/globalAudioCoordinator";
+import { useSectionAudio } from "@/utils/globalAudioCoordinator";
+import { BottomAudioControls } from "./BottomAudioControls";
 import {
   useWeddingConfig,
   mergeGalleryIntoCards,
@@ -412,7 +413,6 @@ export interface FalahiHeritageSectionProps {
 
 export default function FalahiHeritageSection({
   onNext,
-  scrollContainerRef,
 }: FalahiHeritageSectionProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -424,100 +424,116 @@ export default function FalahiHeritageSection({
     [config.gallery]
   );
 
-  const [isPaused, setIsPaused] = useState<boolean>(false);
-  const [trackWidth, setTrackWidth] = useState<number>(0);
-  const { isEnabled: isGlobalAudioEnabled, toggleAudio, playTrack, stopTrack } = useGlobalAudio();
-  const isMuted = !isGlobalAudioEnabled;
-
-  // Marquee Motion Value
-  const x = useMotionValue(0);
+  // Marquee controls & state (matching Saidi & Zamalek)
   const controls = useAnimation();
+  const x = useMotionValue(0);
 
-  // Scroll parallax for emergence of Groom and Bride characters
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    container: scrollContainerRef?.current ? scrollContainerRef : undefined,
-    offset: ["start end", "end start"],
+  const halfRef = useRef<number>(0);
+  const posRef = useRef<number>(0);
+  const startRef = useRef<number>(0);
+  const runIdRef = useRef<number>(0);
+  const pausedRef = useRef<boolean>(false);
+
+  const [isPaused, setIsPaused] = useState<boolean>(false);
+
+  // Sync posRef with the latest motion value
+  useMotionValueEvent(x, "change", (latest) => {
+    posRef.current = latest;
   });
 
-  // Characters emerge naturally from bottom
-  const heroY = useTransform(scrollYProgress, [0, 0.35, 0.7, 1], [180, 0, 0, 180]);
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.25, 0.75, 1], [0, 1, 1, 0]);
-
-  // Section in-view detector for audio triggering
+  // Section in-view detectors for audio & bottom-corner character reveal
   const inView = useInView(sectionRef, { amount: 0.35 });
+  const charactersInView = useInView(sectionRef, { amount: 0.05 });
 
-  // Tripled looped cards for infinite marquee
-  const loopedCards = [...dynamicCards, ...dynamicCards, ...dynamicCards];
+  const {
+    isMuted,
+    toggleGlobalMute: toggleMute,
+    isTrackPlaying,
+    togglePlayStop,
+    volume,
+    increaseVolume,
+    decreaseVolume,
+  } = useSectionAudio(audioRef, inView);
 
-  // Measure card track
+  // Doubled looped cards for seamless Saidi/Zamalek marquee
+  const loopedCards = [...dynamicCards, ...dynamicCards];
+
+  /* ---- Measurement for Infinite Marquee (Saidi/Zamalek standard) ---- */
   useLayoutEffect(() => {
-    if (trackRef.current) {
-      const singleSetWidth = trackRef.current.scrollWidth / 3;
-      setTrackWidth(singleSetWidth);
-    }
-  }, []);
+    const track = trackRef.current;
+    if (!track) return;
 
-  // Continuous marquee animation loop
-  useEffect(() => {
-    if (trackWidth === 0 || isPaused) return;
-
-    let isCancelled = false;
-
-    const runMarquee = async () => {
-      while (!isCancelled && !isPaused) {
-        const currentX = x.get();
-        const remainingDistance = Math.abs(-trackWidth - currentX);
-        const duration = remainingDistance / SPEED;
-
-        await controls.start({
-          x: -trackWidth,
-          transition: {
-            duration,
-            ease: "linear",
-          },
-        });
-
-        if (!isCancelled && !isPaused) {
-          x.set(0);
-        }
+    const measure = () => {
+      const first = track.children[0] as HTMLElement | undefined;
+      const copy = track.children[dynamicCards.length] as HTMLElement | undefined;
+      if (first && copy) {
+        halfRef.current = copy.offsetLeft - first.offsetLeft;
       }
     };
 
-    runMarquee();
-
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(track);
+    window.addEventListener("resize", measure);
     return () => {
-      isCancelled = true;
+      observer.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, [dynamicCards.length]);
+
+  /* ---- Marquee Animation Execution (Saidi/Zamalek standard) ---- */
+  const run = useCallback(() => {
+    const halfWidth = halfRef.current;
+    if (!halfWidth || pausedRef.current) return;
+
+    const id = ++runIdRef.current;
+
+    let start = x.get() % halfWidth;
+    if (start > 0) start -= halfWidth;
+    x.set(start);
+    posRef.current = start;
+    startRef.current = start;
+
+    const remaining = halfWidth + start;
+    controls
+      .start({
+        x: [start, -halfWidth],
+        transition: { duration: remaining / SPEED, ease: "linear" },
+      })
+      .then(() => {
+        if (runIdRef.current !== id || pausedRef.current) return;
+        x.set(0);
+        posRef.current = 0;
+        run();
+      })
+      .catch(() => {});
+  }, [controls, x]);
+
+  useEffect(() => {
+    run();
+    return () => {
+      runIdRef.current += 1;
       controls.stop();
     };
-  }, [trackWidth, isPaused, controls, x]);
-
-  /* -------------------------------------------------------------------------- */
-  /* 3. AUDIO TRIGGER: Exclusively Play When Section 5 is In-View & Crossfade   */
-  /* -------------------------------------------------------------------------- */
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    if (inView && isGlobalAudioEnabled) {
-      playTrack(audio, 0.85);
-    } else {
-      stopTrack(audio, 800);
-    }
-  }, [inView, isGlobalAudioEnabled, playTrack, stopTrack]);
-
-  const toggleMute = () => {
-    toggleAudio();
-  };
+  }, [run, controls]);
 
   const togglePause = () => {
-    setIsPaused((prev) => !prev);
+    if (pausedRef.current) {
+      pausedRef.current = false;
+      setIsPaused(false);
+      run();
+    } else {
+      pausedRef.current = true;
+      setIsPaused(true);
+      runIdRef.current += 1;
+      controls.stop();
+    }
   };
 
   return (
     <section
       ref={sectionRef}
-      className="relative flex min-h-[calc(100vh-4rem)] w-full flex-col justify-between overflow-x-hidden bg-gradient-to-b from-[#E8F5E9] via-[#F1F8E9] to-[#E8F5E9] select-none text-[#1B5E20]"
+      className="relative isolate flex h-[82vh] min-h-[640px] max-h-[820px] w-full flex-col overflow-hidden bg-gradient-to-b from-[#E8F5E9] via-[#F1F8E9] to-[#E8F5E9] select-none text-[#1B5E20]"
     >
       {/* Native HTML5 Audio with Hadret El Omda */}
       <audio
@@ -603,7 +619,7 @@ export default function FalahiHeritageSection({
       {/* -------------------------------------------------------------------- */}
       {/* Top Floating Controls                                                */}
       {/* -------------------------------------------------------------------- */}
-      <div className="absolute right-6 top-6 z-40 flex items-center gap-2.5">
+      <div className="absolute right-6 top-6 z-50 flex items-center gap-2.5">
         {/* Audio Mute/Unmute */}
         <button
           type="button"
@@ -613,7 +629,7 @@ export default function FalahiHeritageSection({
           className="flex items-center gap-1.5 rounded-full border border-[#2E7D32]/40 bg-white/90 px-3 py-2 text-xs font-bold text-[#1B5E20] shadow-xs transition-all duration-200 hover:scale-105 hover:bg-emerald-50 active:scale-95 cursor-pointer"
         >
           <VolumeIcon muted={isMuted} className="h-4 w-4 text-[#E65100]" />
-          <span className="hidden sm:inline font-sans">{isMuted ? "Unmute" : "Anthem 🍊"}</span>
+          <span className="hidden sm:inline font-sans">{isMuted ? "Muted" : "Mute All"}</span>
         </button>
 
         {/* Marquee Play/Pause */}
@@ -638,7 +654,7 @@ export default function FalahiHeritageSection({
       </div>
 
       {/* -------------------------------------------------------------------- */}
-      {/* Centered Header: أفراح الريف with generous bottom mb-24               */}
+      {/* Centered Header: أفراح الريف (Saidi Spacing)                         */}
       {/* -------------------------------------------------------------------- */}
       <header className="relative z-30 px-6 pt-8 text-center md:pt-10 mb-20 md:mb-24 pb-10 md:pb-12">
         <span className="inline-flex items-center gap-2 rounded-full border border-[#2E7D32]/35 bg-white/85 px-4 py-1 text-xs font-bold text-[#2E7D32] shadow-xs">
@@ -657,9 +673,9 @@ export default function FalahiHeritageSection({
       </header>
 
       {/* -------------------------------------------------------------------- */}
-      {/* Marquee Row: 3-Card Focus Scrolling Strip                            */}
+      {/* Full-Width Cards Marquee (Matches Saidi & Zamalek Sections)          */}
       {/* -------------------------------------------------------------------- */}
-      <div className="relative z-10 my-auto h-[440px] min-h-[400px] overflow-hidden">
+      <div className="relative z-20 my-auto h-[440px] min-h-[400px] w-full overflow-hidden">
         <motion.div
           ref={trackRef}
           animate={controls}
@@ -677,46 +693,61 @@ export default function FalahiHeritageSection({
       </div>
 
       {/* -------------------------------------------------------------------- */}
-      {/* 2. ENFORCE SIZING & MIRRORING: Massive Responsive Characters         */}
-      {/* Left Character: Falahi Groom (Strictly Mirrored Inward -scale-x-100) */}
+      {/* Left Character Image: Bottom-Left Corner (Standard Clean CSS)        */}
       {/* -------------------------------------------------------------------- */}
       <motion.div
-        style={{ y: heroY, opacity: heroOpacity }}
-        className="pointer-events-none absolute inset-0 z-20 will-change-transform"
+        initial={{ opacity: 0, y: 40 }}
+        animate={charactersInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
+        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+        className="absolute bottom-0 left-0 z-50 w-44 md:w-64 lg:w-80 pointer-events-none"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={config.falahiGroomUrl || FALAHI_GROOM_SRC}
           alt={`${config.groomName} in Rural Egyptian Attire`}
           aria-hidden="true"
-          className="pointer-events-none absolute bottom-0 left-0 z-20 h-[95%] min-w-[300px] w-auto object-contain object-bottom -scale-x-100 drop-shadow-2xl"
-          style={{ transform: "scaleX(-1)" }}
+          className="w-full h-auto object-contain object-bottom"
         />
       </motion.div>
 
-      {/* Right Character: Falahi Bride (Strictly Facing Inward toward Groom) */}
+      {/* -------------------------------------------------------------------- */}
+      {/* Right Character Image: Bottom-Right Corner (Standard Clean CSS)      */}
+      {/* -------------------------------------------------------------------- */}
       <motion.div
-        style={{ y: heroY, opacity: heroOpacity }}
-        className="pointer-events-none absolute inset-0 z-20 will-change-transform"
+        initial={{ opacity: 0, y: 40 }}
+        animate={charactersInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
+        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+        className="absolute bottom-0 right-0 z-50 w-44 md:w-64 lg:w-80 pointer-events-none"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={config.falahiBrideUrl || FALAHI_BRIDE_SRC}
           alt={`${config.brideName} in Rural Egyptian Attire`}
           aria-hidden="true"
-          className="pointer-events-none absolute bottom-0 right-0 z-20 h-[95%] min-w-[300px] w-auto object-contain object-bottom drop-shadow-2xl"
+          className="w-full h-auto object-contain object-bottom"
         />
       </motion.div>
 
       {/* -------------------------------------------------------------------- */}
-      {/* Footer                                                               */}
+      {/* Footer + Bottom Centered Section Audio Controls                      */}
       {/* -------------------------------------------------------------------- */}
-      <footer className="relative z-30 flex items-center justify-between px-6 pb-5 text-xs text-[#558B2F]">
-        <span className="flex items-center gap-1.5 font-medium">
+      <footer className="relative z-40 flex flex-col sm:flex-row items-center justify-between gap-2 px-6 pb-5 text-xs text-[#558B2F]">
+        <span className="hidden md:flex items-center gap-1.5 font-medium">
           <span className="text-[#E65100]">🍊</span>
           <span>يا بركة الريف وخير الأرض الطيبة.. مبروك لأحلى عرسان.</span>
         </span>
-        <span className="flex items-center gap-3">
+        <div className="mx-auto sm:mx-0">
+          <BottomAudioControls
+            isPlaying={isTrackPlaying}
+            isMuted={isMuted}
+            volume={volume}
+            onTogglePlayStop={togglePlayStop}
+            onIncreaseVolume={increaseVolume}
+            onDecreaseVolume={decreaseVolume}
+            variant="light"
+          />
+        </div>
+        <span className="hidden md:flex items-center gap-3">
           <span className="font-semibold">24 Moments • Delta Rural Marquee</span>
           <span className="h-3 w-px bg-[#2E7D32]/40" />
           <span className="font-serif italic font-bold text-[#E65100]">

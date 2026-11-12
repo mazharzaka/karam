@@ -10,6 +10,7 @@ import FalahiHeritageSection from "./FalahiHeritageSection";
 import ZamalekThemeSection from "./ZamalekThemeSection";
 import AlAhlyThemeSection from "./AlAhlyThemeSection";
 import IndianThemeSection from "./IndianThemeSection";
+import FatimidThemeSection from "./FatimidThemeSection";
 import MexicanThemeSection from "./MexicanThemeSection";
 import WeddingRaceSection from "./WeddingRaceSection";
 import { Scene3PhysicsDesk } from "./Scene3PhysicsDesk";
@@ -17,7 +18,7 @@ import { Scene4ZTunnel } from "./Scene4ZTunnel";
 import { Scene5InfiniteCanvas } from "./Scene5InfiniteCanvas";
 import { KeyboardShortcutsPill } from "./KeyboardShortcutsPill";
 import { FloatingPetals } from "@/components/layout/FloatingPetals";
-import { Volume2, VolumeX, Maximize2, Minimize2, Heart } from "lucide-react";
+import { Volume2, VolumeX, Maximize2, Minimize2, Heart, Minus, Plus } from "lucide-react";
 import { sceneAudio } from "@/utils/sceneAudioController";
 import { useGlobalAudio } from "@/utils/globalAudioCoordinator";
 import {
@@ -40,6 +41,7 @@ const THEME_COMPONENTS: Record<ThemeId, React.ComponentType<ThemeSectionProps>> 
   zamalek: ZamalekThemeSection,
   ahly: AlAhlyThemeSection,
   indian: IndianThemeSection,
+  fatimid: FatimidThemeSection,
   mexican: MexicanThemeSection,
 };
 
@@ -47,7 +49,14 @@ export const PhysicsSceneManager: React.FC = () => {
   const { config } = useWeddingConfig();
   const [currentScene, setCurrentScene] = useState<number>(0);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
-  const { isEnabled: isPlayingMusic, toggleAudio: toggleMusic } = useGlobalAudio();
+  const {
+    isEnabled: isPlayingMusic,
+    isMuted,
+    volume,
+    toggleGlobalMute: toggleMusic,
+    increaseVolume,
+    decreaseVolume,
+  } = useGlobalAudio();
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const sectionElsRef = useRef<(HTMLDivElement | null)[]>([]);
@@ -110,9 +119,10 @@ export const PhysicsSceneManager: React.FC = () => {
 
   useEffect(() => {
     if (sceneAudio) {
+      sceneAudio.setVolume(volume);
       sceneAudio.transitionToScene(currentScene, isPlayingMusic);
     }
-  }, [currentScene, isPlayingMusic]);
+  }, [currentScene, isPlayingMusic, volume]);
 
   const toggleFullscreen = () => {
     if (typeof document === "undefined") return;
@@ -233,11 +243,40 @@ export const PhysicsSceneManager: React.FC = () => {
           })}
         </div>
 
-        {/* HUD Controls: Soundtrack & Cinema Fullscreen */}
+        {/* HUD Controls: Volume, Global Mute & Cinema Fullscreen */}
         <div className="flex items-center gap-2 shrink-0">
+          {/* Incremental Volume Controls (- / + 10%) */}
+          <div className="hidden sm:flex items-center gap-1 px-2 py-1 rounded-full bg-white/10 border border-romantic-roseGold/30 text-white text-[11px]">
+            <button
+              type="button"
+              onClick={decreaseVolume}
+              disabled={volume <= 0}
+              aria-label="Decrease global volume"
+              title="Volume -10%"
+              className="p-1 rounded-full hover:bg-white/15 disabled:opacity-35 cursor-pointer disabled:cursor-not-allowed"
+            >
+              <Minus className="w-3 h-3" />
+            </button>
+            <span className="font-mono text-[10px] font-semibold min-w-[30px] text-center text-romantic-roseGoldLight">
+              {Math.round(volume * 100)}%
+            </span>
+            <button
+              type="button"
+              onClick={increaseVolume}
+              disabled={volume >= 1}
+              aria-label="Increase global volume"
+              title="Volume +10%"
+              className="p-1 rounded-full hover:bg-white/15 disabled:opacity-35 cursor-pointer disabled:cursor-not-allowed"
+            >
+              <Plus className="w-3 h-3" />
+            </button>
+          </div>
+
+          {/* Global Mute All Toggle Button */}
           <button
             onClick={toggleMusic}
-            aria-label="Toggle romantic music"
+            aria-label={isMuted ? "Unmute all audio" : "Mute all audio"}
+            title={isMuted ? "Unmute All" : "Mute All"}
             className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-romantic-roseGold/30 shadow-sm text-xs font-medium text-white transition-all cursor-pointer"
           >
             <div className="flex items-end gap-0.5 h-3.5 w-3">
@@ -246,15 +285,15 @@ export const PhysicsSceneManager: React.FC = () => {
                   key={i}
                   className="w-0.5 bg-romantic-roseGold rounded-full transition-all duration-300"
                   style={{
-                    height: isPlayingMusic ? `${h}%` : "30%",
+                    height: !isMuted && isPlayingMusic ? `${h}%` : "30%",
                   }}
                 />
               ))}
             </div>
             <span className="text-[11px] font-semibold hidden sm:inline text-romantic-roseGoldLight">
-              {isPlayingMusic ? "Waltz Playing" : "Play Sound"}
+              {isMuted ? "Muted" : "Mute All"}
             </span>
-            {isPlayingMusic ? (
+            {!isMuted ? (
               <Volume2 className="w-3.5 h-3.5 text-romantic-roseGoldLight" />
             ) : (
               <VolumeX className="w-3.5 h-3.5 text-stone-400" />

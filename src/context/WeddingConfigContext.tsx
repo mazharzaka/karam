@@ -8,6 +8,8 @@ import React, {
   useCallback,
 } from "react";
 import { ALL_80_IMAGES, RomanceImage } from "@/data/romanticImages";
+import { loadActiveStaticConfig, getActiveProfileKey } from "@/data/configLoader";
+import { resolveProtectedAssetUrl } from "@/utils/cloudinaryUrl";
 
 export type ThemeId =
   | "pharaonic"
@@ -17,6 +19,7 @@ export type ThemeId =
   | "zamalek"
   | "ahly"
   | "indian"
+  | "fatimid"
   | "mexican";
 
 export interface ThemeMeta {
@@ -34,6 +37,7 @@ export const AVAILABLE_THEMES: ThemeMeta[] = [
   { id: "zamalek", label: "Zamalek SC", arabicTitle: "مدرسة الفن والهندسة", hudTitle: "Zamalek SC" },
   { id: "ahly", label: "Al Ahly SC", arabicTitle: "نادي القرن", hudTitle: "نادي القرن" },
   { id: "indian", label: "Indian Bollywood", arabicTitle: "ليالي بوليوود", hudTitle: "ليالي بوليوود" },
+  { id: "fatimid", label: "Fatimid Islamic", arabicTitle: "ليالي القاهرة الفاطمية", hudTitle: "Fatimid Heritage" },
   { id: "mexican", label: "Mexican Fiesta", arabicTitle: "فييستا مكسيكية", hudTitle: "فييستا مكسيكية" },
 ];
 
@@ -43,7 +47,7 @@ const VALID_THEME_IDS = new Set<ThemeId>(AVAILABLE_THEMES.map((t) => t.id));
 
 export function sanitizeActiveThemes(raw: unknown): ThemeId[] {
   if (!Array.isArray(raw)) {
-    return ["ahly", "indian", "mexican"];
+    return ["ahly", "saidi", "fatimid", "cinema"];
   }
   const result: ThemeId[] = [];
   for (const item of raw) {
@@ -74,6 +78,27 @@ export interface GalleryItem {
   date: string;
 }
 
+export interface ThemeSectionCardJson {
+  num: string;
+  corner: string;
+  title: string;
+  place: string;
+  time: string;
+  badge: string;
+  photo: string;
+}
+
+export interface ThemeSectionConfig {
+  chapterBadge?: string;
+  title?: string;
+  subtitle?: string;
+  footerLabel?: string;
+  audioSrc?: string;
+  groomImage?: string;
+  brideImage?: string;
+  cards?: ThemeSectionCardJson[];
+}
+
 export interface SiteConfiguration {
   // Active Themes (Max 5, ahly XOR zamalek)
   activeThemes: ThemeId[];
@@ -95,6 +120,7 @@ export interface SiteConfiguration {
   audioZamalek: string;
   audioAhly: string;
   audioIndian: string;
+  audioFatimid: string;
   audioMexican: string;
 
   // CARD 3: All AI Characters & Race Karts
@@ -112,6 +138,8 @@ export interface SiteConfiguration {
   ahlyBrideUrl: string;
   indianGroomUrl: string;
   indianBrideUrl: string;
+  fatimidGroomUrl: string;
+  fatimidBrideUrl: string;
   mexicanGroomUrl: string;
   mexicanBrideUrl: string;
   raceGroomAvatarUrl: string;
@@ -119,17 +147,19 @@ export interface SiteConfiguration {
   raceGroomKartUrl: string;
   raceBrideKartUrl: string;
 
-  // CARD 4: Mass Gallery
+  // CARD 4: Mass Gallery & Static JSON Section Overrides
+  profileName?: string;
+  sections?: Partial<Record<ThemeId, ThemeSectionConfig>>;
   gallery: GalleryItem[];
   lastUpdated?: string;
 }
 
-export const DEFAULT_CONFIG: SiteConfiguration = {
-  activeThemes: ["ahly", "indian", "mexican"],
+const BASE_FALLBACK_CONFIG: SiteConfiguration = {
+  activeThemes: ["ahly", "saidi", "fatimid", "cinema"],
 
   // Card 1
-  groomName: "كرم",
-  brideName: "هدير",
+  groomName: "Mohamed",
+  brideName: "Manal",
   engagementDate: "2023-08-10",
   weddingDate: "2024-11-15",
   mainHeroBgUrl:
@@ -145,8 +175,9 @@ export const DEFAULT_CONFIG: SiteConfiguration = {
   audioCinema: "/audio/track-d-cinema.mp3",
   audioFalahi: "/audio/hadret-el-omda.mp3",
   audioZamalek: "/audio/zamalek-curva-sud.mp3",
-  audioAhly: "/audio/pharaonic-track.mp3",
+  audioAhly: "/audio/ahly.mp3",
   audioIndian: "/audio/pharaonic-track.mp3",
+  audioFatimid: "/audio/fatami.mp3",
   audioMexican: "/audio/pharaonic-track.mp3",
 
   // Card 3: All AI Characters
@@ -164,6 +195,8 @@ export const DEFAULT_CONFIG: SiteConfiguration = {
   ahlyBrideUrl: "/statues/zamalek-bride.png",
   indianGroomUrl: "/statues/tutankhamun.png",
   indianBrideUrl: "/statues/nefertiti.png",
+  fatimidGroomUrl: "/statues/saidi-man.png",
+  fatimidBrideUrl: "/statues/saidi-woman.png",
   mexicanGroomUrl: "/statues/saidi-man.png",
   mexicanBrideUrl: "/statues/saidi-woman.png",
   raceGroomAvatarUrl: "/race/groom-avatar.png",
@@ -194,14 +227,98 @@ export const DEFAULT_CONFIG: SiteConfiguration = {
   ],
 };
 
-export const STORAGE_KEY = "WEDDING_ADMIN_CONFIG";
+// Synchronously load active static JSON profile (zero async database fetch)
+const ACTIVE_STATIC_JSON = loadActiveStaticConfig() as Partial<SiteConfiguration> &
+  Record<string, unknown>;
+
+function normalizeSections(
+  sections?: Partial<Record<ThemeId, ThemeSectionConfig>>
+): Partial<Record<ThemeId, ThemeSectionConfig>> | undefined {
+  if (!sections) return undefined;
+  const normalized: Partial<Record<ThemeId, ThemeSectionConfig>> = {};
+  for (const key of Object.keys(sections) as ThemeId[]) {
+    const entry = sections[key];
+    if (!entry) continue;
+    normalized[key] = {
+      ...entry,
+      groomImage: entry.groomImage
+        ? resolveProtectedAssetUrl(entry.groomImage, { maxWidth: 960 })
+        : undefined,
+      brideImage: entry.brideImage
+        ? resolveProtectedAssetUrl(entry.brideImage, { maxWidth: 960 })
+        : undefined,
+      cards: Array.isArray(entry.cards)
+        ? entry.cards.map((card) => ({
+            ...card,
+            photo: resolveProtectedAssetUrl(card.photo, { maxWidth: 1000 }),
+          }))
+        : undefined,
+    };
+  }
+  return normalized;
+}
+
+function normalizeImageUrls(cfg: SiteConfiguration): SiteConfiguration {
+  return {
+    ...cfg,
+    mainHeroBgUrl: resolveProtectedAssetUrl(cfg.mainHeroBgUrl, { maxWidth: 2000 }),
+    groomChildhoodUrl: resolveProtectedAssetUrl(cfg.groomChildhoodUrl, { maxWidth: 600 }),
+    brideChildhoodUrl: resolveProtectedAssetUrl(cfg.brideChildhoodUrl, { maxWidth: 600 }),
+    pharaonicGroomUrl: resolveProtectedAssetUrl(cfg.pharaonicGroomUrl, { maxWidth: 960 }),
+    pharaonicBrideUrl: resolveProtectedAssetUrl(cfg.pharaonicBrideUrl, { maxWidth: 960 }),
+    saidiGroomUrl: resolveProtectedAssetUrl(cfg.saidiGroomUrl, { maxWidth: 960 }),
+    saidiBrideUrl: resolveProtectedAssetUrl(cfg.saidiBrideUrl, { maxWidth: 960 }),
+    cinemaGroomUrl: resolveProtectedAssetUrl(cfg.cinemaGroomUrl, { maxWidth: 960 }),
+    cinemaBrideUrl: resolveProtectedAssetUrl(cfg.cinemaBrideUrl, { maxWidth: 960 }),
+    falahiGroomUrl: resolveProtectedAssetUrl(cfg.falahiGroomUrl, { maxWidth: 960 }),
+    falahiBrideUrl: resolveProtectedAssetUrl(cfg.falahiBrideUrl, { maxWidth: 960 }),
+    zamalekGroomUrl: resolveProtectedAssetUrl(cfg.zamalekGroomUrl, { maxWidth: 960 }),
+    zamalekBrideUrl: resolveProtectedAssetUrl(cfg.zamalekBrideUrl, { maxWidth: 960 }),
+    ahlyGroomUrl: resolveProtectedAssetUrl(cfg.ahlyGroomUrl, { maxWidth: 960 }),
+    ahlyBrideUrl: resolveProtectedAssetUrl(cfg.ahlyBrideUrl, { maxWidth: 960 }),
+    indianGroomUrl: resolveProtectedAssetUrl(cfg.indianGroomUrl, { maxWidth: 960 }),
+    indianBrideUrl: resolveProtectedAssetUrl(cfg.indianBrideUrl, { maxWidth: 960 }),
+    fatimidGroomUrl: resolveProtectedAssetUrl(cfg.fatimidGroomUrl, { maxWidth: 960 }),
+    fatimidBrideUrl: resolveProtectedAssetUrl(cfg.fatimidBrideUrl, { maxWidth: 960 }),
+    mexicanGroomUrl: resolveProtectedAssetUrl(cfg.mexicanGroomUrl, { maxWidth: 960 }),
+    mexicanBrideUrl: resolveProtectedAssetUrl(cfg.mexicanBrideUrl, { maxWidth: 960 }),
+    raceGroomAvatarUrl: resolveProtectedAssetUrl(cfg.raceGroomAvatarUrl, { maxWidth: 640 }),
+    raceBrideAvatarUrl: resolveProtectedAssetUrl(cfg.raceBrideAvatarUrl, { maxWidth: 640 }),
+    raceGroomKartUrl: resolveProtectedAssetUrl(cfg.raceGroomKartUrl, { maxWidth: 800 }),
+    raceBrideKartUrl: resolveProtectedAssetUrl(cfg.raceBrideKartUrl, { maxWidth: 800 }),
+    sections: normalizeSections(cfg.sections),
+    gallery: cfg.gallery.map((item) => ({
+      ...item,
+      url: resolveProtectedAssetUrl(item.url, { maxWidth: 1200 }),
+    })),
+  };
+}
+
+export const DEFAULT_CONFIG: SiteConfiguration = normalizeImageUrls({
+  ...BASE_FALLBACK_CONFIG,
+  ...ACTIVE_STATIC_JSON,
+  activeThemes: sanitizeActiveThemes(
+    ACTIVE_STATIC_JSON.activeThemes ?? BASE_FALLBACK_CONFIG.activeThemes
+  ),
+  sections:
+    (ACTIVE_STATIC_JSON.sections as SiteConfiguration["sections"]) ?? undefined,
+  gallery: Array.isArray(ACTIVE_STATIC_JSON.gallery)
+    ? (ACTIVE_STATIC_JSON.gallery as GalleryItem[])
+    : BASE_FALLBACK_CONFIG.gallery,
+});
+
+export const STORAGE_KEY = `WEDDING_ADMIN_CONFIG_V2_${getActiveProfileKey()}`;
 
 export function normalizeConfig(
   raw: Partial<SiteConfiguration> & Record<string, unknown>
 ): SiteConfiguration {
-  return {
+  return normalizeImageUrls({
     ...DEFAULT_CONFIG,
     ...raw,
+    sections: {
+      ...(DEFAULT_CONFIG.sections || {}),
+      ...((raw.sections as SiteConfiguration["sections"]) || {}),
+    },
     activeThemes: sanitizeActiveThemes(raw.activeThemes),
     audioPharaonic:
       (raw.audioPharaonic as string) ||
@@ -238,7 +355,7 @@ export function normalizeConfig(
     gallery: Array.isArray(raw.gallery)
       ? raw.gallery
       : DEFAULT_CONFIG.gallery,
-  };
+  });
 }
 
 const ROTATIONS = [-12, -9, -6, -4, -2, 2, 4, 6, 8, 10, 12, -8, 7, -10, 9];
@@ -272,13 +389,23 @@ export function buildDynamicRomanceImages(gallery: GalleryItem[]): RomanceImage[
 export function mergeGalleryIntoCards<
   T extends { photo: string; title: string; time: string }
 >(defaults: T[], gallery: GalleryItem[], offset = 0): T[] {
-  if (!gallery || gallery.length === 0) return defaults;
+  if (!gallery || gallery.length === 0) {
+    return defaults.map((card) => ({
+      ...card,
+      photo: resolveProtectedAssetUrl(card.photo, { maxWidth: 1000 }),
+    }));
+  }
   return defaults.map((card, index) => {
     const item = gallery[(index + offset) % gallery.length];
-    if (!item) return card;
+    if (!item) {
+      return {
+        ...card,
+        photo: resolveProtectedAssetUrl(card.photo, { maxWidth: 1000 }),
+      };
+    }
     return {
       ...card,
-      photo: item.url || card.photo,
+      photo: resolveProtectedAssetUrl(item.url || card.photo, { maxWidth: 1000 }),
       title: item.caption?.trim() ? item.caption : card.title,
       time: item.date?.trim() ? item.date : card.time,
     };
@@ -303,38 +430,16 @@ export const WeddingConfigProvider: React.FC<{ children: React.ReactNode }> = ({
   const [config, setConfig] = useState<SiteConfiguration>(DEFAULT_CONFIG);
 
   useEffect(() => {
-    let loadedFromLocal = false;
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored) as Partial<SiteConfiguration> &
           Record<string, unknown>;
         setConfig(normalizeConfig(parsed));
-        loadedFromLocal = true;
       }
     } catch (e) {
       console.warn("Could not load stored config from localStorage:", e);
     }
-
-    fetch("/api/config")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data?.config) {
-          const normalized = normalizeConfig(data.config);
-          if (!loadedFromLocal) {
-            setConfig(normalized);
-          } else {
-            setConfig((prev) => {
-              const prevTime = prev.lastUpdated ? Date.parse(prev.lastUpdated) : 0;
-              const apiTime = normalized.lastUpdated
-                ? Date.parse(normalized.lastUpdated)
-                : 0;
-              return apiTime > prevTime ? normalized : prev;
-            });
-          }
-        }
-      })
-      .catch(() => {});
 
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === STORAGE_KEY && e.newValue) {

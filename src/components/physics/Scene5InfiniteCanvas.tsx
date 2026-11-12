@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useRef, useState, useMemo } from "react";
+import React, { useRef, useState, useMemo, useEffect } from "react";
 import Image from "next/image";
+import { motion, AnimatePresence } from "framer-motion";
 import { useGesture } from "@use-gesture/react";
 import confetti from "canvas-confetti";
 import { differenceInDays } from "date-fns";
@@ -14,7 +15,11 @@ import {
   Heart,
   Share2,
   Check,
+  X,
+  MapPin,
+  Calendar,
 } from "lucide-react";
+import { RomanceImage } from "@/data/romanticImages";
 import { romanticAudio } from "@/utils/audioSynthesizer";
 import {
   useWeddingConfig,
@@ -31,7 +36,7 @@ export const Scene5InfiniteCanvas: React.FC<Scene5InfiniteCanvasProps> = ({
   const { config } = useWeddingConfig();
   const canvasImages = useMemo(
     () => buildDynamicRomanceImages(config.gallery),
-    [config.gallery]
+    [config.gallery],
   );
   const daysLoved = useMemo(() => {
     const start = new Date(config.engagementDate || config.weddingDate);
@@ -40,11 +45,27 @@ export const Scene5InfiniteCanvas: React.FC<Scene5InfiniteCanvasProps> = ({
   }, [config.engagementDate, config.weddingDate]);
 
   const targetRef = useRef<HTMLDivElement>(null);
+  const pointerDownPosRef = useRef<{ x: number; y: number } | null>(null);
 
-  // 2D Pan Coordinates & Zoom Factor
-  const [position, setPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  // 2D Pan Coordinates, Zoom Factor & Lightbox State
+  const [position, setPosition] = useState<{ x: number; y: number }>({
+    x: 0,
+    y: 0,
+  });
   const [zoom, setZoom] = useState<number>(1);
   const [copied, setCopied] = useState<boolean>(false);
+  const [selectedImage, setSelectedImage] = useState<RomanceImage | null>(null);
+
+  useEffect(() => {
+    if (!selectedImage) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setSelectedImage(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedImage]);
 
   // Bind Pan & Pinch / Wheel gestures with @use-gesture/react
   useGesture(
@@ -68,7 +89,7 @@ export const Scene5InfiniteCanvas: React.FC<Scene5InfiniteCanvasProps> = ({
         from: () => [position.x, position.y],
         filterTaps: true,
       },
-    }
+    },
   );
 
   const resetView = () => {
@@ -90,7 +111,7 @@ export const Scene5InfiniteCanvas: React.FC<Scene5InfiniteCanvasProps> = ({
     triggerConfetti();
     if (typeof navigator !== "undefined" && navigator.clipboard) {
       navigator.clipboard.writeText(
-        `${config.groomName} & ${config.brideName} • Wedding Story: All ${canvasImages.length} Moments Explored!`
+        `${config.groomName} & ${config.brideName} • Wedding Story: All ${canvasImages.length} Moments Explored!`,
       );
       setCopied(true);
       setTimeout(() => setCopied(false), 3000);
@@ -104,7 +125,9 @@ export const Scene5InfiniteCanvas: React.FC<Scene5InfiniteCanvasProps> = ({
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-romantic-roseGold/30 text-xs font-semibold text-romantic-roseGoldLight mb-1">
             <Move className="w-3.5 h-3.5 text-romantic-roseGold" />
-            <span>Scene 10 • The Infinite Canvas ({canvasImages.length} Memories)</span>
+            <span>
+              Scene 10 • The Infinite Canvas ({canvasImages.length} Memories)
+            </span>
           </div>
           <h2 className="font-serif text-2xl sm:text-3xl font-bold text-white">
             The Infinite Memory Cosmos
@@ -177,17 +200,26 @@ export const Scene5InfiniteCanvas: React.FC<Scene5InfiniteCanvasProps> = ({
               Forever &amp; Always Bound
             </p>
             <p className="text-xs text-romantic-muted mt-2 leading-relaxed">
-              You&apos;ve navigated through every chapter, portrait, and shared memory in our wedding story.
+              You&apos;ve navigated through every chapter, portrait, and shared
+              memory in our wedding story.
             </p>
 
             <div className="grid grid-cols-2 gap-2 my-4">
               <div className="p-2.5 rounded-xl bg-romantic-creamy border border-romantic-roseGold/20">
-                <span className="text-[10px] text-romantic-muted uppercase">Days Loved</span>
-                <p className="font-serif text-lg font-bold">{daysLoved.toLocaleString()}</p>
+                <span className="text-[10px] text-romantic-muted uppercase">
+                  Days Loved
+                </span>
+                <p className="font-serif text-lg font-bold">
+                  {daysLoved.toLocaleString()}
+                </p>
               </div>
               <div className="p-2.5 rounded-xl bg-romantic-creamy border border-romantic-roseGold/20">
-                <span className="text-[10px] text-romantic-muted uppercase">Memories</span>
-                <p className="font-serif text-lg font-bold">{canvasImages.length} / {canvasImages.length}</p>
+                <span className="text-[10px] text-romantic-muted uppercase">
+                  Memories
+                </span>
+                <p className="font-serif text-lg font-bold">
+                  {canvasImages.length} / {canvasImages.length}
+                </p>
               </div>
             </div>
 
@@ -196,7 +228,11 @@ export const Scene5InfiniteCanvas: React.FC<Scene5InfiniteCanvasProps> = ({
                 onClick={handleShare}
                 className="px-5 py-2.5 rounded-full bg-gradient-to-r from-romantic-roseGold to-romantic-roseGoldLight text-romantic-charcoal font-bold text-xs shadow-md hover:scale-105 active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer"
               >
-                {copied ? <Check className="w-3.5 h-3.5" /> : <Share2 className="w-3.5 h-3.5" />}
+                {copied ? (
+                  <Check className="w-3.5 h-3.5" />
+                ) : (
+                  <Share2 className="w-3.5 h-3.5" />
+                )}
                 <span>{copied ? "Copied!" : "Share Love Story"}</span>
               </button>
 
@@ -215,7 +251,33 @@ export const Scene5InfiniteCanvas: React.FC<Scene5InfiniteCanvasProps> = ({
             return (
               <div
                 key={img.id}
-                className="absolute rounded-2xl p-3 bg-white/85 backdrop-blur-md border border-white/60 polaroid-shadow hover:scale-115 hover:z-50 hover:shadow-2xl transition-all duration-300"
+                role="button"
+                tabIndex={0}
+                aria-label={`Zoom into ${img.caption}`}
+                onPointerDown={(e) => {
+                  pointerDownPosRef.current = { x: e.clientX, y: e.clientY };
+                }}
+                onClick={(e) => {
+                  const start = pointerDownPosRef.current;
+                  if (start) {
+                    const dist = Math.hypot(
+                      e.clientX - start.x,
+                      e.clientY - start.y,
+                    );
+                    if (dist > 6) return;
+                  }
+                  e.stopPropagation();
+                  romanticAudio?.playGlideSfx();
+                  setSelectedImage(img);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    romanticAudio?.playGlideSfx();
+                    setSelectedImage(img);
+                  }
+                }}
+                className="group absolute rounded-2xl p-3 bg-white/85 backdrop-blur-md border border-white/60 polaroid-shadow hover:scale-115 hover:z-50 hover:shadow-2xl transition-all duration-300 cursor-pointer"
                 style={{
                   left: `${img.canvasX * 1.5}px`,
                   top: `${img.canvasY * 1.5}px`,
@@ -230,10 +292,13 @@ export const Scene5InfiniteCanvas: React.FC<Scene5InfiniteCanvasProps> = ({
                     fill
                     unoptimized
                     sizes="240px"
-                    className="object-cover"
+                    className="object-cover transition-transform duration-300 group-hover:scale-105"
                   />
                   <div className="absolute top-1.5 right-1.5 p-1 rounded-full bg-white/80 shadow-sm">
                     <Heart className="w-3 h-3 text-rose-500 fill-rose-500" />
+                  </div>
+                  <div className="pointer-events-none absolute bottom-1.5 right-1.5 p-1.5 rounded-full bg-black/55 text-white opacity-0 group-hover:opacity-100 transition-opacity shadow-sm">
+                    <ZoomIn className="w-3.5 h-3.5" />
                   </div>
                 </div>
 
@@ -242,7 +307,9 @@ export const Scene5InfiniteCanvas: React.FC<Scene5InfiniteCanvasProps> = ({
                     &ldquo;{img.caption}&rdquo;
                   </p>
                   <div className="flex items-center justify-between text-[9px] text-romantic-muted mt-1 font-sans">
-                    <span className="truncate">{img.location.split(",")[0]}</span>
+                    <span className="truncate">
+                      {img.location.split(",")[0]}
+                    </span>
                     <span className="font-bold text-romantic-roseGoldDark">
                       #{img.id}
                     </span>
@@ -258,13 +325,78 @@ export const Scene5InfiniteCanvas: React.FC<Scene5InfiniteCanvasProps> = ({
       <footer className="relative z-30 px-6 py-3 bg-black/40 backdrop-blur-md border-t border-romantic-roseGold/20 flex items-center justify-between text-xs text-romantic-muted">
         <span className="flex items-center gap-1.5">
           <Move className="w-3.5 h-3.5 text-romantic-roseGold" />
-          Click &amp; drag anywhere to Pan. Scroll mouse wheel or pinch to Zoom across all {canvasImages.length} memories.
+          in. Drag anywhere to Pan, or scroll/pinch to Zoom across all{" "}
+          {canvasImages.length} memories.
         </span>
         <span className="font-semibold text-romantic-roseGoldLight">
-          Physics Engine Active • {canvasImages.length}/{canvasImages.length} Memories
+          Physics Engine Active • {canvasImages.length}/{canvasImages.length}{" "}
+          Memories
         </span>
       </footer>
+
+      {/* Full-Screen Zoom Lightbox Modal */}
+      <AnimatePresence>
+        {selectedImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            onClick={() => setSelectedImage(null)}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-8 bg-black/85 backdrop-blur-md cursor-zoom-out"
+          >
+            <motion.div
+              initial={{ scale: 0.88, y: 18, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.88, y: 18, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 320, damping: 26 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative w-full max-w-4xl rounded-3xl bg-[#FFFDF9] p-4 sm:p-6 shadow-2xl border-2 border-romantic-roseGold/50 cursor-default"
+            >
+              <button
+                type="button"
+                onClick={() => setSelectedImage(null)}
+                aria-label="Close zoomed image"
+                className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 p-2 rounded-full bg-black/10 hover:bg-black/20 text-romantic-charcoal transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <div className="relative w-full h-[55vh] sm:h-[68vh] rounded-2xl overflow-hidden bg-stone-950 flex items-center justify-center">
+                <Image
+                  src={selectedImage.url}
+                  alt={selectedImage.caption}
+                  fill
+                  unoptimized
+                  sizes="(max-width: 1024px) 100vw, 900px"
+                  className="object-contain"
+                />
+              </div>
+
+              <div className="pt-4 text-center text-romantic-charcoal">
+                <p className="font-handwriting text-2xl sm:text-3xl font-bold leading-snug">
+                  &ldquo;{selectedImage.caption}&rdquo;
+                </p>
+                <div className="mt-2 flex flex-wrap items-center justify-center gap-4 text-xs text-romantic-muted font-medium">
+                  <span className="flex items-center gap-1">
+                    <MapPin className="w-3.5 h-3.5 text-romantic-roseGold" />
+                    {selectedImage.location}
+                  </span>
+                  <span>•</span>
+                  <span className="flex items-center gap-1">
+                    <Calendar className="w-3.5 h-3.5 text-romantic-roseGold" />
+                    {selectedImage.date}
+                  </span>
+                  <span>•</span>
+                  <span className="font-bold text-romantic-roseGoldDark">
+                    Memory #{selectedImage.id}
+                  </span>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
-

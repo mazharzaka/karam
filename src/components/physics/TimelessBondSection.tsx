@@ -27,7 +27,6 @@ import {
 
 const GOLD = "#C9A227";
 const MARQUEE_SPEED_PX_PER_SEC = 45;
-const AUDIO_SRC = "/audio/pharaonic-track.mp3";
 const STATUE_LEFT_SRC = "/statues/tutankhamun.png";
 const STATUE_RIGHT_SRC = "/statues/nefertiti.png";
 
@@ -246,7 +245,7 @@ export default function TimelessBondSection({
   // to resting position "0%". When scrolling past, they sink smoothly back to "100%".
   const statueY = useTransform(
     scrollYProgress,
-    [0, 0.22, 0.46, 0.72, 1],
+    [0, 0.25, 0.45, 0.72, 0.96],
     ["100%", "100%", "0%", "0%", "100%"]
   );
 
@@ -304,7 +303,7 @@ export default function TimelessBondSection({
         x.set(0);
         run();
       })
-      .catch(() => {});
+      .catch(() => { });
   }, [controls, loopDistance, x]);
 
   useEffect(() => {
@@ -354,7 +353,6 @@ export default function TimelessBondSection({
     >
       <audio
         ref={audioRef}
-        src={config.audioPharaonic || AUDIO_SRC}
         loop
         preload="auto"
         className="hidden"
@@ -461,7 +459,7 @@ export default function TimelessBondSection({
         />
       </motion.div>
 
-      {/* Hero character: Pharaonic Bride (Right - Facing Inward toward Groom, matching Saidi section) */}
+      {/* Hero character: Pharaonic Bride (Right - Standard Facing, matching Saidi section) */}
       <motion.div
         style={{ y: statueY, opacity: statueOpacity }}
         className="pointer-events-none absolute bottom-0 right-0 z-20 h-[95%] max-h-[800px] w-auto max-w-[42vw] min-w-[300px] flex items-end justify-end will-change-transform"
@@ -480,11 +478,9 @@ export default function TimelessBondSection({
         <span>✦ Hover over any photo card to softly glide and view cherished memories.</span>
         <span className="flex items-center gap-3">
           <span>24 Moments • Infinite Auto-Marquee</span>
-          <span className="h-3 w-px bg-[#C9A227]/50" />
-          <span className="font-serif italic text-[#C9A227]">A Timeless Bond</span>
         </span>
       </footer>
-    </section>
+    </section >
   );
 }
 

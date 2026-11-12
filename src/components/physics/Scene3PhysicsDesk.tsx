@@ -37,11 +37,11 @@ export const Scene3PhysicsDesk: React.FC<Scene3PhysicsDeskProps> = () => {
   const { config } = useWeddingConfig();
   const deskImages = useMemo(
     () => buildDynamicRomanceImages(config.gallery).slice(0, 30),
-    [config.gallery]
+    [config.gallery],
   );
   const deskRef = useRef<HTMLDivElement>(null);
   const [activeZ, setActiveZ] = useState<number>(100);
-  const [layoutMode, setLayoutMode] = useState<"scatter" | "stack">("scatter");
+  const [layoutMode, setLayoutMode] = useState<"scatter" | "stack">("stack");
   const [scatterSeed, setScatterSeed] = useState<number>(0);
   const [selectedPhoto, setSelectedPhoto] = useState<RomanceImage | null>(null);
 
@@ -78,13 +78,16 @@ export const Scene3PhysicsDesk: React.FC<Scene3PhysicsDeskProps> = () => {
         <div className="text-center md:text-left">
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/80 backdrop-blur-md border border-romantic-roseGold/30 text-xs font-semibold text-romantic-charcoal mb-1 shadow-sm">
             <Camera className="w-3.5 h-3.5 text-romantic-roseGold" />
-            <span>Scene 03 • The Physics Scrapbook Desk (30 Interactive Polaroids)</span>
+            <span>
+              Scene 03 • The Physics Scrapbook Desk (30 Interactive Polaroids)
+            </span>
           </div>
           <h2 className="font-serif text-3xl sm:text-4xl font-bold text-romantic-charcoal tracking-tight">
             The Physics Scrapbook Desk
           </h2>
           <p className="font-serif text-sm sm:text-base text-romantic-roseGoldDark italic mt-0.5">
-            Toss, stack, and inspect our moments across the virtual mahogany table.
+            Toss, stack, and inspect our moments across the virtual mahogany
+            table.
           </p>
         </div>
 
@@ -129,9 +132,7 @@ export const Scene3PhysicsDesk: React.FC<Scene3PhysicsDeskProps> = () => {
       </div>
 
       {/* Virtual Table Top with 30 Draggable Polaroids */}
-      <div
-        className="relative flex-1 w-full max-w-7xl mx-auto my-3 rounded-3xl bg-white/30 backdrop-blur-sm border-2 border-dashed border-romantic-roseGold/30 overflow-hidden flex items-center justify-center min-h-[460px]"
-      >
+      <div className="relative flex-1 w-full max-w-7xl mx-auto my-3 rounded-3xl bg-white/30 backdrop-blur-sm border-2 border-dashed border-romantic-roseGold/30 overflow-hidden flex items-center justify-center min-h-[460px]">
         {deskImages.map((photo, index) => (
           <DraggableScrapbookPolaroid
             key={`${photo.id}-${scatterSeed}`}
@@ -161,11 +162,14 @@ export const Scene3PhysicsDesk: React.FC<Scene3PhysicsDeskProps> = () => {
         <span className="flex items-center gap-2">
           <Sparkles className="w-3.5 h-3.5 text-romantic-roseGold" />
           <span>
-            Click to zoom into any memory. Drag and toss freely with momentum inertia and spring physics.
+            Click to zoom into any memory. Drag and toss freely with momentum
+            inertia and spring physics.
           </span>
         </span>
         <div className="flex items-center gap-3 font-semibold text-romantic-charcoal">
-          <span>Mode: {layoutMode === "scatter" ? "Free Scatter" : "Tidy Stack"}</span>
+          <span>
+            Mode: {layoutMode === "scatter" ? "Free Scatter" : "Tidy Stack"}
+          </span>
           <span className="text-romantic-roseGold/40">•</span>
           <span>{deskImages.length} Physics Polaroids</span>
         </div>
@@ -266,14 +270,20 @@ const DraggableScrapbookPolaroid: React.FC<DraggableScrapbookPolaroidProps> = ({
   currentZ,
 }) => {
   const [zIndex, setZIndex] = useState<number>(index + 10);
-  const washiStyle = useMemo(() => WASHI_TAPES[index % WASHI_TAPES.length], [index]);
+  const washiStyle = useMemo(
+    () => WASHI_TAPES[index % WASHI_TAPES.length],
+    [index],
+  );
 
   // Target coordinates depending on layout mode:
   // "scatter": spread naturally across desk
   // "stack": stacked in center like a deck of cards with subtle fan offsets
-  const targetX = layoutMode === "scatter" ? photo.deskX : (index - totalCount / 2) * 1.5;
-  const targetY = layoutMode === "scatter" ? photo.deskY : (index - totalCount / 2) * 0.8;
-  const targetRotation = layoutMode === "scatter" ? photo.rotation : ((index % 7) - 3) * 1.5;
+  const targetX =
+    layoutMode === "scatter" ? photo.deskX : (index - totalCount / 2) * 1.5;
+  const targetY =
+    layoutMode === "scatter" ? photo.deskY : (index - totalCount / 2) * 0.8;
+  const targetRotation =
+    layoutMode === "scatter" ? photo.rotation : ((index % 7) - 3) * 1.5;
 
   const handleDragStart = () => {
     setZIndex(currentZ + 100);
@@ -362,7 +372,9 @@ const DraggableScrapbookPolaroid: React.FC<DraggableScrapbookPolaroidProps> = ({
           &ldquo;{photo.caption}&rdquo;
         </p>
         <div className="flex items-center justify-between text-[9px] text-romantic-muted mt-1 font-sans">
-          <span className="truncate max-w-[120px]">{photo.location.split(",")[0]}</span>
+          <span className="truncate max-w-[120px]">
+            {photo.location.split(",")[0]}
+          </span>
           <Heart className="w-2.5 h-2.5 text-rose-400 fill-rose-400 shrink-0" />
         </div>
       </div>

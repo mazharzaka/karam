@@ -8,15 +8,9 @@ import React, {
   useRef,
   useState,
 } from "react";
-import {
-  motion,
-  useAnimation,
-  useInView,
-  useMotionValue,
-  useScroll,
-  useTransform,
-} from "framer-motion";
-import { useGlobalAudio } from "@/utils/globalAudioCoordinator";
+import { motion, useAnimation, useInView, useMotionValue } from "framer-motion";
+import { useSectionAudio } from "@/utils/globalAudioCoordinator";
+import { BottomAudioControls } from "./BottomAudioControls";
 import {
   useWeddingConfig,
   mergeGalleryIntoCards,
@@ -55,6 +49,7 @@ export interface HeritageMarqueeShellProps {
   audioSrc: string;
   groomImageSrc: string;
   brideImageSrc: string;
+  flipGroom?: boolean;
   defaultCards: ThemeMomentCard[];
   galleryOffset?: number;
   backgroundDecorations?: React.ReactNode;
@@ -106,16 +101,16 @@ export const HeritageMarqueeShell: React.FC<HeritageMarqueeShellProps> = ({
   audioSrc,
   groomImageSrc,
   brideImageSrc,
+  flipGroom = false,
   defaultCards,
   galleryOffset = 0,
   backgroundDecorations,
   onNext,
-  scrollContainerRef,
 }) => {
   const { config } = useWeddingConfig();
   const dynamicCards = useMemo(
     () => mergeGalleryIntoCards(defaultCards, config.gallery, galleryOffset),
-    [defaultCards, config.gallery, galleryOffset]
+    [defaultCards, config.gallery, galleryOffset],
   );
 
   const sectionRef = useRef<HTMLElement>(null);
@@ -130,35 +125,19 @@ export const HeritageMarqueeShell: React.FC<HeritageMarqueeShellProps> = ({
   const pausedRef = useRef<boolean>(false);
 
   const [isPaused, setIsPaused] = useState(false);
+
+  const inView = useInView(sectionRef, { amount: 0.35 });
+  const charactersInView = useInView(sectionRef, { amount: 0.12 });
+
   const {
-    isEnabled: isGlobalAudioEnabled,
-    toggleAudio,
-    playTrack,
-    stopTrack,
-  } = useGlobalAudio();
-  const isMuted = !isGlobalAudioEnabled;
-
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    container: scrollContainerRef?.current ? scrollContainerRef : undefined,
-    offset: ["start end", "end start"],
-  });
-
-  const heroY = useTransform(
-    scrollYProgress,
-    [0, 0.22, 0.46, 0.72, 1],
-    ["100%", "100%", "0%", "0%", "100%"]
-  );
-  const heroOpacity = useTransform(
-    scrollYProgress,
-    [0, 0.2, 0.38, 0.74, 0.96],
-    [0, 0, 1, 1, 0]
-  );
-
-  const inView = useInView(sectionRef, {
-    root: scrollContainerRef?.current ? scrollContainerRef : undefined,
-    amount: 0.35,
-  });
+    isMuted,
+    toggleGlobalMute,
+    isTrackPlaying,
+    togglePlayStop,
+    volume,
+    increaseVolume,
+    decreaseVolume,
+  } = useSectionAudio(audioRef, inView);
 
   useLayoutEffect(() => {
     const track = trackRef.current;
@@ -228,39 +207,36 @@ export const HeritageMarqueeShell: React.FC<HeritageMarqueeShellProps> = ({
     }
   };
 
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    if (inView && isGlobalAudioEnabled) {
-      playTrack(audio, 0.85);
-    } else {
-      stopTrack(audio, 800);
-    }
-  }, [inView, isGlobalAudioEnabled, playTrack, stopTrack]);
-
   const loopedCards = [...dynamicCards, ...dynamicCards];
 
   return (
     <section
       ref={sectionRef}
       id={id}
-      className={`relative isolate flex h-[82vh] min-h-[640px] max-h-[820px] w-full flex-col overflow-hidden select-none ${backgroundClassName}`}
+      className={`relative isolate w-full min-h-[90vh] overflow-hidden flex flex-col justify-center select-none ${backgroundClassName}`}
     >
-      <audio ref={audioRef} src={audioSrc} loop preload="auto" className="hidden" />
+      <audio
+        ref={audioRef}
+        src={audioSrc}
+        loop
+        preload="auto"
+        className="hidden"
+      />
 
       {backgroundDecorations}
 
       {/* Top-Right Controls */}
-      <div className="absolute right-6 top-6 z-40 flex items-center gap-2.5">
+      <div className="absolute right-6 top-6 z-50 flex items-center gap-2.5">
         <button
           type="button"
-          onClick={toggleAudio}
-          aria-label={isMuted ? "Unmute music" : "Mute music"}
+          onClick={toggleGlobalMute}
+          aria-label={isMuted ? "Unmute all audio" : "Mute all audio"}
+          title={isMuted ? "Unmute All" : "Mute All"}
           className="flex items-center gap-1.5 rounded-full border border-white/40 bg-white/90 px-3 py-2 text-xs font-bold text-[#2B1D24] shadow-sm transition-all duration-200 hover:scale-105 cursor-pointer"
         >
           <VolumeIcon muted={isMuted} className="h-4 w-4" />
           <span className="hidden sm:inline font-sans">
-            {isMuted ? "Unmute" : "Music"}
+            {isMuted ? "Muted" : "Mute All"}
           </span>
         </button>
 
@@ -307,7 +283,7 @@ export const HeritageMarqueeShell: React.FC<HeritageMarqueeShellProps> = ({
       </header>
 
       {/* Kotsheena 3-Card Marquee */}
-      <div className="relative z-10 my-auto h-[440px] min-h-[400px] overflow-hidden">
+      <div className="relative z-20 my-auto h-[440px] min-h-[400px] w-full overflow-hidden">
         <motion.div
           ref={trackRef}
           animate={controls}
@@ -315,8 +291,7 @@ export const HeritageMarqueeShell: React.FC<HeritageMarqueeShellProps> = ({
           className="flex w-max gap-6 will-change-transform"
         >
           {loopedCards.map((card, i) => {
-            const rot =
-              ROTATIONS[(i % dynamicCards.length) % ROTATIONS.length];
+            const rot = ROTATIONS[(i % dynamicCards.length) % ROTATIONS.length];
             return (
               <div
                 key={`${card.num}-${i}`}
@@ -372,45 +347,64 @@ export const HeritageMarqueeShell: React.FC<HeritageMarqueeShellProps> = ({
         </motion.div>
       </div>
 
-      {/* Left Character (Mirrored Inward) */}
+      {/* Left Character (Standard Clean Bottom-Anchored Framing) */}
       <motion.div
-        style={{ y: heroY, opacity: heroOpacity }}
-        className="pointer-events-none absolute bottom-0 left-0 z-20 h-[95%] max-h-[800px] w-auto max-w-[42vw] min-w-[300px] flex items-end justify-start will-change-transform"
+        initial={{ opacity: 0, y: 40 }}
+        animate={
+          charactersInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }
+        }
+        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+        className="absolute bottom-0 left-0 z-50 w-44 md:w-64 lg:w-80 pointer-events-none"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={groomImageSrc}
           alt={`${config.groomName} ${title}`}
           aria-hidden="true"
-          className="-scale-x-100 h-full w-auto object-contain object-bottom drop-shadow-2xl"
-          style={{ transform: "scaleX(-1)" }}
+          className={`w-full h-auto object-contain object-bottom ${flipGroom ? "scale-x-[-1]" : ""}`}
         />
       </motion.div>
 
-      {/* Right Character */}
+      {/* Right Character (Standard Clean Bottom-Anchored Framing) */}
       <motion.div
-        style={{ y: heroY, opacity: heroOpacity }}
-        className="pointer-events-none absolute bottom-0 right-0 z-20 h-[95%] max-h-[800px] w-auto max-w-[42vw] min-w-[300px] flex items-end justify-end will-change-transform"
+        initial={{ opacity: 0, y: 40 }}
+        animate={
+          charactersInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }
+        }
+        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+        className="absolute bottom-0 right-0 z-50 w-44 md:w-64 lg:w-80 pointer-events-none"
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={brideImageSrc}
           alt={`${config.brideName} ${title}`}
           aria-hidden="true"
-          className="h-full w-auto object-contain object-bottom drop-shadow-2xl"
+          className="w-full h-auto object-contain object-bottom"
         />
       </motion.div>
 
-      {/* Footer */}
+      {/* Footer + Bottom Centered Section Audio Controls */}
       <footer
-        className={`relative z-30 flex items-center justify-between px-6 pb-5 text-xs ${footerTextClassName}`}
+        className={`relative z-40 flex flex-col sm:flex-row items-center justify-between gap-2 px-6 pb-5 text-xs ${footerTextClassName}`}
       >
-        <span>
+        <span className="hidden md:inline">
           ✦ {config.groomName} &amp; {config.brideName} • {footerLabel}
         </span>
-        <span className="font-serif italic font-bold">{title}</span>
+        <div className="mx-auto sm:mx-0">
+          <BottomAudioControls
+            isPlaying={isTrackPlaying}
+            isMuted={isMuted}
+            volume={volume}
+            onTogglePlayStop={togglePlayStop}
+            onIncreaseVolume={increaseVolume}
+            onDecreaseVolume={decreaseVolume}
+            variant="dark"
+          />
+        </div>
+        <span className="hidden md:inline font-serif italic font-bold">
+          {title}
+        </span>
       </footer>
     </section>
   );
 };
-

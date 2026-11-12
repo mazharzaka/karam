@@ -146,6 +146,13 @@ const GROOM_GENERATION_TASKS: MagicGenerationTask[] = [
       "Hyper-realistic, cinematic full-body studio portrait of a handsome real Egyptian man dressed in an opulent embroidered royal Indian Sherwani in deep crimson and gold with traditional stole, warm festive smile, 10% empty padding margin, feet firmly at bottom, pure solid white background for easy cutout, 8k photorealistic photography",
   },
   {
+    key: "fatimidGroomUrl",
+    role: "groom",
+    label: "Fatimid Groom",
+    prompt:
+      "Hyper-realistic, cinematic waist-up portrait of a handsome real Egyptian man dressed in an authentic traditional Islamic Fatimid royal emerald green and antique gold embroidered kaftan and noble turban, confident warm smile, pure solid black background, 8k photorealistic photography",
+  },
+  {
     key: "mexicanGroomUrl",
     role: "groom",
     label: "Mexican Groom",
@@ -205,6 +212,13 @@ const BRIDE_GENERATION_TASKS: MagicGenerationTask[] = [
       "Hyper-realistic, cinematic full-body studio portrait of a beautiful real Egyptian woman dressed in a stunning richly embroidered crimson, magenta, and gold Indian bridal Lehenga with sheer dupatta and traditional jewelry, radiant smile, 10% empty padding margin, pure solid white background for easy cutout, 8k photorealistic photography",
   },
   {
+    key: "fatimidBrideUrl",
+    role: "bride",
+    label: "Fatimid Bride",
+    prompt:
+      "Vertical portrait (2:3). Medium waist-up portrait of a beautiful Egyptian woman dressed in an elegant traditional Islamic Fatimid royal dress in deep emerald green with intricate antique gold embroidery, delicate antique gold headpiece and modest chiffon veil, charming smile, pure solid black background, 8k photorealistic photography",
+  },
+  {
     key: "mexicanBrideUrl",
     role: "bride",
     label: "Mexican Bride",
@@ -232,6 +246,8 @@ type CharacterFieldKey =
   | "ahlyBrideUrl"
   | "indianGroomUrl"
   | "indianBrideUrl"
+  | "fatimidGroomUrl"
+  | "fatimidBrideUrl"
   | "mexicanGroomUrl"
   | "mexicanBrideUrl"
   | "raceGroomAvatarUrl"
@@ -259,6 +275,8 @@ const CHARACTER_FIELDS: {
     { key: "ahlyBrideUrl", title: "Al Ahly Bride (نادي القرن)", subtitle: "Theme: ahly", themeId: "ahly" },
     { key: "indianGroomUrl", title: "Indian Groom (ليالي بوليوود)", subtitle: "Theme: indian", themeId: "indian" },
     { key: "indianBrideUrl", title: "Indian Bride (ليالي بوليوود)", subtitle: "Theme: indian", themeId: "indian" },
+    { key: "fatimidGroomUrl", title: "Fatimid Groom (ليالي القاهرة الفاطمية)", subtitle: "Theme: fatimid", themeId: "fatimid" },
+    { key: "fatimidBrideUrl", title: "Fatimid Bride (ليالي القاهرة الفاطمية)", subtitle: "Theme: fatimid", themeId: "fatimid" },
     { key: "mexicanGroomUrl", title: "Mexican Groom (فييستا مكسيكية)", subtitle: "Theme: mexican", themeId: "mexican" },
     { key: "mexicanBrideUrl", title: "Mexican Bride (فييستا مكسيكية)", subtitle: "Theme: mexican", themeId: "mexican" },
     { key: "raceGroomAvatarUrl", title: "Race Groom Avatar", subtitle: "Couples Race Challenge" },
@@ -277,6 +295,7 @@ const AUDIO_FIELDS: {
     | "audioZamalek"
     | "audioAhly"
     | "audioIndian"
+    | "audioFatimid"
     | "audioMexican"
   >;
   label: string;
@@ -326,8 +345,14 @@ const AUDIO_FIELDS: {
       placeholder: "/audio/indian-theme.mp3",
     },
     {
+      key: "audioFatimid",
+      label: "8. Fatimid Islamic Theme Audio URL",
+      badge: "fatimid",
+      placeholder: "/audio/fatimid-theme.mp3",
+    },
+    {
       key: "audioMexican",
-      label: "8. Mexican Fiesta Theme Audio URL",
+      label: "9. Mexican Fiesta Theme Audio URL",
       badge: "mexican",
       placeholder: "/audio/mexican-theme.mp3",
     },
@@ -356,6 +381,7 @@ export default function AdminPage() {
 
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [manualAddUrl, setManualAddUrl] = useState("");
   const [lastUploadedGalleryUrl, setLastUploadedGalleryUrl] = useState("");
@@ -544,32 +570,80 @@ export default function AdminPage() {
   const handleSaveAndPublish = async () => {
     setIsSaving(true);
     setSaveSuccess(false);
+    setSaveError(null);
+
+    const existingSections = draft.sections || {};
+    const syncedSections: SiteConfiguration["sections"] = {
+      ...existingSections,
+      ahly: {
+        ...(existingSections.ahly || {}),
+        groomImage: draft.ahlyGroomUrl,
+        brideImage: draft.ahlyBrideUrl,
+        audioSrc: draft.audioAhly,
+      },
+      saidi: {
+        ...(existingSections.saidi || {}),
+        groomImage: draft.saidiGroomUrl,
+        brideImage: draft.saidiBrideUrl,
+        audioSrc: draft.audioSaidi,
+      },
+      fatimid: {
+        ...(existingSections.fatimid || {}),
+        groomImage: draft.fatimidGroomUrl,
+        brideImage: draft.fatimidBrideUrl,
+        audioSrc: draft.audioFatimid,
+      },
+      cinema: {
+        ...(existingSections.cinema || {}),
+        groomImage: draft.cinemaGroomUrl,
+        brideImage: draft.cinemaBrideUrl,
+        audioSrc: draft.audioCinema,
+      },
+    };
 
     const payload: SiteConfiguration = {
       ...draft,
+      groomName: draft.groomName?.trim() || "Mohamed",
+      brideName: draft.brideName?.trim() || "Manal",
+      sections: syncedSections,
       lastUpdated: new Date().toISOString(),
     };
 
-    // Persist immediately into global context + localStorage
-    updateConfig(payload);
-    setIsDirty(false);
-
-    // Persist to /api/config server endpoint
     try {
-      await fetch("/api/config", {
+      const res = await fetch("/api/config", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-    } catch (err) {
-      console.warn("Could not save to /api/config:", err);
-    }
 
-    setTimeout(() => {
-      setIsSaving(false);
+      const data = (await res.json().catch(() => ({}))) as {
+        success?: boolean;
+        error?: string;
+        config?: Partial<SiteConfiguration>;
+      };
+
+      if (!res.ok || !data?.success) {
+        throw new Error(
+          data?.error || `Failed to save configuration (HTTP ${res.status})`
+        );
+      }
+
+      // Persist immediately into global context + localStorage
+      updateConfig(payload);
+      setDraft(payload);
+      setIsDirty(false);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 5000);
-    }, 350);
+    } catch (err) {
+      const message =
+        err instanceof Error
+          ? err.message
+          : "Could not save configuration to server JSON file.";
+      console.error("Failed to save to /api/config:", err);
+      setSaveError(message);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -890,7 +964,7 @@ export default function AdminPage() {
                   type="text"
                   value={draft.groomName}
                   onChange={(e) => setField("groomName", e.target.value)}
-                  placeholder="e.g. كرم"
+                  placeholder="e.g. Mohamed"
                   className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/20 outline-none text-sm"
                 />
               </div>
@@ -902,7 +976,7 @@ export default function AdminPage() {
                   type="text"
                   value={draft.brideName}
                   onChange={(e) => setField("brideName", e.target.value)}
-                  placeholder="e.g. هدير"
+                  placeholder="e.g. Manal"
                   className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-[#D4AF37] focus:ring-2 focus:ring-[#D4AF37]/20 outline-none text-sm"
                 />
               </div>
@@ -1317,10 +1391,15 @@ export default function AdminPage() {
       <div className="fixed bottom-0 inset-x-0 z-50 bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] px-4 py-3.5">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="text-xs text-gray-600 flex items-center gap-2">
-            {saveSuccess ? (
+            {saveError ? (
+              <span className="inline-flex items-center gap-1.5 text-rose-700 font-bold">
+                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                Save Failed: {saveError}
+              </span>
+            ) : saveSuccess ? (
               <span className="inline-flex items-center gap-1.5 text-emerald-700 font-bold">
                 <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                Saved! All frontend sections are now synced with your updates.
+                Saved to JSON &amp; Published! All frontend sections are synced.
               </span>
             ) : (
               <span>
