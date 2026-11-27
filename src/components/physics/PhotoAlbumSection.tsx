@@ -465,7 +465,12 @@ export default function PhotoAlbumSection() {
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(212,175,55,0.06),transparent_65%)]" />
 
       {/* Background Instrumental Track (Configured via Admin Panel albumAudioUrl) */}
-      <audio ref={audioRef} src={albumAudioSrc} loop preload="none" />
+      <audio
+        ref={audioRef}
+        src={albumAudioSrc ? encodeURI(albumAudioSrc) : undefined}
+        loop
+        preload="none"
+      />
 
       {/* Top-Right Album Controls: 30s/20s Video Selector + Auto-Play + Audio Mute/Unmute */}
       <div className="relative sm:absolute sm:top-6 sm:right-6 z-30 mb-6 sm:mb-0 flex flex-wrap items-center justify-center gap-2.5">

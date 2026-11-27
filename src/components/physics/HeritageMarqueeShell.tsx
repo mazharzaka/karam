@@ -225,7 +225,7 @@ export const HeritageMarqueeShell: React.FC<HeritageMarqueeShellProps> = ({
     >
       <audio
         ref={audioRef}
-        src={audioSrc}
+        src={audioSrc ? encodeURI(audioSrc) : undefined}
         loop
         preload="auto"
         className="hidden"

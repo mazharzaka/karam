@@ -239,7 +239,12 @@ export const Scene1HeroSpotlight: React.FC<Scene1HeroSpotlightProps> = ({
       className="relative w-full h-full min-h-[92vh] flex flex-col justify-between items-center py-10 px-4 sm:px-8 bg-[#24181B] text-[#FDECEF] overflow-hidden select-none"
     >
       {/* Hero Background Audio */}
-      <audio ref={heroAudioRef} src={heroAudioSrc} loop preload="none" />
+      <audio
+        ref={heroAudioRef}
+        src={heroAudioSrc ? encodeURI(heroAudioSrc) : undefined}
+        loop
+        preload="none"
+      />
 
       {/* Top-Right Hero Audio Mute / Unmute Button */}
       <button

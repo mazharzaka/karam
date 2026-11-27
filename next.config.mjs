@@ -3,6 +3,8 @@ const nextConfig = {
   env: {
     NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME:
       process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "dsls01rrg",
+    NEXT_PUBLIC_ACTIVE_PROFILE_ID:
+      process.env.NEXT_PUBLIC_ACTIVE_PROFILE_ID || "8f92x",
   },
   images: {
     formats: ["image/avif", "image/webp"],

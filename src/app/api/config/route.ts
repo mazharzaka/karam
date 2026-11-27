@@ -2,12 +2,20 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import fs from "fs";
 import path from "path";
+import payload8f92x from "@/private/app-payload-8f92x.json";
+import payload9c34v from "@/private/app-payload-9c34v.json";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const ACTIVE_PROFILE_COOKIE = "active_profile_id";
 let inMemoryActiveProfileId: string | null = null;
+const DEFAULT_PROFILE_ID = "8f92x";
+
+const BUNDLED_PAYLOADS: Record<string, JsonRecord> = {
+  "8f92x": payload8f92x as JsonRecord,
+  "9c34v": payload9c34v as JsonRecord,
+};
 
 const PROFILE_ARABIC_LABELS: Record<string, string> = {
   "8f92x": "محمد ومنال",
@@ -26,31 +34,54 @@ function getProfileFilePath(profileId: string) {
 
 function listAvailableProfiles() {
   const privateDir = path.join(process.cwd(), "src/private");
-  if (!fs.existsSync(privateDir)) return [];
-
-  const files = fs
-    .readdirSync(privateDir)
-    .filter((f) => /^app-payload-[a-zA-Z0-9_-]+\.json$/.test(f))
-    .sort();
-
-  return files.map((filename) => {
-    const id = filename.replace(/^app-payload-/, "").replace(/\.json$/, "");
-    let label = PROFILE_ARABIC_LABELS[id] || id;
-    let groomName = "";
-    let brideName = "";
+  if (fs.existsSync(privateDir)) {
     try {
-      const parsed = JSON.parse(
-        fs.readFileSync(path.join(privateDir, filename), "utf8"),
-      ) as Record<string, unknown>;
-      groomName = typeof parsed.groomName === "string" ? parsed.groomName : "";
-      brideName = typeof parsed.brideName === "string" ? parsed.brideName : "";
-      if (!PROFILE_ARABIC_LABELS[id] && groomName && brideName) {
-        label = `${groomName} & ${brideName}`;
+      const files = fs
+        .readdirSync(privateDir)
+        .filter((f) => /^app-payload-[a-zA-Z0-9_-]+\.json$/.test(f))
+        .sort();
+
+      if (files.length > 0) {
+        return files.map((filename) => {
+          const id = filename.replace(/^app-payload-/, "").replace(/\.json$/, "");
+          let label = PROFILE_ARABIC_LABELS[id] || id;
+          let groomName = "";
+          let brideName = "";
+          try {
+            const parsed = JSON.parse(
+              fs.readFileSync(path.join(privateDir, filename), "utf8"),
+            ) as Record<string, unknown>;
+            groomName = typeof parsed.groomName === "string" ? parsed.groomName : "";
+            brideName = typeof parsed.brideName === "string" ? parsed.brideName : "";
+            if (!PROFILE_ARABIC_LABELS[id] && groomName && brideName) {
+              label = `${groomName} & ${brideName}`;
+            }
+          } catch {
+            // ignore malformed JSON
+          }
+          return { id, filename, label, groomName, brideName };
+        });
       }
     } catch {
-      // ignore malformed JSON
+      // Fall through to bundled fallback
     }
-    return { id, filename, label, groomName, brideName };
+  }
+
+  // Resilient fallback for serverless environments (Vercel)
+  return Object.keys(BUNDLED_PAYLOADS).map((id) => {
+    const data = BUNDLED_PAYLOADS[id] as Record<string, unknown>;
+    const groomName = typeof data.groomName === "string" ? data.groomName : "";
+    const brideName = typeof data.brideName === "string" ? data.brideName : "";
+    const label =
+      PROFILE_ARABIC_LABELS[id] ||
+      (groomName && brideName ? `${groomName} & ${brideName}` : id);
+    return {
+      id,
+      filename: `app-payload-${id}.json`,
+      label,
+      groomName,
+      brideName,
+    };
   });
 }
 
@@ -95,12 +126,8 @@ function getActiveConfigTarget(explicitProfileId?: string) {
     }
   }
 
-  const profileId = process.env.NEXT_PUBLIC_ACTIVE_PROFILE_ID?.trim();
-  if (!profileId) {
-    throw new Error(
-      "NEXT_PUBLIC_ACTIVE_PROFILE_ID environment variable is missing."
-    );
-  }
+  const profileId =
+    process.env.NEXT_PUBLIC_ACTIVE_PROFILE_ID?.trim() || DEFAULT_PROFILE_ID;
   return getProfileFilePath(profileId);
 }
 
@@ -179,8 +206,16 @@ export async function GET() {
     const { profileId, filename, filePath } = getActiveConfigTarget();
     let activeConfig: JsonRecord | null = null;
     if (fs.existsSync(filePath)) {
-      const rawFile = fs.readFileSync(filePath, "utf8");
-      activeConfig = JSON.parse(rawFile) as JsonRecord;
+      try {
+        const rawFile = fs.readFileSync(filePath, "utf8");
+        activeConfig = JSON.parse(rawFile) as JsonRecord;
+      } catch {
+        activeConfig = null;
+      }
+    }
+
+    if (!activeConfig) {
+      activeConfig = (BUNDLED_PAYLOADS[profileId] || payload8f92x) as JsonRecord;
     }
 
     return NextResponse.json(
@@ -203,10 +238,18 @@ export async function GET() {
     const message =
       error instanceof Error
         ? error.message
-        : "Missing NEXT_PUBLIC_ACTIVE_PROFILE_ID environment variable.";
+        : "Failed to load active profile configuration.";
+    // Even in error, return bundled default rather than 500
     return NextResponse.json(
-      { status: "error", error: message },
-      { status: 500 }
+      {
+        status: "ok",
+        profile: DEFAULT_PROFILE_ID,
+        filename: `app-payload-${DEFAULT_PROFILE_ID}.json`,
+        config: payload8f92x as JsonRecord,
+        availableProfiles: listAvailableProfiles(),
+        warning: message,
+      },
+      { status: 200 }
     );
   }
 }
@@ -386,11 +429,18 @@ export async function POST(request: Request) {
 
     merged.sections = nextSections;
 
-    fs.writeFileSync(
-      filePath,
-      `${JSON.stringify(merged, null, 2)}\n`,
-      "utf8"
-    );
+    try {
+      fs.writeFileSync(
+        filePath,
+        `${JSON.stringify(merged, null, 2)}\n`,
+        "utf8"
+      );
+    } catch (writeErr) {
+      console.warn(
+        `[API /api/config POST] Could not write to ${filePath} (read-only in serverless/Vercel):`,
+        writeErr
+      );
+    }
 
     return NextResponse.json(
       {
