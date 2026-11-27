@@ -8,7 +8,10 @@ import React, {
   useCallback,
 } from "react";
 import { ALL_80_IMAGES, RomanceImage } from "@/data/romanticImages";
-import { loadActiveStaticConfig, getActiveProfileKey } from "@/data/configLoader";
+import {
+  loadActiveStaticConfig,
+  getActiveProfileKey,
+} from "@/data/configLoader";
 import { resolveProtectedAssetUrl } from "@/utils/cloudinaryUrl";
 
 export type ThemeId =
@@ -30,39 +33,111 @@ export interface ThemeMeta {
 }
 
 export const AVAILABLE_THEMES: ThemeMeta[] = [
-  { id: "pharaonic", label: "Pharaonic", arabicTitle: "التراث الفرعوني", hudTitle: "Egyptian Heritage" },
-  { id: "saidi", label: "Saidi", arabicTitle: "أصالة وجذور", hudTitle: "Saidi Heritage" },
-  { id: "cinema", label: "1950s Cinema", arabicTitle: "زمن الفن الجميل", hudTitle: "Golden Age Cinema" },
-  { id: "falahi", label: "Falahi", arabicTitle: "أفراح الريف", hudTitle: "أفراح الريف" },
-  { id: "zamalek", label: "Zamalek SC", arabicTitle: "مدرسة الفن والهندسة", hudTitle: "Zamalek SC" },
-  { id: "ahly", label: "Al Ahly SC", arabicTitle: "نادي القرن", hudTitle: "نادي القرن" },
-  { id: "indian", label: "Indian Bollywood", arabicTitle: "ليالي بوليوود", hudTitle: "ليالي بوليوود" },
-  { id: "fatimid", label: "Fatimid Islamic", arabicTitle: "ليالي القاهرة الفاطمية", hudTitle: "Fatimid Heritage" },
-  { id: "mexican", label: "Mexican Fiesta", arabicTitle: "فييستا مكسيكية", hudTitle: "فييستا مكسيكية" },
+  {
+    id: "pharaonic",
+    label: "Pharaonic",
+    arabicTitle: "التراث الفرعوني",
+    hudTitle: "Egyptian Heritage",
+  },
+  {
+    id: "saidi",
+    label: "Saidi",
+    arabicTitle: "أصالة وجذور",
+    hudTitle: "Saidi Heritage",
+  },
+  {
+    id: "cinema",
+    label: "1950s Cinema",
+    arabicTitle: "زمن الفن الجميل",
+    hudTitle: "Golden Age Cinema",
+  },
+  {
+    id: "falahi",
+    label: "Falahi",
+    arabicTitle: "أفراح الريف",
+    hudTitle: "أفراح الريف",
+  },
+  {
+    id: "zamalek",
+    label: "Zamalek SC",
+    arabicTitle: "مدرسة الفن والهندسة",
+    hudTitle: "Zamalek SC",
+  },
+  {
+    id: "ahly",
+    label: "Al Ahly SC",
+    arabicTitle: "نادي القرن",
+    hudTitle: "نادي القرن",
+  },
+  {
+    id: "indian",
+    label: "Indian Bollywood",
+    arabicTitle: "ليالي بوليوود",
+    hudTitle: "ليالي بوليوود",
+  },
+  {
+    id: "fatimid",
+    label: "Fatimid Islamic",
+    arabicTitle: "ليالي القاهرة الفاطمية",
+    hudTitle: "Fatimid Heritage",
+  },
+  {
+    id: "mexican",
+    label: "Mexican Fiesta",
+    arabicTitle: "فييستا مكسيكية",
+    hudTitle: "فييستا مكسيكية",
+  },
 ];
 
 export const MAX_ACTIVE_THEMES = 5;
 
 const VALID_THEME_IDS = new Set<ThemeId>(AVAILABLE_THEMES.map((t) => t.id));
 
+export const PRIMARY_THEME_ORDER: ThemeId[] = [
+  "saidi",
+  "zamalek",
+  "fatimid",
+  "mexican",
+  "cinema",
+];
+
 export function sanitizeActiveThemes(raw: unknown): ThemeId[] {
-  if (!Array.isArray(raw)) {
-    return ["ahly", "saidi", "fatimid", "cinema"];
+  if (!Array.isArray(raw) || raw.length === 0) {
+    return [...PRIMARY_THEME_ORDER];
   }
-  const result: ThemeId[] = [];
+  const validThemes: ThemeId[] = [];
   for (const item of raw) {
-    if (typeof item !== "string" || !VALID_THEME_IDS.has(item as ThemeId)) continue;
+    if (typeof item !== "string" || !VALID_THEME_IDS.has(item as ThemeId))
+      continue;
     const id = item as ThemeId;
-    if (result.includes(id)) continue;
-    if (id === "ahly" && result.includes("zamalek")) continue;
-    if (id === "zamalek" && result.includes("ahly")) continue;
-    result.push(id);
-    if (result.length >= MAX_ACTIVE_THEMES) break;
+    if (validThemes.includes(id)) continue;
+    if (id === "ahly" && validThemes.includes("zamalek")) continue;
+    if (id === "zamalek" && validThemes.includes("ahly")) continue;
+    validThemes.push(id);
+    if (validThemes.length >= MAX_ACTIVE_THEMES) break;
   }
-  return result;
+  if (validThemes.length === 0) {
+    return [...PRIMARY_THEME_ORDER];
+  }
+  // Enforce primary sequence: saidi -> zamalek -> fatimid -> mexican -> cinema
+  const prioritized: ThemeId[] = [];
+  for (const p of PRIMARY_THEME_ORDER) {
+    if (validThemes.includes(p)) {
+      prioritized.push(p);
+    }
+  }
+  for (const v of validThemes) {
+    if (!prioritized.includes(v)) {
+      prioritized.push(v);
+    }
+  }
+  return prioritized.slice(0, MAX_ACTIVE_THEMES);
 }
 
-export function isThemeCheckboxDisabled(current: ThemeId[], id: ThemeId): boolean {
+export function isThemeCheckboxDisabled(
+  current: ThemeId[],
+  id: ThemeId,
+): boolean {
   const isSelected = current.includes(id);
   if (isSelected) return false;
   if (current.length >= MAX_ACTIVE_THEMES) return true;
@@ -169,12 +244,9 @@ export interface SiteConfiguration {
 export function isImageFlipped(
   config: SiteConfiguration,
   fieldKey: string,
-  defaultFlip = false
+  defaultFlip = false,
 ): boolean {
-  if (
-    config.imageFlips &&
-    typeof config.imageFlips[fieldKey] === "boolean"
-  ) {
+  if (config.imageFlips && typeof config.imageFlips[fieldKey] === "boolean") {
     return config.imageFlips[fieldKey];
   }
   return defaultFlip;
@@ -206,7 +278,7 @@ function sanitizePunishments(raw: unknown, fallback: string[]): string[] {
 }
 
 const BASE_FALLBACK_CONFIG: SiteConfiguration = {
-  activeThemes: ["ahly", "saidi", "fatimid", "cinema"],
+  activeThemes: ["saidi", "zamalek", "fatimid", "mexican", "cinema"],
   punishmentsGroom: DEFAULT_PUNISHMENTS_GROOM,
   punishmentsBride: DEFAULT_PUNISHMENTS_BRIDE,
   imageFlips: {},
@@ -284,11 +356,12 @@ const BASE_FALLBACK_CONFIG: SiteConfiguration = {
 };
 
 // Synchronously load active static JSON profile (zero async database fetch)
-const ACTIVE_STATIC_JSON = loadActiveStaticConfig() as Partial<SiteConfiguration> &
-  Record<string, unknown>;
+const ACTIVE_STATIC_JSON =
+  loadActiveStaticConfig() as Partial<SiteConfiguration> &
+    Record<string, unknown>;
 
 function normalizeSections(
-  sections?: Partial<Record<ThemeId, ThemeSectionConfig>>
+  sections?: Partial<Record<ThemeId, ThemeSectionConfig>>,
 ): Partial<Record<ThemeId, ThemeSectionConfig>> | undefined {
   if (!sections) return undefined;
   const normalized: Partial<Record<ThemeId, ThemeSectionConfig>> = {};
@@ -317,31 +390,77 @@ function normalizeSections(
 function normalizeImageUrls(cfg: SiteConfiguration): SiteConfiguration {
   return {
     ...cfg,
-    mainHeroBgUrl: resolveProtectedAssetUrl(cfg.mainHeroBgUrl, { maxWidth: 2000 }),
-    groomChildhoodUrl: resolveProtectedAssetUrl(cfg.groomChildhoodUrl, { maxWidth: 600 }),
-    brideChildhoodUrl: resolveProtectedAssetUrl(cfg.brideChildhoodUrl, { maxWidth: 600 }),
-    pharaonicGroomUrl: resolveProtectedAssetUrl(cfg.pharaonicGroomUrl, { maxWidth: 960 }),
-    pharaonicBrideUrl: resolveProtectedAssetUrl(cfg.pharaonicBrideUrl, { maxWidth: 960 }),
-    saidiGroomUrl: resolveProtectedAssetUrl(cfg.saidiGroomUrl, { maxWidth: 960 }),
-    saidiBrideUrl: resolveProtectedAssetUrl(cfg.saidiBrideUrl, { maxWidth: 960 }),
-    cinemaGroomUrl: resolveProtectedAssetUrl(cfg.cinemaGroomUrl, { maxWidth: 960 }),
-    cinemaBrideUrl: resolveProtectedAssetUrl(cfg.cinemaBrideUrl, { maxWidth: 960 }),
-    falahiGroomUrl: resolveProtectedAssetUrl(cfg.falahiGroomUrl, { maxWidth: 960 }),
-    falahiBrideUrl: resolveProtectedAssetUrl(cfg.falahiBrideUrl, { maxWidth: 960 }),
-    zamalekGroomUrl: resolveProtectedAssetUrl(cfg.zamalekGroomUrl, { maxWidth: 960 }),
-    zamalekBrideUrl: resolveProtectedAssetUrl(cfg.zamalekBrideUrl, { maxWidth: 960 }),
+    mainHeroBgUrl: resolveProtectedAssetUrl(cfg.mainHeroBgUrl, {
+      maxWidth: 2000,
+    }),
+    groomChildhoodUrl: resolveProtectedAssetUrl(cfg.groomChildhoodUrl, {
+      maxWidth: 600,
+    }),
+    brideChildhoodUrl: resolveProtectedAssetUrl(cfg.brideChildhoodUrl, {
+      maxWidth: 600,
+    }),
+    pharaonicGroomUrl: resolveProtectedAssetUrl(cfg.pharaonicGroomUrl, {
+      maxWidth: 960,
+    }),
+    pharaonicBrideUrl: resolveProtectedAssetUrl(cfg.pharaonicBrideUrl, {
+      maxWidth: 960,
+    }),
+    saidiGroomUrl: resolveProtectedAssetUrl(cfg.saidiGroomUrl, {
+      maxWidth: 960,
+    }),
+    saidiBrideUrl: resolveProtectedAssetUrl(cfg.saidiBrideUrl, {
+      maxWidth: 960,
+    }),
+    cinemaGroomUrl: resolveProtectedAssetUrl(cfg.cinemaGroomUrl, {
+      maxWidth: 960,
+    }),
+    cinemaBrideUrl: resolveProtectedAssetUrl(cfg.cinemaBrideUrl, {
+      maxWidth: 960,
+    }),
+    falahiGroomUrl: resolveProtectedAssetUrl(cfg.falahiGroomUrl, {
+      maxWidth: 960,
+    }),
+    falahiBrideUrl: resolveProtectedAssetUrl(cfg.falahiBrideUrl, {
+      maxWidth: 960,
+    }),
+    zamalekGroomUrl: resolveProtectedAssetUrl(cfg.zamalekGroomUrl, {
+      maxWidth: 960,
+    }),
+    zamalekBrideUrl: resolveProtectedAssetUrl(cfg.zamalekBrideUrl, {
+      maxWidth: 960,
+    }),
     ahlyGroomUrl: resolveProtectedAssetUrl(cfg.ahlyGroomUrl, { maxWidth: 960 }),
     ahlyBrideUrl: resolveProtectedAssetUrl(cfg.ahlyBrideUrl, { maxWidth: 960 }),
-    indianGroomUrl: resolveProtectedAssetUrl(cfg.indianGroomUrl, { maxWidth: 960 }),
-    indianBrideUrl: resolveProtectedAssetUrl(cfg.indianBrideUrl, { maxWidth: 960 }),
-    fatimidGroomUrl: resolveProtectedAssetUrl(cfg.fatimidGroomUrl, { maxWidth: 960 }),
-    fatimidBrideUrl: resolveProtectedAssetUrl(cfg.fatimidBrideUrl, { maxWidth: 960 }),
-    mexicanGroomUrl: resolveProtectedAssetUrl(cfg.mexicanGroomUrl, { maxWidth: 960 }),
-    mexicanBrideUrl: resolveProtectedAssetUrl(cfg.mexicanBrideUrl, { maxWidth: 960 }),
-    raceGroomAvatarUrl: resolveProtectedAssetUrl(cfg.raceGroomAvatarUrl, { maxWidth: 640 }),
-    raceBrideAvatarUrl: resolveProtectedAssetUrl(cfg.raceBrideAvatarUrl, { maxWidth: 640 }),
-    raceGroomKartUrl: resolveProtectedAssetUrl(cfg.raceGroomKartUrl, { maxWidth: 800 }),
-    raceBrideKartUrl: resolveProtectedAssetUrl(cfg.raceBrideKartUrl, { maxWidth: 800 }),
+    indianGroomUrl: resolveProtectedAssetUrl(cfg.indianGroomUrl, {
+      maxWidth: 960,
+    }),
+    indianBrideUrl: resolveProtectedAssetUrl(cfg.indianBrideUrl, {
+      maxWidth: 960,
+    }),
+    fatimidGroomUrl: resolveProtectedAssetUrl(cfg.fatimidGroomUrl, {
+      maxWidth: 960,
+    }),
+    fatimidBrideUrl: resolveProtectedAssetUrl(cfg.fatimidBrideUrl, {
+      maxWidth: 960,
+    }),
+    mexicanGroomUrl: resolveProtectedAssetUrl(cfg.mexicanGroomUrl, {
+      maxWidth: 960,
+    }),
+    mexicanBrideUrl: resolveProtectedAssetUrl(cfg.mexicanBrideUrl, {
+      maxWidth: 960,
+    }),
+    raceGroomAvatarUrl: resolveProtectedAssetUrl(cfg.raceGroomAvatarUrl, {
+      maxWidth: 640,
+    }),
+    raceBrideAvatarUrl: resolveProtectedAssetUrl(cfg.raceBrideAvatarUrl, {
+      maxWidth: 640,
+    }),
+    raceGroomKartUrl: resolveProtectedAssetUrl(cfg.raceGroomKartUrl, {
+      maxWidth: 800,
+    }),
+    raceBrideKartUrl: resolveProtectedAssetUrl(cfg.raceBrideKartUrl, {
+      maxWidth: 800,
+    }),
     sections: normalizeSections(cfg.sections),
     gallery: cfg.gallery.map((item) => ({
       ...item,
@@ -350,24 +469,92 @@ function normalizeImageUrls(cfg: SiteConfiguration): SiteConfiguration {
   };
 }
 
+/**
+ * Reorders gallery items so that items numbered/indexed 82 through 125 are placed
+ * at the very top (first in sequence) until that range completes, followed smoothly
+ * by all remaining items.
+ *
+ * Inspects any explicit number in id/caption/title, or detects starting index offset
+ * (e.g. 1-based, 5-based, 11-based, or 0-based), ensuring no valid items are ever dropped.
+ */
+export function prioritizeGallery82To125<
+  T extends { id?: string | number; title?: string; caption?: string; date?: string; url?: string }
+>(items: T[]): T[] {
+  if (!items || items.length === 0) return items;
+
+  const extractExplicitNum = (item: T): number | null => {
+    if (typeof item.id === "number") return item.id;
+    const candidates = [
+      typeof item.id === "string" ? item.id : "",
+      item.title || "",
+      item.caption || "",
+    ];
+    for (const c of candidates) {
+      const match = c.match(/(?:^|\b|mem-|item-|photo-|#)(\d+)(?:\b|$)/i);
+      if (match) {
+        const num = parseInt(match[1], 10);
+        if (!isNaN(num) && num < 100000) return num;
+      }
+    }
+    return null;
+  };
+
+  // Detect starting index offset (e.g. 1-based, 5-based, 11-based)
+  let startingOffset = 1;
+  const firstNum = extractExplicitNum(items[0]);
+  if (firstNum !== null && firstNum > 0 && firstNum < 80) {
+    startingOffset = firstNum;
+  }
+
+  const isPriority = (item: T, idx: number): boolean => {
+    const explicit = extractExplicitNum(item);
+    if (explicit !== null) {
+      return explicit >= 82 && explicit <= 125;
+    }
+    const effectiveNumber = idx + startingOffset;
+    if (effectiveNumber >= 82 && effectiveNumber <= 125) return true;
+    if (idx >= 82 && idx <= 125) return true;
+    return false;
+  };
+
+  const priorityItems: T[] = [];
+  const remainingItems: T[] = [];
+
+  items.forEach((item, idx) => {
+    if (isPriority(item, idx)) {
+      priorityItems.push(item);
+    } else {
+      remainingItems.push(item);
+    }
+  });
+
+  if (priorityItems.length > 0) {
+    return [...priorityItems, ...remainingItems];
+  }
+
+  return items;
+}
+
 export const DEFAULT_CONFIG: SiteConfiguration = normalizeImageUrls({
   ...BASE_FALLBACK_CONFIG,
   ...ACTIVE_STATIC_JSON,
   activeThemes: sanitizeActiveThemes(
-    ACTIVE_STATIC_JSON.activeThemes ?? BASE_FALLBACK_CONFIG.activeThemes
+    ACTIVE_STATIC_JSON.activeThemes ?? BASE_FALLBACK_CONFIG.activeThemes,
   ),
   sections:
     (ACTIVE_STATIC_JSON.sections as SiteConfiguration["sections"]) ?? undefined,
-  gallery: Array.isArray(ACTIVE_STATIC_JSON.gallery)
-    ? (ACTIVE_STATIC_JSON.gallery as GalleryItem[])
-    : BASE_FALLBACK_CONFIG.gallery,
+  gallery: prioritizeGallery82To125(
+    Array.isArray(ACTIVE_STATIC_JSON.gallery)
+      ? (ACTIVE_STATIC_JSON.gallery as GalleryItem[])
+      : BASE_FALLBACK_CONFIG.gallery
+  ),
   punishmentsGroom: sanitizePunishments(
     ACTIVE_STATIC_JSON.punishmentsGroom ?? ACTIVE_STATIC_JSON.punishments,
-    DEFAULT_PUNISHMENTS_GROOM
+    DEFAULT_PUNISHMENTS_GROOM,
   ),
   punishmentsBride: sanitizePunishments(
     ACTIVE_STATIC_JSON.punishmentsBride ?? ACTIVE_STATIC_JSON.punishments,
-    DEFAULT_PUNISHMENTS_BRIDE
+    DEFAULT_PUNISHMENTS_BRIDE,
   ),
   imageFlips:
     ACTIVE_STATIC_JSON.imageFlips &&
@@ -379,7 +566,7 @@ export const DEFAULT_CONFIG: SiteConfiguration = normalizeImageUrls({
 export const STORAGE_KEY = `WEDDING_ADMIN_CONFIG_V2_${getActiveProfileKey()}`;
 
 export function normalizeConfig(
-  raw: Partial<SiteConfiguration> & Record<string, unknown>
+  raw: Partial<SiteConfiguration> & Record<string, unknown>,
 ): SiteConfiguration {
   return normalizeImageUrls({
     ...DEFAULT_CONFIG,
@@ -389,8 +576,7 @@ export function normalizeConfig(
       ...((raw.sections as SiteConfiguration["sections"]) || {}),
     },
     activeThemes: sanitizeActiveThemes(raw.activeThemes),
-    heroAudioUrl:
-      (raw.heroAudioUrl as string) || DEFAULT_CONFIG.heroAudioUrl,
+    heroAudioUrl: (raw.heroAudioUrl as string) || DEFAULT_CONFIG.heroAudioUrl,
     albumAudioUrl:
       (raw.albumAudioUrl as string) || DEFAULT_CONFIG.albumAudioUrl,
     audioPharaonic:
@@ -425,9 +611,9 @@ export function normalizeConfig(
       (raw.raceBrideAvatarUrl as string) ||
       (raw.avatarBrideUrl as string) ||
       DEFAULT_CONFIG.raceBrideAvatarUrl,
-    gallery: Array.isArray(raw.gallery)
-      ? raw.gallery
-      : DEFAULT_CONFIG.gallery,
+    gallery: prioritizeGallery82To125(
+      Array.isArray(raw.gallery) ? raw.gallery : DEFAULT_CONFIG.gallery
+    ),
     punishmentsGroom: Array.isArray(raw.punishmentsGroom)
       ? raw.punishmentsGroom
           .filter((item): item is string => typeof item === "string")
@@ -452,12 +638,16 @@ export function normalizeConfig(
 
 const ROTATIONS = [-12, -9, -6, -4, -2, 2, 4, 6, 8, 10, 12, -8, 7, -10, 9];
 
-export function buildDynamicRomanceImages(gallery: GalleryItem[]): RomanceImage[] {
+export function buildDynamicRomanceImages(
+  gallery: GalleryItem[],
+): RomanceImage[] {
   if (!gallery || gallery.length === 0) {
     return ALL_80_IMAGES;
   }
 
-  return gallery.map((item, index) => {
+  const prioritized = prioritizeGallery82To125(gallery);
+
+  return prioritized.map((item, index) => {
     const template = ALL_80_IMAGES[index % ALL_80_IMAGES.length];
     const col = index % 5;
     const row = Math.floor(index / 5);
@@ -479,7 +669,7 @@ export function buildDynamicRomanceImages(gallery: GalleryItem[]): RomanceImage[
 }
 
 export function mergeGalleryIntoCards<
-  T extends { photo: string; title: string; time: string }
+  T extends { photo: string; title: string; time: string },
 >(defaults: T[], gallery: GalleryItem[], offset = 0): T[] {
   if (!gallery || gallery.length === 0) {
     return defaults.map((card) => ({
@@ -497,7 +687,9 @@ export function mergeGalleryIntoCards<
     }
     return {
       ...card,
-      photo: resolveProtectedAssetUrl(item.url || card.photo, { maxWidth: 1000 }),
+      photo: resolveProtectedAssetUrl(item.url || card.photo, {
+        maxWidth: 1000,
+      }),
       title: item.caption?.trim() ? item.caption : card.title,
       time: item.date?.trim() ? item.date : card.time,
     };
@@ -542,7 +734,7 @@ export const WeddingConfigProvider: React.FC<{ children: React.ReactNode }> = ({
         (
           data: {
             config?: Partial<SiteConfiguration> & Record<string, unknown>;
-          } | null
+          } | null,
         ) => {
           if (cancelled || !data?.config) return;
           const fresh = normalizeConfig(data.config);
@@ -552,7 +744,7 @@ export const WeddingConfigProvider: React.FC<{ children: React.ReactNode }> = ({
           } catch {
             // Ignore storage quota errors
           }
-        }
+        },
       )
       .catch(() => {
         // Fallback to static/localStorage config if offline

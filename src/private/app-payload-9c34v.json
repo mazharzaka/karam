@@ -7,8 +7,8 @@
     "mexican",
     "cinema"
   ],
-  "groomName": "Mohamed",
-  "brideName": "Manal",
+  "groomName": "karam",
+  "brideName": "om sahas",
   "punishmentsGroom": [
     "غسيل المواعين النهاردة 🍽️",
     "عزومة أكل من برة على حسابك 🍔",
@@ -25,7 +25,7 @@
   ],
   "engagementDate": "1999-10-22",
   "weddingDate": "1999-10-22",
-  "mainHeroBgUrl": "https://res.cloudinary.com/dsls01rrg/image/upload/f_auto,q_auto,c_limit,w_2000/v1794440810/bcuip5vya72gkccb8mcm.jpg",
+  "mainHeroBgUrl": "https://res.cloudinary.com/dsls01rrg/image/upload/f_auto,q_auto,c_limit,w_2000/v1795736436/kevqvaaqvodtajevvrmn.jpg",
   "groomChildhoodUrl": "https://res.cloudinary.com/dsls01rrg/image/upload/f_auto,q_auto,c_limit,w_600/v1794440824/blys9ix6vyeb22hmcqni.jpg",
   "brideChildhoodUrl": "https://res.cloudinary.com/dsls01rrg/image/upload/f_auto,q_auto,c_limit,w_600/v1794440836/dlhrvdexiw1o2etgdy3y.jpg",
   "audioPharaonic": "/audio/pharaonic-track.mp3",
@@ -36,7 +36,7 @@
   "audioAhly": "/audio/ahly.mp3",
   "audioIndian": "/audio/pharaonic-track.mp3",
   "audioFatimid": "/audio/fatami.mp3",
-  "audioMexican": "/audio/pharaonic-track.mp3",
+  "audioMexican": "/audio/Salsa song.mp3",
   "pharaonicGroomUrl": "/statues/tutankhamun.png",
   "pharaonicBrideUrl": "/statues/nefertiti.png",
   "saidiGroomUrl": "/statues/saidi-man.png",
@@ -1043,7 +1043,7 @@
       "date": "2026-11-26"
     }
   ],
-  "lastUpdated": "2026-11-26T23:22:38.639Z",
+  "lastUpdated": "2026-11-26T23:44:30.246Z",
   "imageFlips": {
     "zamalekBrideUrl": true,
     "saidiGroomUrl": true,

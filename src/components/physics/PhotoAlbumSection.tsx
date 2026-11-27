@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import HTMLFlipBook from "react-pageflip";
 import {
@@ -12,9 +18,11 @@ import {
   Volume2,
   VolumeX,
 } from "lucide-react";
-import { useWeddingConfig } from "@/context/WeddingConfigContext";
+import {
+  useWeddingConfig,
+  prioritizeGallery82To125,
+} from "@/context/WeddingConfigContext";
 import { globalAudioCoordinator } from "@/utils/globalAudioCoordinator";
-import { SmoothImage } from "@/components/SmoothImage";
 
 interface AlbumPhoto {
   id: string;
@@ -24,12 +32,42 @@ interface AlbumPhoto {
 }
 
 const FALLBACK_PHOTOS: AlbumPhoto[] = [
-  { id: "fb-1", url: "/moments/01.jpg", caption: "أول لحظة جمعتنا", date: "Memory I" },
-  { id: "fb-2", url: "/moments/02.jpg", caption: "ضحكة من القلب", date: "Memory II" },
-  { id: "fb-3", url: "/moments/03.jpg", caption: "أجمل ذكرياتنا", date: "Memory III" },
-  { id: "fb-4", url: "/moments/04.jpg", caption: "خطوة بخطوة سوا", date: "Memory IV" },
-  { id: "fb-5", url: "/moments/05.jpg", caption: "وعد العمر كله", date: "Memory V" },
-  { id: "fb-6", url: "/moments/06.jpg", caption: "بداية حكايتنا", date: "Memory VI" },
+  {
+    id: "fb-1",
+    url: "/moments/01.jpg",
+    caption: "أول لحظة جمعتنا",
+    date: "Memory I",
+  },
+  {
+    id: "fb-2",
+    url: "/moments/02.jpg",
+    caption: "ضحكة من القلب",
+    date: "Memory II",
+  },
+  {
+    id: "fb-3",
+    url: "/moments/03.jpg",
+    caption: "أجمل ذكرياتنا",
+    date: "Memory III",
+  },
+  {
+    id: "fb-4",
+    url: "/moments/04.jpg",
+    caption: "خطوة بخطوة سوا",
+    date: "Memory IV",
+  },
+  {
+    id: "fb-5",
+    url: "/moments/05.jpg",
+    caption: "وعد العمر كله",
+    date: "Memory V",
+  },
+  {
+    id: "fb-6",
+    url: "/moments/06.jpg",
+    caption: "بداية حكايتنا",
+    date: "Memory VI",
+  },
 ];
 
 const InterlockingRingsSVG: React.FC<{ className?: string }> = ({
@@ -43,7 +81,14 @@ const InterlockingRingsSVG: React.FC<{ className?: string }> = ({
     aria-hidden="true"
   >
     <defs>
-      <linearGradient id="goldRingGrad" x1="0" y1="0" x2="80" y2="48" gradientUnits="userSpaceOnUse">
+      <linearGradient
+        id="goldRingGrad"
+        x1="0"
+        y1="0"
+        x2="80"
+        y2="48"
+        gradientUnits="userSpaceOnUse"
+      >
         <stop offset="0%" stopColor="#FDE68A" />
         <stop offset="50%" stopColor="#D4AF37" />
         <stop offset="100%" stopColor="#F59E0B" />
@@ -237,6 +282,8 @@ export default function PhotoAlbumSection() {
   const [userMuted, setUserMuted] = useState(false);
   const [isAutoFlip, setIsAutoFlip] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
+  const [selectedVideo, setSelectedVideo] = useState<"30s" | "20s">("30s");
+  const [isVideoBg, setIsVideoBg] = useState<boolean>(true);
 
   const sectionRef = useRef<HTMLElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -266,7 +313,8 @@ export default function PhotoAlbumSection() {
 
   const albumPhotos: AlbumPhoto[] = useMemo(() => {
     const raw = (config.gallery || []).filter((item) => item?.url);
-    return raw.length > 0 ? raw : FALLBACK_PHOTOS;
+    const source = raw.length > 0 ? raw : FALLBACK_PHOTOS;
+    return prioritizeGallery82To125(source);
   }, [config.gallery]);
 
   const photoPages: AlbumPhoto[][] = useMemo(() => {
@@ -387,27 +435,83 @@ export default function PhotoAlbumSection() {
       id="section-photo-album"
       className="relative w-full min-h-[calc(100vh-4rem)] overflow-hidden bg-gradient-to-b from-zinc-950 via-[#0d0b0c] to-black py-14 px-4 sm:px-8 flex flex-col items-center justify-center border-t border-amber-500/15"
     >
+      {/* Background Looping Video Showcase (30s / 20s) with Subtle Dark Overlay */}
+      {isVideoBg && (
+        <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden">
+          <video
+            key={selectedVideo}
+            autoPlay
+            loop
+            muted
+            playsInline
+            preload="metadata"
+            className="h-full w-full object-cover opacity-25"
+          >
+            <source
+              src={
+                selectedVideo === "30s"
+                  ? "/videos/ambient-cinematic-30s.mp4"
+                  : "/videos/ambient-cinematic-20s.mp4"
+              }
+              type="video/mp4"
+            />
+          </video>
+          {/* Subtle dark overlay for contrast and readability */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/85 via-zinc-950/75 to-black/90 backdrop-blur-[1px]" />
+        </div>
+      )}
+
       {/* Subtle monochrome luxury ambient glow */}
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(212,175,55,0.06),transparent_65%)]" />
 
       {/* Background Instrumental Track (Configured via Admin Panel albumAudioUrl) */}
-      <audio
-        ref={audioRef}
-        src={albumAudioSrc}
-        loop
-        preload="none"
-      />
+      <audio ref={audioRef} src={albumAudioSrc} loop preload="none" />
 
-      {/* Top-Right Album Controls: Auto-Play + Audio Mute/Unmute */}
-      <div className="relative sm:absolute sm:top-6 sm:right-6 z-30 mb-6 sm:mb-0 flex items-center gap-2.5">
+      {/* Top-Right Album Controls: 30s/20s Video Selector + Auto-Play + Audio Mute/Unmute */}
+      <div className="relative sm:absolute sm:top-6 sm:right-6 z-30 mb-6 sm:mb-0 flex flex-wrap items-center justify-center gap-2.5">
+        {/* Background Looping Video Selector (30s vs 20s) */}
+        <div className="flex items-center rounded-full border border-zinc-700/80 bg-zinc-900/80 p-0.5 backdrop-blur-md shadow-md">
+          <button
+            type="button"
+            onClick={() => {
+              setIsVideoBg(true);
+              setSelectedVideo("30s");
+            }}
+            aria-pressed={isVideoBg && selectedVideo === "30s"}
+            className={`rounded-full px-2.5 py-1.5 text-[11px] font-medium transition-all cursor-pointer ${
+              isVideoBg && selectedVideo === "30s"
+                ? "bg-[#d4af37]/25 text-[#fae8a4] shadow-sm font-bold"
+                : "text-zinc-400 hover:text-zinc-200"
+            }`}
+          >
+            30s Video
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setIsVideoBg(true);
+              setSelectedVideo("20s");
+            }}
+            aria-pressed={isVideoBg && selectedVideo === "20s"}
+            className={`rounded-full px-2.5 py-1.5 text-[11px] font-medium transition-all cursor-pointer ${
+              isVideoBg && selectedVideo === "20s"
+                ? "bg-[#d4af37]/25 text-[#fae8a4] shadow-sm font-bold"
+                : "text-zinc-400 hover:text-zinc-200"
+            }`}
+          >
+            20s Video
+          </button>
+        </div>
+
         <button
           type="button"
           onClick={() => setIsAutoFlip((prev) => !prev)}
           aria-pressed={isAutoFlip}
-          className={`flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-xs font-medium backdrop-blur-md transition-all cursor-pointer ${isAutoFlip
+          className={`flex items-center gap-1.5 rounded-full border px-3.5 py-2 text-xs font-medium backdrop-blur-md transition-all cursor-pointer ${
+            isAutoFlip
               ? "border-[#d4af37] bg-[#d4af37]/20 text-[#fae8a4] shadow-[0_0_16px_rgba(212,175,55,0.25)]"
               : "border-zinc-700/80 bg-zinc-900/80 text-zinc-300 hover:border-[#d4af37]/60 hover:text-amber-200"
-            }`}
+          }`}
         >
           {isAutoFlip ? (
             <>
@@ -425,7 +529,9 @@ export default function PhotoAlbumSection() {
         <button
           type="button"
           onClick={toggleAudio}
-          aria-label={isPlaying && !isMuted ? "Mute Album Audio" : "Play Album Audio"}
+          aria-label={
+            isPlaying && !isMuted ? "Mute Album Audio" : "Play Album Audio"
+          }
           className="flex items-center gap-2 rounded-full border border-zinc-700/80 bg-zinc-900/80 backdrop-blur-md px-3.5 py-2 text-xs font-medium text-amber-200/90 shadow-lg transition-all hover:border-[#d4af37]/60 hover:bg-zinc-900 cursor-pointer"
         >
           {isPlaying && !isMuted ? (
@@ -543,22 +649,28 @@ export default function PhotoAlbumSection() {
                       className="group relative h-full min-h-0 w-full bg-white p-2 pb-2 rounded-xs shadow-md border border-stone-200/90 cursor-zoom-in transition-transform duration-300 hover:scale-[1.015] flex flex-col overflow-hidden"
                     >
                       <div className="relative flex-1 min-h-0 w-full overflow-hidden rounded-xs bg-zinc-900 flex items-center justify-center">
-                        <SmoothImage
-                          src={photo.url}
-                          alt={
-                            photo.caption ||
-                            `Wedding memory ${pageIdx * 2 + idx + 1}`
-                          }
-                          draggable={false}
-                          className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-[1.03]"
-                        />
+                        <div className="relative w-full h-full aspect-[2/3] max-h-full mx-auto flex items-center justify-center overflow-hidden">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={photo.url}
+                            alt={
+                              photo.caption ||
+                              `Wedding memory ${pageIdx * 2 + idx + 1}`
+                            }
+                            loading="lazy"
+                            decoding="async"
+                            draggable={false}
+                            className="w-full h-full aspect-[2/3] object-cover object-top transition-transform duration-500 group-hover:scale-[1.03]"
+                          />
+                        </div>
                         <span className="pointer-events-none absolute bottom-1.5 right-1.5 rounded-full bg-black/70 px-2 py-0.5 text-[10px] tracking-wider text-amber-200/90 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                           2× Click
                         </span>
                       </div>
                       <div className="shrink-0 pt-1.5 px-1 flex items-center justify-between gap-2 text-stone-700">
                         <span className="font-serif text-[11px] font-semibold truncate">
-                          {photo.caption || `${config.groomName} & ${config.brideName}`}
+                          {photo.caption ||
+                            `${config.groomName} & ${config.brideName}`}
                         </span>
                         {photo.date && (
                           <span className="font-mono text-[10px] text-stone-400 shrink-0">

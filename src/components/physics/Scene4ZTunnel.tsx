@@ -3,7 +3,13 @@
 import React, { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { Eye, Heart, ChevronLeft, ChevronRight, FastForward } from "lucide-react";
+import {
+  Eye,
+  Heart,
+  ChevronLeft,
+  ChevronRight,
+  FastForward,
+} from "lucide-react";
 import { romanticAudio } from "@/utils/audioSynthesizer";
 import {
   useWeddingConfig,
@@ -14,7 +20,7 @@ export const Scene4ZTunnel: React.FC = () => {
   const { config } = useWeddingConfig();
   const tunnelImages = useMemo(
     () => buildDynamicRomanceImages(config.gallery).slice(0, 20),
-    [config.gallery]
+    [config.gallery],
   );
   // Flight position along the tunnel
   const [tunnelProgress, setTunnelProgress] = useState<number>(0);
@@ -36,7 +42,10 @@ export const Scene4ZTunnel: React.FC = () => {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [total]);
 
-  const activeIndex = Math.min(Math.max(0, Math.round(tunnelProgress)), Math.max(0, total - 1));
+  const activeIndex = Math.min(
+    Math.max(0, Math.round(tunnelProgress)),
+    Math.max(0, total - 1),
+  );
   const activeImage = tunnelImages[activeIndex] || tunnelImages[0];
 
   return (
@@ -118,8 +127,8 @@ export const Scene4ZTunnel: React.FC = () => {
             distance > 4
               ? Math.max(0, 1 - (distance - 4) * 0.5)
               : distance < -0.8
-              ? Math.max(0, 1 - Math.abs(distance + 0.8) * 1.5)
-              : 1;
+                ? Math.max(0, 1 - Math.abs(distance + 0.8) * 1.5)
+                : 1;
 
           const zIndex = Math.round(100 - distance * 10);
           const isFocal = Math.abs(distance) < 0.4;
@@ -138,14 +147,14 @@ export const Scene4ZTunnel: React.FC = () => {
               }}
             >
               {/* Photo */}
-              <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden bg-stone-100 shadow-inner">
+              <div className="relative w-full aspect-[2/3] rounded-2xl overflow-hidden bg-stone-100 shadow-inner">
                 <Image
                   src={img.url}
                   alt={img.caption}
                   fill
                   unoptimized
                   sizes="360px"
-                  className="object-cover"
+                  className="object-cover object-top transition-transform duration-300"
                 />
                 <div className="absolute top-2.5 right-2.5 p-1.5 rounded-full bg-white/80 backdrop-blur-md">
                   <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500" />
@@ -199,4 +208,3 @@ export const Scene4ZTunnel: React.FC = () => {
     </div>
   );
 };
-

@@ -207,14 +207,14 @@ export const Scene3PhysicsDesk: React.FC<Scene3PhysicsDeskProps> = () => {
               </div>
 
               {/* Large Image Frame */}
-              <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden bg-stone-900 shadow-inner mt-2">
+              <div className="relative w-full aspect-[2/3] rounded-xl overflow-hidden bg-stone-900 shadow-inner mt-2">
                 <Image
                   src={selectedPhoto.url}
                   alt={selectedPhoto.caption}
                   fill
                   unoptimized
                   sizes="600px"
-                  className="object-cover"
+                  className="object-cover object-top"
                 />
               </div>
 
@@ -339,14 +339,14 @@ const DraggableScrapbookPolaroid: React.FC<DraggableScrapbookPolaroidProps> = ({
       />
 
       {/* Photo Frame */}
-      <div className="relative w-full aspect-[4/3] rounded-lg overflow-hidden bg-stone-100 shadow-inner group">
+      <div className="relative w-full aspect-[2/3] rounded-lg overflow-hidden bg-stone-100 shadow-inner group">
         <Image
           src={photo.url}
           alt={photo.caption}
           fill
           unoptimized
           sizes="210px"
-          className="object-cover pointer-events-none select-none transition-transform duration-500 group-hover:scale-105"
+          className="object-cover object-top pointer-events-none select-none transition-transform duration-500 group-hover:scale-105"
         />
 
         {/* Zoom inspection overlay pill */}

@@ -190,6 +190,15 @@ export default function FatimidThemeSection({
             aria-hidden="true"
             className="pointer-events-none select-none absolute right-4 md:right-12 top-6 z-0 w-48 sm:w-64 md:w-80 h-auto object-contain opacity-20 mix-blend-luminosity"
           />
+
+          {/* Center-Bottom Background: Grand Golden Fatimid Dome Watermark */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/fatimid-dome.png"
+            alt=""
+            aria-hidden="true"
+            className="pointer-events-none select-none absolute left-1/2 -translate-x-1/2 bottom-0 z-0 w-60 sm:w-72 md:w-88 h-auto object-contain opacity-15 mix-blend-luminosity"
+          />
         </>
       }
     />

@@ -285,14 +285,14 @@ export const Scene5InfiniteCanvas: React.FC<Scene5InfiniteCanvasProps> = ({
                   transform: `rotate(${img.rotation}deg)`,
                 }}
               >
-                <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden bg-stone-100">
+                <div className="relative w-full aspect-[2/3] rounded-xl overflow-hidden bg-stone-100">
                   <Image
                     src={img.url}
                     alt={img.caption}
                     fill
                     unoptimized
                     sizes="240px"
-                    className="object-cover transition-transform duration-300 group-hover:scale-105"
+                    className="object-cover object-top transition-transform duration-300 group-hover:scale-105"
                   />
                   <div className="absolute top-1.5 right-1.5 p-1 rounded-full bg-white/80 shadow-sm">
                     <Heart className="w-3 h-3 text-rose-500 fill-rose-500" />
