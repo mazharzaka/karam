@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -122,7 +128,10 @@ export const Scene1HeroSpotlight: React.FC<Scene1HeroSpotlightProps> = ({
     y: typeof window !== "undefined" ? window.innerHeight / 2 : 400,
   });
 
-  const parsedStartDate = useMemo(() => new Date(effectiveStartDate), [effectiveStartDate]);
+  const parsedStartDate = useMemo(
+    () => new Date(effectiveStartDate),
+    [effectiveStartDate],
+  );
 
   // Hourly Celebration: Track hours passed using useRef
   const hoursPassed = useMemo(() => {
@@ -178,7 +187,10 @@ export const Scene1HeroSpotlight: React.FC<Scene1HeroSpotlightProps> = ({
   // Check if hour value has incremented or changed from the last checked state
   useEffect(() => {
     if (mounted) {
-      if (prevHoursRef.current !== null && hoursPassed !== prevHoursRef.current) {
+      if (
+        prevHoursRef.current !== null &&
+        hoursPassed !== prevHoursRef.current
+      ) {
         triggerHourlyCelebration();
       }
       prevHoursRef.current = hoursPassed;
@@ -204,13 +216,15 @@ export const Scene1HeroSpotlight: React.FC<Scene1HeroSpotlightProps> = ({
 
   // Time calculations via date-fns (Engagement & Wedding)
   const engagementStats = useMemo(
-    () => getSafeDuration(config.engagementDate || effectiveStartDate, currentTime),
-    [config.engagementDate, effectiveStartDate, currentTime]
+    () =>
+      getSafeDuration(config.engagementDate || effectiveStartDate, currentTime),
+    [config.engagementDate, effectiveStartDate, currentTime],
   );
 
   const weddingStats = useMemo(
-    () => getSafeDuration(config.weddingDate || effectiveStartDate, currentTime),
-    [config.weddingDate, effectiveStartDate, currentTime]
+    () =>
+      getSafeDuration(config.weddingDate || effectiveStartDate, currentTime),
+    [config.weddingDate, effectiveStartDate, currentTime],
   );
 
   const timeStats = useMemo(() => {
@@ -340,14 +354,16 @@ export const Scene1HeroSpotlight: React.FC<Scene1HeroSpotlightProps> = ({
           className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-romantic-roseGold/40 hover:border-romantic-roseGold text-[11px] text-romantic-roseGoldLight hover:text-white transition-all shadow-glow cursor-pointer group"
         >
           <PartyPopper className="w-3.5 h-3.5 text-romantic-roseGold group-hover:rotate-12 transition-transform" />
-          <span>Hourly Milestone Active ({mounted ? timeStats.totalHours.toLocaleString() : "..."}h)</span>
+          <span>
+            Hourly Milestone Active (
+            {mounted ? timeStats.totalHours.toLocaleString() : "..."}h)
+          </span>
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
         </motion.button>
       </div>
 
       {/* MAIN HERO CONTENT: Central Counter & Floating Childhood Photos */}
       <div className="relative z-20 flex flex-col items-center my-auto text-center w-full max-w-4xl px-2">
-        
         {/* Dynamic Couple Title & Subtitle intro */}
         <motion.h1
           initial={{ opacity: 0, y: 12 }}
@@ -369,7 +385,6 @@ export const Scene1HeroSpotlight: React.FC<Scene1HeroSpotlightProps> = ({
 
         {/* Relative container wrapping the main counter and floating childhood portraits */}
         <div className="relative w-full flex items-center justify-center my-4 py-4">
-
           {/* 
             CHILDHOOD PHOTO 1: BRIDE (Top-Left Floating Polaroid Avatar) 
           */}
@@ -424,8 +439,18 @@ export const Scene1HeroSpotlight: React.FC<Scene1HeroSpotlightProps> = ({
             transition={{
               opacity: { duration: 1, delay: 0.7 },
               x: { duration: 1, delay: 0.7 },
-              y: { repeat: Infinity, duration: 6.5, ease: "easeInOut", delay: 0.5 },
-              rotate: { repeat: Infinity, duration: 7.5, ease: "easeInOut", delay: 0.5 },
+              y: {
+                repeat: Infinity,
+                duration: 6.5,
+                ease: "easeInOut",
+                delay: 0.5,
+              },
+              rotate: {
+                repeat: Infinity,
+                duration: 7.5,
+                ease: "easeInOut",
+                delay: 0.5,
+              },
             }}
             className="absolute -bottom-10 -right-2 sm:-right-8 md:-right-16 z-30 pointer-events-auto"
           >
@@ -469,7 +494,9 @@ export const Scene1HeroSpotlight: React.FC<Scene1HeroSpotlightProps> = ({
                     {/* Hours block */}
                     <div className="flex flex-col items-center">
                       <span className="text-5xl sm:text-7xl md:text-9xl text-gold-shimmer font-serif">
-                        {mounted ? timeStats.totalHours.toLocaleString() : "..."}
+                        {mounted
+                          ? timeStats.totalHours.toLocaleString()
+                          : "..."}
                       </span>
                       <span className="text-[10px] sm:text-xs md:text-sm font-sans tracking-widest uppercase text-romantic-roseGoldLight/90 mt-1">
                         Hours
@@ -483,7 +510,9 @@ export const Scene1HeroSpotlight: React.FC<Scene1HeroSpotlightProps> = ({
                     {/* Minutes block */}
                     <div className="flex flex-col items-center">
                       <span className="text-5xl sm:text-7xl md:text-9xl text-white font-serif">
-                        {mounted ? String(timeStats.subHourMins).padStart(2, "0") : "00"}
+                        {mounted
+                          ? String(timeStats.subHourMins).padStart(2, "0")
+                          : "00"}
                       </span>
                       <span className="text-[10px] sm:text-xs md:text-sm font-sans tracking-widest uppercase text-romantic-roseGoldLight/90 mt-1">
                         Minutes
@@ -497,7 +526,9 @@ export const Scene1HeroSpotlight: React.FC<Scene1HeroSpotlightProps> = ({
                     {/* Seconds block */}
                     <div className="flex flex-col items-center">
                       <span className="text-5xl sm:text-7xl md:text-9xl text-romantic-blushLight font-serif">
-                        {mounted ? String(timeStats.subMinuteSecs).padStart(2, "0") : "00"}
+                        {mounted
+                          ? String(timeStats.subMinuteSecs).padStart(2, "0")
+                          : "00"}
                       </span>
                       <span className="text-[10px] sm:text-xs md:text-sm font-sans tracking-widest uppercase text-romantic-roseGoldLight/90 mt-1">
                         Seconds
@@ -532,9 +563,13 @@ export const Scene1HeroSpotlight: React.FC<Scene1HeroSpotlightProps> = ({
                   <div className="flex items-center gap-3 mt-3 text-xs sm:text-sm text-romantic-blush font-light font-mono bg-black/30 px-3 py-1 rounded-full border border-romantic-roseGold/30">
                     <span>+{timeStats.durationHours}h</span>
                     <span>:</span>
-                    <span>{String(timeStats.durationMinutes).padStart(2, "0")}m</span>
+                    <span>
+                      {String(timeStats.durationMinutes).padStart(2, "0")}m
+                    </span>
                     <span>:</span>
-                    <span>{String(timeStats.durationSeconds).padStart(2, "0")}s</span>
+                    <span>
+                      {String(timeStats.durationSeconds).padStart(2, "0")}s
+                    </span>
                   </div>
                 </motion.div>
               )}
@@ -561,7 +596,8 @@ export const Scene1HeroSpotlight: React.FC<Scene1HeroSpotlightProps> = ({
                     Years Written in the Stars
                   </p>
                   <p className="text-xs sm:text-sm text-romantic-blush font-light mt-1">
-                    {timeStats.durationYears} Years, {timeStats.durationMonths} Months, {timeStats.durationDays} Days together
+                    {timeStats.durationYears} Years, {timeStats.durationMonths}{" "}
+                    Months, {timeStats.durationDays} Days together
                   </p>
                 </motion.div>
               )}
@@ -679,7 +715,8 @@ export const Scene1HeroSpotlight: React.FC<Scene1HeroSpotlightProps> = ({
           </div>
           <div className="px-4 py-2.5 rounded-2xl bg-black/35 backdrop-blur-md border border-romantic-roseGold/30 text-center">
             <p className="text-[10px] uppercase tracking-widest text-romantic-roseGoldLight/80 font-semibold">
-              {weddingStats.isFuture ? "Countdown to Wedding" : "Since Wedding"} ({config.weddingDate || "—"})
+              {weddingStats.isFuture ? "Countdown to Wedding" : "Since Wedding"}{" "}
+              ({config.weddingDate || "—"})
             </p>
             <p className="font-serif text-sm sm:text-base font-bold text-white mt-0.5">
               {mounted
@@ -698,8 +735,11 @@ export const Scene1HeroSpotlight: React.FC<Scene1HeroSpotlightProps> = ({
         >
           <div className="w-2 h-2 rounded-full bg-romantic-roseGold animate-ping shrink-0" />
           <p className="text-[#FDECEF]/80">
-            <span className="font-serif font-bold text-white mr-1.5">Interactive Spotlight:</span>
-            Move your cursor across the screen to reveal {config.groomName} &amp; {config.brideName}&apos;s wedding memory.
+            <span className="font-serif font-bold text-white mr-1.5">
+              Interactive Spotlight:
+            </span>
+            Move your cursor across the screen to reveal {config.groomName}{" "}
+            &amp; {config.brideName}&apos;s wedding memory.
           </p>
         </motion.div>
       </div>
